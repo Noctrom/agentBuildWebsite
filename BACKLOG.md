@@ -10,7 +10,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S2  | Theme & dark mode              | dev-1  | S1         | in progress |
 | S3  | Site layout (header/footer)    | dev-1  | S1         | todo   |
 | S4  | Core UI components             | dev-1  | S2         | todo   |
-| S5  | Content model & placeholders   | dev-2  | S1         | in progress |
+| S5  | Content model & placeholders   | dev-2  | S1         | done   |
 | S6  | Home page                      | dev-2  | S3, S4, S5 | todo   |
 | S7  | About page                     | dev-2  | S3, S4, S5 | todo   |
 | S8  | Projects page                  | dev-2  | S3, S4, S5 | todo   |
@@ -55,9 +55,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S5 — Content model & placeholders
 *As Chris, I want all site content in one place so I can swap placeholders for real info without touching page code.*
-- [ ] Typed data files in `src/content/`: profile (name, title, bio, links), projects, experience, skills
-- [ ] Clearly fake placeholder values (e.g. "Project Alpha", "Jane Doe Corp")
-- [ ] Placeholder resume PDF at `public/resume.pdf`
+- [x] Typed data files in `src/content/`: profile (name, title, bio, links), projects, experience, skills
+- [x] Clearly fake placeholder values (e.g. "Project Alpha", "Jane Doe Corp")
+- [x] Placeholder resume PDF at `public/resume.pdf`
 
 ### S6 — Home page
 *As a recruiter, I want to know who Chris is and what Chris does within a few seconds of landing.*

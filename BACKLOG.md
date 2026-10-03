@@ -7,10 +7,10 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | ID  | Story                          | Owner  | Depends on | Status |
 |-----|--------------------------------|--------|------------|--------|
 | S1  | Project scaffold               | dev-1  | —          | done   |
-| S2  | Theme & dark mode              | dev-1  | S1         | todo   |
+| S2  | Theme & dark mode              | dev-1  | S1         | in progress |
 | S3  | Site layout (header/footer)    | dev-1  | S1         | todo   |
 | S4  | Core UI components             | dev-1  | S2         | todo   |
-| S5  | Content model & placeholders   | dev-2  | S1         | todo   |
+| S5  | Content model & placeholders   | dev-2  | S1         | in progress |
 | S6  | Home page                      | dev-2  | S3, S4, S5 | todo   |
 | S7  | About page                     | dev-2  | S3, S4, S5 | todo   |
 | S8  | Projects page                  | dev-2  | S3, S4, S5 | todo   |

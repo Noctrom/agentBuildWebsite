@@ -7,7 +7,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | ID  | Story                          | Owner  | Depends on | Status |
 |-----|--------------------------------|--------|------------|--------|
 | S1  | Project scaffold               | dev-1  | —          | done   |
-| S2  | Theme & dark mode              | dev-1  | S1         | in progress |
+| S2  | Theme & dark mode              | dev-1  | S1         | done   |
 | S3  | Site layout (header/footer)    | dev-1  | S1         | todo   |
 | S4  | Core UI components             | dev-1  | S2         | todo   |
 | S5  | Content model & placeholders   | dev-2  | S1         | done   |
@@ -34,9 +34,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S2 — Theme & dark mode
 *As a visitor, I want a clean, consistent look that respects my light/dark preference.*
-- [ ] Color, font, and spacing tokens defined in one place
-- [ ] Defaults to the OS color scheme; a toggle overrides it and is remembered
-- [ ] Text meets WCAG AA contrast in both themes
+- [x] Color, font, and spacing tokens defined in one place
+- [x] Defaults to the OS color scheme; a toggle overrides it and is remembered
+- [x] Text meets WCAG AA contrast in both themes
 
 ### S3 — Site layout
 *As a visitor, I want consistent navigation on every page so I can find what I'm looking for.*

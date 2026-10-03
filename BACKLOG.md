@@ -6,7 +6,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 | ID  | Story                          | Owner  | Depends on | Status |
 |-----|--------------------------------|--------|------------|--------|
-| S1  | Project scaffold               | dev-1  | —          | todo   |
+| S1  | Project scaffold               | dev-1  | —          | done   |
 | S2  | Theme & dark mode              | dev-1  | S1         | todo   |
 | S3  | Site layout (header/footer)    | dev-1  | S1         | todo   |
 | S4  | Core UI components             | dev-1  | S2         | todo   |
@@ -25,12 +25,12 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S1 — Project scaffold
 *As a developer, I want a working project skeleton so the team can build features on a shared foundation.*
-- [ ] Vite + React + TypeScript app at repo root
-- [ ] Tailwind CSS configured and working
-- [ ] React Router with placeholder routes: `/`, `/about`, `/projects`, `/resume`, `/contact`
-- [ ] ESLint configured; `npm run build` and `npm run lint` pass
-- [ ] Folder structure matches `CLAUDE.md`
-- [ ] `vercel.json` rewrites all paths to `index.html` (so deep links work)
+- [x] Vite + React + TypeScript app at repo root
+- [x] Tailwind CSS configured and working
+- [x] React Router with placeholder routes: `/`, `/about`, `/projects`, `/resume`, `/contact`
+- [x] ESLint configured; `npm run build` and `npm run lint` pass
+- [x] Folder structure matches `CLAUDE.md`
+- [x] `vercel.json` rewrites all paths to `index.html` (so deep links work)
 
 ### S2 — Theme & dark mode
 *As a visitor, I want a clean, consistent look that respects my light/dark preference.*

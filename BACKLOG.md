@@ -8,7 +8,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 |-----|--------------------------------|--------|------------|--------|
 | S1  | Project scaffold               | dev-1  | —          | done   |
 | S2  | Theme & dark mode              | dev-1  | S1         | done   |
-| S3  | Site layout (header/footer)    | dev-1  | S1         | todo   |
+| S3  | Site layout (header/footer)    | dev-1  | S1         | in progress |
 | S4  | Core UI components             | dev-1  | S2         | todo   |
 | S5  | Content model & placeholders   | dev-2  | S1         | done   |
 | S6  | Home page                      | dev-2  | S3, S4, S5 | todo   |

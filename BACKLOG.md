@@ -8,7 +8,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 |-----|--------------------------------|--------|------------|--------|
 | S1  | Project scaffold               | dev-1  | —          | done   |
 | S2  | Theme & dark mode              | dev-1  | S1         | done   |
-| S3  | Site layout (header/footer)    | dev-1  | S1         | in progress |
+| S3  | Site layout (header/footer)    | dev-1  | S1         | done   |
 | S4  | Core UI components             | dev-1  | S2         | in progress |
 | S5  | Content model & placeholders   | dev-2  | S1         | done   |
 | S6  | Home page                      | dev-2  | S3, S4, S5 | todo   |
@@ -40,10 +40,10 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S3 — Site layout
 *As a visitor, I want consistent navigation on every page so I can find what I'm looking for.*
-- [ ] Header with name/logo and links to all pages; current page is highlighted
-- [ ] Collapses to a hamburger menu under 768px, keyboard accessible
-- [ ] Footer with placeholder social links (GitHub, LinkedIn, email) and copyright year
-- [ ] Layout shell wraps every route
+- [x] Header with name/logo and links to all pages; current page is highlighted
+- [x] Collapses to a hamburger menu under 768px, keyboard accessible
+- [x] Footer with placeholder social links (GitHub, LinkedIn, email) and copyright year
+- [x] Layout shell wraps every route
 
 ### S4 — Core UI components
 *As a developer, I want reusable components so pages look consistent and aren't duplicated.*

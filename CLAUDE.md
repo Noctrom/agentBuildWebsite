@@ -38,6 +38,10 @@ public/         # Static assets, resume PDF, favicon
 - Commit message references the story id, e.g. `S7: Home hero section`
 
 ## Commands
+Use Node 22 (`.nvmrc`). On this machine, prefix shell commands with:
+`export PATH=$HOME/.nvm/versions/node/v22.23.3/bin:$PATH`
+(system Node is 18, which current Vite does not support).
+
 - `npm run dev` — local dev server
 - `npm run build` — type-check + production build
 - `npm run lint` — ESLint

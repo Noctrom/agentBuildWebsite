@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push * main*)",
+      "Bash(git push *:main*)",
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git * --no-verify*)",
+      "Bash(git config *core.hooksPath*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh api *protection*)",
+      "Bash(gh api *rulesets*)",
+      "Edit(.githooks/**)",
+      "Edit(.claude/settings.json)"
+    ]
+  },
+  "worktree": {
+    "baseRef": "head"
+  }
+}

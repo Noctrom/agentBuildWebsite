@@ -1,0 +1,7 @@
+#!/bin/sh
+. "$(git rev-parse --show-toplevel)/.githooks/_branch-rules.sh"
+in_agent_worktree && block "dev agents never push. The leader merges your story branch into 'leader' locally."
+while read -r _ _ remote_ref _; do
+  [ "$remote_ref" = "refs/heads/main" ] && block "pushing to main is not allowed. Open a PR from 'leader' to 'main' for Chris to review."
+done
+exit 0

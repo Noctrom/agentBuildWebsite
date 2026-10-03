@@ -28,8 +28,20 @@ public/         # Static assets, resume PDF, favicon
 ## Team workflow
 - **Leader** = the main Claude Code session. Writes/assigns stories in `BACKLOG.md`, reviews dev work, merges, reports progress to Chris. Does not write feature code.
 - **dev-1** (foundation & design system) and **dev-2** (pages & content) are subagents in `.claude/agents/`.
-- Each story is done on its own branch `story/<id>-<slug>` in an isolated worktree, then reviewed and merged into `main` by the leader.
+- Each story is done on its own branch `story/<id>-<slug>` in an isolated worktree, then reviewed and merged into `leader` by the leader.
 - Stay inside your owned folders. If you need a change in another dev's area, report it back instead of making it.
+
+## Git workflow
+```
+main      ← production. Changes ONLY via a PR from leader, reviewed and merged by Chris on GitHub.
+  └ leader   ← integration branch. Only the leader commits, merges and pushes here.
+      └ story/<id>-<slug>   ← one per story, branched from leader, worked by one dev agent.
+```
+- **main**: nobody commits to or pushes `main`, ever. The leader opens a PR `leader → main` when a batch of stories is ready, and Chris reviews and merges it. The leader never merges PRs.
+- **leader**: the leader's checkout (repo root) stays on `leader`. The leader merges reviewed story branches into it with `git merge --no-ff`, runs build + lint on the result, then pushes `leader`.
+- **story branches**: dev agents create `story/<id>-<slug>` from the latest `leader`, commit small focused commits there (message prefixed with the story id), and never push, merge, rebase shared branches, or force anything. The leader merges or sends back for fixes.
+- Never rewrite published history (no force push, no `--no-verify`, no amending pushed commits).
+- If a story branch falls behind `leader`, the leader (not the dev) decides whether to merge `leader` into it.
 
 ## Definition of done
 - Every acceptance criterion in the story is met

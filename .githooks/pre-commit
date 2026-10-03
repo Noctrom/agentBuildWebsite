@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(git rev-parse --show-toplevel)/.githooks/_branch-rules.sh"
+branch=$(current_branch)
+[ "$branch" = "main" ] && block "no commits on main. main only changes through a PR that Chris reviews and merges on GitHub."
+if in_agent_worktree; then
+  case "$branch" in
+    story/*) ;;
+    *) block "dev agents commit only on a story/<id>-<slug> branch (current: '${branch:-detached HEAD}')." ;;
+  esac
+fi
+exit 0

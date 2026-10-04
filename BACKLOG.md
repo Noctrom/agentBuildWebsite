@@ -14,7 +14,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S6  | Home page                      | dev-2  | S3, S4, S5 | done   |
 | S7  | About page                     | dev-2  | S3, S4, S5 | done   |
 | S8  | Projects page                  | dev-2  | S3, S4, S5 | done   |
-| S9  | Resume page                    | dev-2  | S3, S4, S5 | in progress |
+| S9  | Resume page                    | dev-2  | S3, S4, S5 | done   |
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
@@ -79,8 +79,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S9 — Resume page
 *As a recruiter, I want to view and download Chris's resume.*
-- [ ] Summary of experience and education on the page
-- [ ] Download button for `/resume.pdf`
+- [x] Summary of experience and education on the page
+- [x] Download button for `/resume.pdf`
 
 ### S10 — Contact page
 *As a visitor, I want an easy way to reach Chris.*

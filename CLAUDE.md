@@ -55,6 +55,8 @@ main      ← production. Changes ONLY via a PR from leader, reviewed and merged
 ## Agent logs
 Each dev keeps a story log at `docs/agent-logs/<agent>.md` (owned by that agent only). After every story it appends an entry: what it did, how it did it, verification, files, follow-ups. The entry is committed on the story branch, so it merges with the story. If two parallel stories by the same agent both append to the log, the leader resolves the merge conflict by keeping both entries.
 
+Merge-conflict lesson (S6–S8): "keep both sides" is only safe for append-only files (logs, export lists, imports). For lines that *replace* something, such as route elements in `App.tsx`, resolve by hand: keeping both sides once left duplicate placeholder routes that shadowed the real pages, which build and lint did not catch. After resolving, read the merged file.
+
 ## Definition of done
 - Every acceptance criterion in the story is met
 - `npm run build` and `npm run lint` pass with no errors

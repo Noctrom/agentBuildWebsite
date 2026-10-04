@@ -2,6 +2,8 @@
 
 Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
+> **Handoff (2026-10-04):** S1–S10 are done, merged into `leader` and pushed. All story branches and worktrees are cleaned up; only `leader` and `main` exist. Next up: S11 (dev-1), the follow-ups S13–S15, then a `leader → main` PR for Chris to review, then S12 (deploy). S13 and S14 touch the same `ui/` and `layout/` files as S11 parts, so run S11, S13 and S14 as one dev-1 batch or one after another; S15 (dev-2) can run in parallel.
+
 ## Sprint 1
 
 | ID  | Story                          | Owner  | Depends on | Status |
@@ -18,6 +20,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
+| S13 | Align header with page content | dev-1  | S3         | todo   |
+| S14 | Card & Tag background tones    | dev-1  | S4         | todo   |
+| S15 | Consistent page copy in content| dev-2  | S6–S10     | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -99,3 +104,24 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 - [ ] Repo pushed to GitHub, connected to Vercel
 - [ ] Production build deploys from `main`; deep links work
 - [ ] Chris has the live URL
+
+### S13 — Align header with page content
+*As a visitor, I want the header and page content to line up so the site looks polished.*
+Found in S7/S10 review: at desktop widths the header's site name starts ~16px right of the page content's left edge. Header puts `px-gutter` inside its `max-w-content` box; `Section` puts `px-gutter` outside it.
+- [ ] Header, footer and `Section` content share the same left and right edges at 375px, 768px and 1280px
+- [ ] One consistent container pattern used by layout and `Section`
+
+### S14 — Card & Tag background tones
+*As a developer, I want cards and tags to stand out on any section background.*
+Found in S9 review: `className="bg-bg"` can't override `Card`'s built-in `bg-surface` (CSS order), so cards disappear into `tone="surface"` Sections. About's `<Tag className="bg-bg">` may have the same problem.
+- [ ] `Card` and `Tag` accept a tone/variant prop (e.g. `tone="bg" | "surface"`) or merge classes so overrides win
+- [ ] Cards and tags are visibly distinct inside a `tone="surface"` Section in both themes
+- [ ] About page skill tags checked; report any page changes needed to dev-2
+
+### S15 — Consistent page copy in content
+*As Chris, I want every page's text stored the same way so replacing placeholders is predictable.*
+Found in S6–S10 review: page copy lives in different shapes (`home` typed in `types.ts`, `projectsPage` in `projects.ts`, `aboutPage` untyped, `contactPage`/`resumePage` with types in their own files), and "Code"/"Live demo" labels are defined twice.
+- [ ] One pattern for page copy (file per page, typed, consistent naming), applied to all five pages
+- [ ] Shared labels (e.g. project "Code" / "Live demo") defined once
+- [ ] No visible text changes; build and lint pass
+

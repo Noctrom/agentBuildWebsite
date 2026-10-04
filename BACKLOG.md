@@ -9,13 +9,13 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S1  | Project scaffold               | dev-1  | —          | done   |
 | S2  | Theme & dark mode              | dev-1  | S1         | done   |
 | S3  | Site layout (header/footer)    | dev-1  | S1         | done   |
-| S4  | Core UI components             | dev-1  | S2         | in progress |
+| S4  | Core UI components             | dev-1  | S2         | done   |
 | S5  | Content model & placeholders   | dev-2  | S1         | done   |
-| S6  | Home page                      | dev-2  | S3, S4, S5 | todo   |
-| S7  | About page                     | dev-2  | S3, S4, S5 | todo   |
-| S8  | Projects page                  | dev-2  | S3, S4, S5 | todo   |
+| S6  | Home page                      | dev-2  | S3, S4, S5 | in progress |
+| S7  | About page                     | dev-2  | S3, S4, S5 | in progress |
+| S8  | Projects page                  | dev-2  | S3, S4, S5 | in progress |
 | S9  | Resume page                    | dev-2  | S3, S4, S5 | todo   |
-| S10 | Contact page                   | dev-2  | S3, S4, S5 | todo   |
+| S10 | Contact page                   | dev-2  | S3, S4, S5 | in progress |
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
 
@@ -47,11 +47,11 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S4 — Core UI components
 *As a developer, I want reusable components so pages look consistent and aren't duplicated.*
-- [ ] `Button` (primary/secondary; renders as link or button)
-- [ ] `Card` (title, description, optional image, optional tags, optional link)
-- [ ] `Section` (heading + content wrapper with consistent spacing)
-- [ ] `Tag` (small label/pill)
-- [ ] All typed with exported prop types; usable in both themes
+- [x] `Button` (primary/secondary; renders as link or button)
+- [x] `Card` (title, description, optional image, optional tags, optional link)
+- [x] `Section` (heading + content wrapper with consistent spacing)
+- [x] `Tag` (small label/pill)
+- [x] All typed with exported prop types; usable in both themes
 
 ### S5 — Content model & placeholders
 *As Chris, I want all site content in one place so I can swap placeholders for real info without touching page code.*

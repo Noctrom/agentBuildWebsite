@@ -29,3 +29,30 @@
 - dev-1 (S4): projects can have both `repoUrl` and `demoUrl`, so `Card` must support more than one link.
 - S7/S9 will need a shared date formatter for `YearMonth`.
 - The static resume PDF must be replaced by hand along with the real content.
+
+## S10 — Contact page (2026-10-03)
+**Branch:** story/S10-contact-page · **Status:** done
+
+**What I did**
+- Email (`mailto:`) button plus GitHub and LinkedIn buttons, all from `profile.links`. The email address is also shown as plain, selectable text so people can copy it.
+- Call-to-action text from `profile.contactCta`, shown as the section intro under the page's h1.
+- No form.
+- `/contact` route now renders the page instead of the Placeholder.
+
+**How I did it**
+- `src/pages/Contact.tsx` is one `Section` (`headingLevel={1}`, intro = CTA) holding a bordered `bg-surface` panel: an "Email" label, the address (`select-all`, `break-all` so long addresses never overflow at 375px), then the three Buttons in a labelled `<ul>`. Email is the primary button; GitHub and LinkedIn are secondary. `Button` handles new-tab and the screen-reader "(opens in a new tab)" for the http links. The mailto link stays in the same tab.
+- I didn't use `Card`: it needs a title heading and adds the card title to each action's accessible name, which doesn't fit here. A plain panel with theme classes was simpler.
+- The page heading and button labels live in a new `src/content/contact.ts` (`contactPage`), exported from the content barrel, so the page has no hardcoded text. I kept its type in that file and didn't touch `types.ts`/`profile.ts`, so the parallel page stories are less likely to conflict.
+- Only semantic theme classes are used. No `<main>`, one h1.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview` at `/contact`, light and dark at 375px and 1280px: one h1 ("Contact"), one `<main>`, no `<form>`, no horizontal overflow, no console errors. Links are `mailto:hello@example.com` (no target), GitHub and LinkedIn with `target="_blank" rel="noopener noreferrer"`. Screenshots look right in both themes. At 375px the buttons wrap onto two rows.
+
+**Files**
+- Added: `src/pages/Contact.tsx`, `src/content/contact.ts`.
+- Changed: `src/content/index.ts` (one export line), `src/App.tsx` (Contact import and the `/contact` route element only).
+
+**Follow-ups**
+- Leader: S6–S8 also add an import below the `Layout` import in `src/App.tsx` and may append to `src/content/index.ts`. If they conflict at merge time, keep all lines.
+- dev-1 (minor, seen in screenshots): at desktop the header's site name starts about 16px to the right of the page content's left edge.

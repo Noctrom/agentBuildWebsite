@@ -19,6 +19,7 @@ src/
   styles/       # Tailwind entry, theme tokens             (Dev 1)
   App.tsx       # Routes                                   (Dev 1 owns; Dev 2 may add routes)
 public/         # Static assets, resume PDF, favicon
+docs/agent-logs/  # One story log per dev agent (dev-1.md, dev-2.md)
 ```
 
 - All site text and data lives in `src/content/`. Pages never hardcode bio/project text.
@@ -43,11 +44,23 @@ main      ← production. Changes ONLY via a PR from leader, reviewed and merged
 - Never rewrite published history (no force push, no `--no-verify`, no amending pushed commits).
 - If a story branch falls behind `leader`, the leader (not the dev) decides whether to merge `leader` into it.
 
+## Story review & cleanup loop
+1. The dev finishes the story on `story/<id>-<slug>`, writes a story log entry, and reports to the leader.
+2. The leader reviews the code (diff, acceptance criteria, the log entry) and runs build + lint on the branch.
+   - Not good: the leader messages the same dev agent (SendMessage) with the changes needed. The dev fixes on the same branch and reports again.
+   - Good: the leader merges with `--no-ff` into `leader`, runs build + lint on the result, pushes `leader`, updates `BACKLOG.md`, then messages the dev: approved, merged and pushed.
+3. On approval, the dev deletes its own story branch and worktree helper branch (`git branch -d` only; see the agent files).
+4. The leader removes the dev's worktree folder (`git worktree remove`) and confirms no stale branches remain.
+
+## Agent logs
+Each dev keeps a story log at `docs/agent-logs/<agent>.md` (owned by that agent only). After every story it appends an entry: what it did, how it did it, verification, files, follow-ups. The entry is committed on the story branch, so it merges with the story. If two parallel stories by the same agent both append to the log, the leader resolves the merge conflict by keeping both entries.
+
 ## Definition of done
 - Every acceptance criterion in the story is met
 - `npm run build` and `npm run lint` pass with no errors
 - Works at mobile (375px) and desktop widths
 - Commit message references the story id, e.g. `S7: Home hero section`
+- Story log entry added to `docs/agent-logs/<agent>.md`
 
 ## Commands
 Use Node 22 (`.nvmrc`). On this machine, prefix shell commands with:

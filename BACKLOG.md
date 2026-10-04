@@ -11,10 +11,10 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S3  | Site layout (header/footer)    | dev-1  | S1         | done   |
 | S4  | Core UI components             | dev-1  | S2         | done   |
 | S5  | Content model & placeholders   | dev-2  | S1         | done   |
-| S6  | Home page                      | dev-2  | S3, S4, S5 | in progress |
-| S7  | About page                     | dev-2  | S3, S4, S5 | in progress |
-| S8  | Projects page                  | dev-2  | S3, S4, S5 | in progress |
-| S9  | Resume page                    | dev-2  | S3, S4, S5 | todo   |
+| S6  | Home page                      | dev-2  | S3, S4, S5 | done   |
+| S7  | About page                     | dev-2  | S3, S4, S5 | done   |
+| S8  | Projects page                  | dev-2  | S3, S4, S5 | done   |
+| S9  | Resume page                    | dev-2  | S3, S4, S5 | in progress |
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
@@ -61,21 +61,21 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 ### S6 — Home page
 *As a recruiter, I want to know who Chris is and what Chris does within a few seconds of landing.*
-- [ ] Hero with name, title, one-line pitch, and photo placeholder
-- [ ] Buttons: "View Projects" and "Download Resume"
-- [ ] Preview of up to 3 featured projects linking to `/projects`
+- [x] Hero with name, title, one-line pitch, and photo placeholder
+- [x] Buttons: "View Projects" and "Download Resume"
+- [x] Preview of up to 3 featured projects linking to `/projects`
 
 ### S7 — About page
 *As a hiring manager, I want to learn about Chris's background and skills.*
-- [ ] Bio paragraphs from content
-- [ ] Skills grouped by category, rendered as tags
-- [ ] Experience timeline (role, company, dates, summary)
+- [x] Bio paragraphs from content
+- [x] Skills grouped by category, rendered as tags
+- [x] Experience timeline (role, company, dates, summary)
 
 ### S8 — Projects page
 *As a visitor, I want to browse Chris's work and filter it by technology.*
-- [ ] Grid of project cards (title, description, tech tags, links to repo/demo)
-- [ ] Filter by tech tag; "All" resets it
-- [ ] Responsive: 1 column mobile, 2–3 on desktop
+- [x] Grid of project cards (title, description, tech tags, links to repo/demo)
+- [x] Filter by tech tag; "All" resets it
+- [x] Responsive: 1 column mobile, 2–3 on desktop
 
 ### S9 — Resume page
 *As a recruiter, I want to view and download Chris's resume.*

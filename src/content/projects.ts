@@ -1,4 +1,4 @@
-import type { Project } from './types'
+import type { Project, ProjectsPageCopy } from './types'
 
 // PLACEHOLDER: replace with real projects. Tags overlap on purpose so the
 // projects page filter has something to do.
@@ -68,3 +68,15 @@ export const featuredProjects: Project[] = projects.filter((p) => p.featured)
 export const projectTags: string[] = [...new Set(projects.flatMap((p) => p.tags))].sort((a, b) =>
   a.localeCompare(b),
 )
+
+// PLACEHOLDER: projects page copy.
+export const projectsPage: ProjectsPageCopy = {
+  title: 'Projects',
+  intro: 'Lorem ipsum dolor sit amet, a placeholder selection of things I have built. Filter by technology below.',
+  filterLabel: 'Filter projects by technology',
+  allLabel: 'All',
+  repoLabel: 'Code',
+  demoLabel: 'Live demo',
+  resultCount: (shown, total) =>
+    `Showing ${shown} of ${total} ${total === 1 ? 'project' : 'projects'}`,
+}

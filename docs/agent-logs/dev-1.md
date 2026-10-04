@@ -82,3 +82,31 @@
 
 **Follow-ups**
 - dev-2: pages render inside Layout's `<main>`, so they must not add their own `<main>`; each page sets its own width and padding (e.g. `mx-auto max-w-content px-gutter`).
+
+## S4 — Core UI components (2026-10-03)
+**Branch:** story/S4-ui-components · **Status:** done
+
+**What I did**
+- `Button`: primary/secondary variants and `sm`/`md` sizes. It renders a React Router `Link` (`to`), an `<a>` (`href`: external URLs, `mailto:`, files with `download`) or a `<button>` (neither).
+- `Card`: title, description, optional image (`{ src, alt }`), optional tags, an `actions` array (any number of links) and an optional `footer` slot.
+- `Section`: `<section>` with heading, optional intro and content, using `px-gutter py-section` and `max-w-content`. Heading level is configurable (1–4), plus optional `id` and `tone="surface"` for an alternating band. It never renders `<main>`.
+- `Tag` (static pill) and `TagButton` (toggle with `aria-pressed`) for the S8 filter.
+- Barrel `src/components/ui/index.ts` exports all components and prop types, including `ThemeToggle`.
+
+**How I did it**
+- Button props are a discriminated union on `to` / `href` / neither (`?: never` on the other keys), so `to` + `href` or `external` on a Link don't compile. `http(s)://` hrefs default to `target="_blank" rel="noopener noreferrer"` plus a screen-reader-only "(opens in a new tab)", like the footer. `external` overrides that. `<button>` defaults to `type="button"`.
+- Card actions render as small Buttons. Each action's accessible name includes the card title (e.g. "Code: Project Alpha (opens in a new tab)"), so repeated "Code"/"Demo" labels across a grid stay unambiguous. Cards are `<article>`s with `h-full` and `mt-auto` footers, so actions line up in a grid row. Tags are a `<ul>`.
+- Section labels itself with `aria-labelledby` and a `useId` heading id.
+- Only semantic theme classes are used. Focus rings come from the global `:focus-visible` rule.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Throwaway preview page (not committed) with headless Chromium against `vite preview`, in light and dark at 375px and 1280px: no horizontal overflow, correct `href`/`target`/`rel`/`download`, one `<main>`, sections labelled by the right heading level, the filter toggles `aria-pressed`, the Link navigates client-side, and the focus outline is visible.
+- `@ts-expect-error` checks confirmed invalid prop combos are rejected.
+
+**Files**
+- Added: `src/components/ui/Button.tsx`, `Card.tsx`, `Section.tsx`, `Tag.tsx`, `index.ts`.
+
+**Follow-ups**
+- dev-2: import from `src/components/ui` (barrel). Wrap card grids in `<ul>`/`<li>`. Wrap filter TagButtons in `role="group"` with an `aria-label`.
+- Cards use `bg-surface`. Inside a `tone="surface"` Section they are set apart only by their border, so prefer default-tone sections for card grids.

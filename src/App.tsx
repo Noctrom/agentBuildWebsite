@@ -4,17 +4,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Home from './pages/Home'
 import Projects from './pages/Projects'
-
-// Temporary inline placeholders. dev-2 will replace these with real page
-// components from src/pages/ (S6–S10). Pages render inside Layout's <main>.
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div className="mx-auto max-w-prose px-gutter py-section">
-      <h1 className="text-3xl font-bold text-accent">{title}</h1>
-      <p className="mt-2 text-muted">Placeholder page.</p>
-    </div>
-  )
-}
+import Resume from './pages/Resume'
 
 export default function App() {
   return (
@@ -23,7 +13,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/projects" element={<Projects />} />
-        <Route path="/resume" element={<Placeholder title="Resume" />} />
+        <Route path="/resume" element={<Resume />} />
         <Route path="/contact" element={<Contact />} />
       </Route>
     </Routes>

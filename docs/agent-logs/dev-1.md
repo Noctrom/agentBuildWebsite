@@ -159,3 +159,32 @@
 **Follow-ups**
 - dev-2: `src/pages/About.tsx` line 23, `<Tag className="bg-bg">{skill}</Tag>` → `<Tag tone="bg">{skill}</Tag>`.
 - Any future Card inside a `tone="surface"` Section should use `tone="bg"`.
+
+## S17 — Live reload on WSL (2026-10-04)
+**Branch:** story/S17-wsl-live-reload · **Status:** done
+
+**What I did**
+- Plain `npm run dev` now live-reloads edits to `src/` (component, content and CSS) with no env vars.
+- Polling is set in `vite.config.ts` under `server.watch`, with a comment explaining why (WSL on /mnt/c gets no file-change events).
+- Idle CPU stays low: about 4% of one core, polling only project files.
+
+**How I did it**
+- `server.watch`: `usePolling: true`, `interval: 300` (chokidar's default is 100ms; 300ms still feels instant), `binaryInterval: 1000`.
+- Vite already ignores `**/.git/**`, `**/node_modules/**` and its cache dir (checked `resolveChokidarOptions` in Vite 8.3.2). I added `dist/` and `.claude/` explicitly. `.claude/worktrees/` holds full repo copies of agent worktrees, so the root dev server would otherwise poll their `src/` too.
+- Problem: a `**/.claude/**` glob matches absolute paths, and every agent worktree lives under `.claude/`, so it would ignore every file in a worktree. I anchored both patterns to the config folder (`fileURLToPath(new URL('.', import.meta.url))`) instead.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Ran `npm run dev -- --port 5199 --strictPort` in the worktree (no `CHOKIDAR_USEPOLLING`), with headless Chromium (playwright-core) on `/`. I made the edits from the Windows side with `powershell.exe` (like a Windows editor), so they could not reach Vite as native WSL events:
+  - content (`src/content/profile.ts` name): DOM updated in ~0.9s, HMR (no full reload)
+  - component (`Footer.tsx` aria-label): ~0.9s, HMR
+  - CSS (`index.css` body outline): ~1.2s, HMR
+  - Vite logged `hmr update ...` for each edit. I reverted the test edits with `git checkout -- src`, which Vite also picked up.
+- Idle CPU: `top -p <vite pid>` sampled every 2s for ~10s: 3.5–4.5% (0.40s CPU time over 10s).
+
+**Files**
+- Changed: `vite.config.ts`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- Polling also runs on machines where native watching works (e.g. Vercel never runs the dev server, so builds are unaffected). If the repo ever moves to the WSL filesystem (`~/...`), polling can be removed.
+- This log entry may conflict with S14's entry on merge; keep both.

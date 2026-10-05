@@ -26,7 +26,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | done   |
 | S17 | Live reload on WSL             | dev-1  | S1         | done   |
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
-| S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | in progress |
+| S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | done   |
 | S20 | Workflow diagrams              | dev-1  | S4         | in progress |
 | S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | todo   |
 | S22 | Behind the Scenes nav link     | dev-1  | S21        | todo   |
@@ -115,6 +115,7 @@ Split on 2026-10-04: the 404 page, page copy and `public/` assets belong to dev-
 - [ ] Chris has the live URL
 
 Notes from S11: change `og:image` in index.html to an absolute URL once the Vercel domain is known (and consider `og:url`); make sure `public/og-image.png` exists first, or the SPA rewrite serves index.html in its place.
+Note from S19: Vercel's SPA rewrite serves unknown URLs with HTTP 200 (soft 404). If search indexing of the 404 page matters, add a `noindex` option to `PageMeta` (dev-1) and use it on NotFound (dev-2).
 ### S13 — Align header with page content
 *As a visitor, I want the header and page content to line up so the site looks polished.*
 Found in S7/S10 review: at desktop widths the header's site name starts ~16px right of the page content's left edge. Header puts `px-gutter` inside its `max-w-content` box; `Section` puts `px-gutter` outside it.
@@ -158,10 +159,10 @@ Found in S14 review: About's skill tags sit in a `tone="surface"` Section and pa
 ### S19 — 404 page & per-page metadata
 *As a visitor who follows a bad link, I want a helpful page; as Chris, I want each page to have its own title and description.*
 Split from S11. Uses dev-1's `PageMeta` from S11.
-- [ ] Catch-all route (`path="*"`) inside the Layout renders a `NotFound` page with copy from `src/content/pages/notFound.ts` and a button home
-- [ ] Each page copy file gets `meta: { title, description }` (placeholder text) and every page, including 404, renders `PageMeta` with it
-- [ ] Placeholder Open Graph image at `public/og-image.png` (1200×630, clearly placeholder)
-- [ ] Browser tab shows the right title on each route, and on an unknown URL
+- [x] Catch-all route (`path="*"`) inside the Layout renders a `NotFound` page with copy from `src/content/pages/notFound.ts` and a button home
+- [x] Each page copy file gets `meta: { title, description }` (placeholder text) and every page, including 404, renders `PageMeta` with it
+- [x] Placeholder Open Graph image at `public/og-image.png` (1200×630, clearly placeholder)
+- [x] Browser tab shows the right title on each route, and on an unknown URL
 
 ### S20 — Workflow diagrams
 Triaged from story inbox D1 (story-writer, 2026-10-04).

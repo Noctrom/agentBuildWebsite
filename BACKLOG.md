@@ -23,8 +23,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | in progress |
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | in progress |
-| S16 | Live reload on WSL             | dev-1  | S1         | todo   |
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | todo   |
+| S17 | Live reload on WSL             | dev-1  | S1         | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -133,7 +133,7 @@ Found in S13 review: the Home hero builds its own container (`px-gutter` on the 
 - [ ] Home hero uses `<Container>`; no page uses its own `px-gutter` / `max-w-content` classes
 - [ ] Hero edges still match header and sections at 375px, 768px and 1280px
 
-### S16 — Live reload on WSL
+### S17 — Live reload on WSL
 *As Chris, I want the dev server to update the page when files change so I can watch the site as it's built.*
 Found 2026-10-04: the repo lives on the Windows drive (`/mnt/c`) and is run from WSL, which doesn't pass file-change events to Vite, so `npm run dev` never live-reloads. Running with `CHOKIDAR_USEPOLLING=true` works as a stopgap.
 - [ ] Plain `npm run dev` picks up edits to `src/` files (component, content and CSS changes) without a manual refresh, with no env vars needed

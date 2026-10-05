@@ -11,6 +11,9 @@ export type {
 export { default as Card } from './Card'
 export type { CardProps, CardAction, CardImage } from './Card'
 
+export { default as Container } from './Container'
+export type { ContainerProps } from './Container'
+
 export { default as Section } from './Section'
 export type { SectionProps, HeadingLevel } from './Section'
 

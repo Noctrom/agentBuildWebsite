@@ -1,4 +1,5 @@
 import { profile } from '../../content'
+import Container from '../ui/Container'
 
 /** Site footer: social links and copyright. */
 export default function Footer() {
@@ -13,7 +14,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-border bg-surface">
-      <div className="mx-auto flex max-w-content flex-col items-center gap-4 px-gutter py-8 sm:flex-row sm:justify-between">
+      <Container className="flex flex-col items-center gap-4 py-8 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted">
           &copy; {year} {profile.name}
         </p>
@@ -35,7 +36,7 @@ export default function Footer() {
             </li>
           ))}
         </ul>
-      </div>
+      </Container>
     </footer>
   )
 }

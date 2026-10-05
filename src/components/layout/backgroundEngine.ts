@@ -1,5 +1,6 @@
 import { isSceneBuild } from '../../scenes/build'
 import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '../../scenes/types'
+import { FrameRateMonitor } from './frameRateMonitor'
 
 /**
  * Imperative engine behind <SpaceBackground> (S24). Owns one <canvas> per
@@ -16,6 +17,11 @@ import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '.
  * scene that is still fading out fades it back in instead of rebuilding it.
  * With reduce motion on, the old scene stays until the new one is ready and
  * is then swapped instantly.
+ *
+ * Slow devices (V0.42): `watchFrameRate` measures the loop's real frame
+ * cadence, counting only steady frames (no build, no fade, tab visible), and
+ * reports once if the animation runs consistently slow. See
+ * frameRateMonitor.ts.
  *
  * Contrast budget: the layers' opacities never sum to more than 1 (times
  * BACKGROUND_MAX_OPACITY), so overlapping fades are never brighter than one
@@ -117,6 +123,8 @@ export class BackgroundEngine {
   private lastNow = 0
   private failed = false
   private destroyed = false
+  /** Slow-frame detection (V0.42); null while not watching. */
+  private monitor: FrameRateMonitor | null = null
   private readonly resizeObserver: ResizeObserver | null
 
   constructor(container: HTMLElement, options: BackgroundEngineOptions) {
@@ -138,6 +146,8 @@ export class BackgroundEngine {
    */
   setScene(scene: Scene) {
     if (this.failed || this.destroyed) return
+    // A route change: its render, build and fade are not the device's steady pace.
+    this.monitor?.reset()
     if (this.pending?.scene.id === scene.id) return
     if (this.reducedMotion) {
       const current = this.layers.at(-1)
@@ -170,6 +180,7 @@ export class BackgroundEngine {
   setReducedMotion(reducedMotion: boolean) {
     if (this.reducedMotion === reducedMotion) return
     this.reducedMotion = reducedMotion
+    this.monitor?.reset()
     // The scene being shown: the one building, else the layer fading in or
     // shown (after a quick "back" it need not be the top layer).
     const target =
@@ -183,6 +194,23 @@ export class BackgroundEngine {
     this.refresh()
     // Rebuild with the new flag; the old layer stays until the new one is ready.
     if (target) this.beginScene(target, true)
+  }
+
+  /**
+   * Start (or with `null`, stop) watching for a consistently slow animation
+   * (V0.42). `onSlow` is called at most once; watching then stops. Only
+   * steady animated frames count, so it never fires while animation is off.
+   */
+  watchFrameRate(onSlow: (() => void) | null) {
+    if (!onSlow) {
+      this.monitor = null
+      return
+    }
+    const monitor = new FrameRateMonitor(() => {
+      if (this.monitor === monitor) this.monitor = null
+      onSlow()
+    })
+    this.monitor = monitor
   }
 
   destroy() {
@@ -435,6 +463,9 @@ export class BackgroundEngine {
 
   private start() {
     if (this.frameId) return
+    // The loop was stopped (hidden tab, reduced motion, no layers): that gap
+    // and the first interval after it are not frame times.
+    this.monitor?.reset()
     this.lastNow = performance.now()
     this.frameId = requestAnimationFrame(this.tick)
   }
@@ -447,11 +478,20 @@ export class BackgroundEngine {
   private readonly tick = (now: number) => {
     this.frameId = 0
     if (this.failed || this.destroyed) return
-    const dt = Math.min(MAX_DT, Math.max(0, (now - this.lastNow) / 1000))
+    const interval = now - this.lastNow
+    const dt = Math.min(MAX_DT, Math.max(0, interval / 1000))
     this.lastNow = now
     for (const layer of this.layers) layer.time += dt
-    this.updateFades(now)
+    const fading = this.updateFades(now)
     this.drawAll(dt)
+    if (this.monitor) {
+      // Steady: on screen, animating, nothing building or fading.
+      if (fading || this.pending || document.hidden || this.layers.length === 0) {
+        this.monitor.reset()
+      } else {
+        this.monitor.frame(now, interval)
+      }
+    }
     if (!this.failed && this.layers.length > 0) {
       this.frameId = requestAnimationFrame(this.tick)
     }
@@ -467,6 +507,8 @@ export class BackgroundEngine {
     this.measure()
     const { width, height, dpr } = this.size
     if (width === prev.width && height === prev.height && dpr === prev.dpr) return
+    // Resizing (e.g. rotating a phone) costs frames that say nothing about the device.
+    this.monitor?.reset()
     try {
       for (const layer of this.layers) {
         this.sizeCanvas(layer.canvas, layer.ctx)
@@ -483,6 +525,7 @@ export class BackgroundEngine {
   private fail(error: unknown) {
     if (this.failed) return
     this.failed = true
+    this.monitor = null
     console.error('Space background disabled:', error)
     this.cancelPending()
     this.stop()

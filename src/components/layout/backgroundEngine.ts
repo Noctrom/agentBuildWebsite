@@ -1,5 +1,12 @@
 import { isSceneBuild } from '../../scenes/build'
 import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '../../scenes/types'
+import {
+  clearMirrorSource,
+  hasMirrors,
+  repaintMirrors,
+  setMirrorSource,
+  type MirrorSource,
+} from './backgroundMirror'
 import { FrameRateMonitor } from './frameRateMonitor'
 
 /**
@@ -22,6 +29,10 @@ import { FrameRateMonitor } from './frameRateMonitor'
  * cadence, counting only steady frames (no build, no fade, tab visible), and
  * reports once if the animation runs consistently slow. See
  * frameRateMonitor.ts.
+ *
+ * Mirrors (V0.48): after every draw the engine repaints the background
+ * mirrors (backgroundMirror.ts), small canvases such as the phone top bar's
+ * backdrop that show a copy of the background at their spot.
  *
  * Contrast budget: the layers' opacities never sum to more than 1 (times
  * BACKGROUND_MAX_OPACITY), so overlapping fades are never brighter than one
@@ -110,7 +121,7 @@ function easeOut(t: number) {
   return 1 - (1 - t) ** 2
 }
 
-export class BackgroundEngine {
+export class BackgroundEngine implements MirrorSource {
   private readonly container: HTMLElement
   private readonly onFail: () => void
   private reducedMotion: boolean
@@ -136,6 +147,34 @@ export class BackgroundEngine {
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => this.handleResize())
     this.resizeObserver?.observe(container)
     document.addEventListener('visibilitychange', this.handleVisibility)
+    setMirrorSource(this)
+  }
+
+  /** Backing px per CSS px of the scene canvases (MirrorSource). */
+  get scale() {
+    return this.size.dpr
+  }
+
+  /**
+   * Copy the background as shown now into `ctx.canvas` (MirrorSource, V0.48):
+   * the area whose top-left corner is at (`left`, `top`) in the viewport, at
+   * the same backing scale. Each layer is drawn with the opacity its canvas
+   * is shown at, so over the same solid page color the copy matches the page
+   * pixel for pixel. The container is fixed at the viewport's top-left, so
+   * viewport and container coordinates are the same.
+   */
+  paintCopy(ctx: CanvasRenderingContext2D, left: number, top: number) {
+    const { dpr } = this.size
+    const { width, height } = ctx.canvas
+    const sx = Math.round(left * dpr)
+    const sy = Math.round(top * dpr)
+    for (const layer of this.layers) {
+      const alpha = layer.opacity * BACKGROUND_MAX_OPACITY
+      if (alpha <= 0) continue
+      ctx.globalAlpha = alpha
+      ctx.drawImage(layer.canvas, sx, sy, width, height, 0, 0, width, height)
+    }
+    ctx.globalAlpha = 1
   }
 
   /**
@@ -220,6 +259,7 @@ export class BackgroundEngine {
     this.resizeObserver?.disconnect()
     document.removeEventListener('visibilitychange', this.handleVisibility)
     for (const layer of [...this.layers]) this.removeLayer(layer)
+    clearMirrorSource(this)
   }
 
   private measure() {
@@ -458,7 +498,9 @@ export class BackgroundEngine {
       for (const layer of this.layers) this.drawLayer(layer, dt)
     } catch (error) {
       this.fail(error)
+      return
     }
+    if (hasMirrors()) repaintMirrors()
   }
 
   private start() {
@@ -530,6 +572,7 @@ export class BackgroundEngine {
     this.cancelPending()
     this.stop()
     for (const layer of [...this.layers]) this.removeLayer(layer)
+    clearMirrorSource(this)
     this.onFail()
   }
 }

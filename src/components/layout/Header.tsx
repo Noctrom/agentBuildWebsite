@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type Ref } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import Container from '../ui/Container'
 import { glowClass } from '../ui/tone'
+import { useBackgroundMirror, useMirrorFallback } from './backgroundMirror'
 import { navItems, type NavItem } from './navItems'
 
 const MENU_ID = 'primary-nav-menu'
@@ -86,9 +87,6 @@ const fullLabelClass = (collapsible: boolean) =>
 const shortLabelClass =
   'hidden px-4 py-2 group-hover:opacity-0 group-focus-visible:opacity-0 lg:block motion-safe:transition-opacity motion-safe:duration-150 motion-safe:ease-out'
 
-/** Frosted header glass (S25): bg at 80% (V0.35) plus backdrop blur. Top bar only (below lg). */
-const glass = 'bg-bg-header backdrop-blur-glass'
-
 /**
  * Site navigation (V0.38: vertical rail; V0.47: slim, see-through rail).
  * There is no site name in it; the Home button leads home and the name lives
@@ -114,10 +112,14 @@ const glass = 'bg-bg-header backdrop-blur-glass'
  * land below it. From lg the bar is hidden, so the value is 0 (index.css also
  * forces 0 from lg).
  *
- * Below lg the glass sits on its own layer behind the content instead of on
- * <header>: an element with a backdrop filter is a backdrop root, so the
- * mobile menu (a child that hangs below the bar) and the bubbles could not
- * blur the page behind them.
+ * Below lg the bar and the open menu show the space background, and only
+ * the background (V0.48; it was frosted glass with a line under it). Behind
+ * them is one backdrop layer, sized to the bar plus the open menu, holding a
+ * copy of the background's pixels at that spot (see backgroundMirror.ts). It
+ * is opaque, so page content scrolling under the bar or lying under the menu
+ * is hidden, and it matches the page around it, so the bar has no edge. It
+ * is a layer of its own, not a background on <header> or <nav>, so one
+ * canvas covers both and the menu can scroll over it.
  *
  * Under lg the menu is an overlay below the bar rather than part of it, so
  * opening it doesn't push the page down from wherever the visitor scrolled
@@ -131,6 +133,8 @@ export default function Header() {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const headerRef = useRef<HTMLElement>(null)
   const barRef = useRef<HTMLDivElement>(null)
+  const navRef = useRef<HTMLElement>(null)
+  const backdropRef = useRef<HTMLDivElement>(null)
 
   // Close the menu whenever the route changes. Adjusting state during render
   // is the React-recommended alternative to setState inside an effect.
@@ -177,6 +181,23 @@ export default function Header() {
     }
   }, [])
 
+  // Size the backdrop (V0.48) to the bar plus the open menu. The menu is
+  // display:none while closed, so it adds 0 then. From lg the backdrop is hidden.
+  useEffect(() => {
+    const bar = barRef.current
+    const nav = navRef.current
+    const backdrop = backdropRef.current
+    if (!bar || !nav || !backdrop) return
+    const update = () => {
+      backdrop.style.height = `${bar.offsetHeight + nav.offsetHeight}px`
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(bar)
+    observer.observe(nav)
+    return () => observer.disconnect()
+  }, [])
+
   // Publish the rail's width (V0.47). Below lg the header is the sticky top
   // bar, not a rail, so 0. Rounded up to whole px: a fractional padding left a
   // 1px horizontal overflow. Runs before paint, so the padding is right on the
@@ -211,10 +232,7 @@ export default function Header() {
       onBlur={onBlur}
       className="sticky top-0 z-40 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col lg:justify-center-safe"
     >
-      <div
-        aria-hidden="true"
-        className={`absolute inset-0 -z-10 border-b border-border lg:hidden ${glass}`}
-      />
+      <Backdrop ref={backdropRef} />
       <div ref={barRef} className="lg:hidden">
         <Container className="flex items-center justify-end py-3">
           <button
@@ -232,9 +250,10 @@ export default function Header() {
       </div>
 
       <nav
+        ref={navRef}
         id={MENU_ID}
         aria-label="Primary"
-        className={`${open ? 'block' : 'hidden'} absolute inset-x-0 top-full max-h-[calc(100dvh-var(--header-height,4rem))] overflow-y-auto overscroll-contain border-b border-border ${glass} lg:static lg:block lg:max-h-none lg:overflow-visible lg:border-0 lg:bg-transparent lg:backdrop-blur-none`}
+        className={`${open ? 'block' : 'hidden'} absolute inset-x-0 top-full max-h-[calc(100dvh-var(--header-height,4rem))] overflow-y-auto overscroll-contain lg:static lg:block lg:max-h-none lg:overflow-visible`}
       >
         <ul className="mx-auto flex max-w-page flex-col items-start gap-1 px-gutter py-3 lg:mx-0 lg:max-w-none lg:gap-2 lg:px-3 lg:py-6">
           {navItems.map((item) => (
@@ -247,6 +266,31 @@ export default function Header() {
     </header>
   )
 }
+
+/**
+ * Backdrop behind the top bar and the open menu, below lg (V0.48): a canvas
+ * mirroring the space background, over the solid page color. Until the
+ * background starts it is just the page color, like the page. If the
+ * background has fallen back to the static gradient, it shows that gradient
+ * instead, sized to the viewport (the header sits at the viewport's top-left,
+ * so it lines up with the page's).
+ */
+function Backdrop({ ref }: { ref: Ref<HTMLDivElement> }) {
+  const canvasRef = useBackgroundMirror()
+  const fallback = useMirrorFallback()
+  return (
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-x-0 top-0 -z-10 bg-bg lg:hidden print:hidden ${fallback ? 'space-fallback' : ''}`}
+      style={fallback ? fallbackStyle : undefined}
+    >
+      <canvas ref={canvasRef} className={`block size-full ${fallback ? 'hidden' : ''}`} />
+    </div>
+  )
+}
+
+const fallbackStyle = { backgroundSize: '100% 100lvh', backgroundRepeat: 'no-repeat', backgroundPosition: '0 0' }
 
 /**
  * One nav button. From lg a button with a short label shows it collapsed

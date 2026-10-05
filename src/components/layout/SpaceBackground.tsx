@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
 import { sceneForPath } from '../../scenes/routes'
 import { BackgroundEngine } from './backgroundEngine'
+import { setMirrorFallback } from './backgroundMirror'
 import {
   getMotionChoice,
   getReducedMotion,
@@ -72,6 +73,11 @@ export default function SpaceBackground({ onAutoPause }: { onAutoPause?: () => v
   useEffect(() => {
     onAutoPauseRef.current = onAutoPause
   }, [onAutoPause])
+
+  // Mirrors (the phone top bar, V0.48) show the static gradient too.
+  useEffect(() => {
+    setMirrorFallback(failed)
+  }, [failed])
 
   useEffect(() => {
     if (!engine || !watchFrameRate) return

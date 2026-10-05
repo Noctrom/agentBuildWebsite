@@ -38,7 +38,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | done   |
 | S29 | Scene engine follow-ups        | dev-1  | S27        | done   |
 | S30 | Space-themed favicon & OG image | dev-2 | S23       | in progress |
-| S31 | Nebula & sun build incrementally | dev-2 | S29      | todo   |
+| S31 | Nebula & sun build incrementally | dev-2 | S29      | in progress |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 

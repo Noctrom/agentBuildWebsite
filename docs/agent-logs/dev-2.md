@@ -277,3 +277,31 @@
 
 **Fixes after review**
 - `NotFound.tsx`: removed my extra `<div className="mt-8">` around the home Button. `Section` already wraps its children in a `mt-8` div, so the gap was doubled to 64px. Now the gap between the intro and the button is 32px, the same as on other pages (checked in headless Chromium at 375px and 1280px). The metadata check script still passes, and build and lint pass.
+
+## S21 — Behind the Scenes page (2026-10-04)
+**Branch:** story/S21-behind-the-scenes · **Status:** done
+
+**What I did**
+- Added the page `BehindTheScenes` at `/behind-the-scenes` (route in `App.tsx`, before the `*` catch-all). It has its own `PageMeta`, so the tab reads "Behind the Scenes · Jane Placeholder". I did not add a nav link (that is S22, dev-1).
+- All page text is Chris's draft copy, used as written. It lives in `src/content/pages/behindTheScenes.ts` and follows the S15 page-copy pattern (`meta`, `title`, `intro`, `<section>Title` / `<section>Intro`, `<thing>Label`).
+- Diagram A (`StoryFlowDiagram`) is in "How work flows". It has three stages: Plan (Chris → Story writer → Story inbox → Leader), Build (dev-1 / dev-2 → Leader review → `leader`) and Ship (Pull request → Chris → `main` → Vercel). These are all the S20 steps, in order. The "Send back for fixes" loop goes from review to dev. Both ends are in the Build stage, so it draws as a bracket.
+- Diagram B (`BranchDiagram`) is in "Branches and reviews". It shows `main` ← `leader` ← `story/<id>-<slug>`, with who may change each branch and how work moves up a level.
+- The "View the source on GitHub" button links to `repoUrl`, which is defined once in the content file. It opens in a new tab.
+
+**How I did it**
+- The diagram data is typed with the component types (`FlowStage`, `FlowLoop`, `BranchLevel`), using `import type` from `components/ui`. That import is erased at build time, so there is no runtime cycle with `PageMeta`, which imports `content`.
+- `Button` already gives `http(s)://` hrefs `target="_blank"` and `rel="noopener noreferrer"`, plus a screen-reader "(opens in a new tab)" note. No ui/ change was needed.
+- Sections switch between the default and surface tones. Diagram A sits in a surface band, so it gets `tone="bg"`. Prose sections use `Section`'s `intro` slot. The page only uses existing token classes (`text-fg`, `text-muted`), so the S23 palette will apply.
+- I wrote the diagram step details myself without pronouns for Chris (e.g. "Decides what gets built"). The diagrams say "Chris" rather than "Me", because "Me" reads oddly as a box label. The draft's `main` code span is stored as plain text, because content strings carry no markup.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview` at 375px and 1280px: 28/28 checks passed. Checked: the title, exactly one `<title>` and one meta description, the h1, both figures fully inside the viewport, the loop label and key diagram text visible, no horizontal overflow, the repo link href/`target="_blank"`/`rel="noopener noreferrer"`, and no console errors. I also looked at full-page and per-diagram screenshots at both widths.
+
+**Files**
+- Added: `src/content/pages/behindTheScenes.ts`, `src/pages/BehindTheScenes.tsx`
+- Changed: `src/content/pages/index.ts` (export), `src/App.tsx` (import plus one route), `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- S22 (dev-1): nav link to `/behind-the-scenes`.
+- Recheck the page after S23 merges (space palette); it uses tokens only.

@@ -1,7 +1,9 @@
-import { useLayoutEffect } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router'
+import AutoPauseNotice from './AutoPauseNotice'
 import Footer from './Footer'
 import Header from './Header'
+import { useMotionChoice } from './motionPreference'
 import SpaceBackground from './SpaceBackground'
 
 /**
@@ -12,13 +14,21 @@ import SpaceBackground from './SpaceBackground'
  * From lg the navigation is a rail fixed to the left edge (V0.38), so the
  * shell is padded by the rail width: main, the footer and every Container
  * sit to the right of it. The background stays full width behind the rail.
+ *
+ * The auto-pause toast (V0.42) opens when the background pauses itself on a
+ * slow device, only in that page session, and closes early if the
+ * animation setting changes (e.g. the footer switch is turned on).
  */
 export default function Layout() {
   useScrollToTopOnNavigate()
+  const [noticeOpen, setNoticeOpen] = useState(false)
+  const motionChoice = useMotionChoice()
+  const openNotice = useCallback(() => setNoticeOpen(true), [])
+  const closeNotice = useCallback(() => setNoticeOpen(false), [])
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col text-fg lg:pl-rail">
-      <SpaceBackground />
+      <SpaceBackground onAutoPause={openNotice} />
       <a
         href="#main"
         className="sr-only rounded-md bg-accent font-medium text-accent-fg focus:not-sr-only focus:fixed focus:px-4 focus:py-2 focus:top-2 focus:left-2 focus:z-50"
@@ -30,6 +40,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <AutoPauseNotice open={noticeOpen && motionChoice === 'auto-paused'} onClose={closeNotice} />
     </div>
   )
 }

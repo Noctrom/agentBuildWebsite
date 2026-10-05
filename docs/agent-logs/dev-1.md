@@ -237,3 +237,42 @@
 - dev-2 (S19): render one `<PageMeta>` per page, with title/description from `src/content/` (Home without `title`, 404 included). Add `public/og-image.png` (1200×630).
 - dev-2 / Chris: the index.html default name/description are hardcoded placeholders. Keep them in sync with `profile.name` when real content lands.
 - Leader (S12): many crawlers want an absolute `og:image` URL. Once the Vercel domain is known, change `/og-image.png` to `https://<domain>/og-image.png` and consider adding `og:url`. A missing `og-image.png` is served as index.html by the SPA rewrite, so make sure the file exists before deploying.
+
+## S20 — Workflow diagrams (2026-10-04)
+**Branch:** story/S20-workflow-diagrams · **Status:** done
+
+**What I did**
+- Added two reusable components in `src/components/ui/` and exported them with their prop types from the barrel:
+  - `StoryFlowDiagram` (Diagram A): story flow as stages of steps, plus a "send back for fixes" loop.
+  - `BranchDiagram` (Diagram B): branch levels (main ← leader ← story/*). Each level shows what it is for and who may change it, and each arrow says how work moves up.
+- All text comes from props, which are data-driven arrays (`stages[].steps[]`, `levels[]`). The components contain no label text.
+- Diagram A draws every step in the S20 order. The loop is a dashed accent bracket from "Leader review" back up to "dev-1 / dev-2", with its own label.
+- Layout at 375px and 768px: a single vertical column (max 28rem), with no horizontal scroll. From `lg` up, Diagram A's stages sit side by side, and Diagram B indents each level like a tree.
+- Colours use only theme tokens (fg, muted, accent, border, surface/bg), so they meet the documented AA ratios in light and dark. The smallest text is xs muted on surface: 6.92 / 6.36.
+- Text alternatives:
+  - A: the figure is named via `aria-labelledby`, the visual chart is `aria-hidden`, and screen readers get a visually hidden nested `<ol>` (stages → steps). The loop's full `description` sentence sits on the "from" step.
+  - B: is itself a semantic `<ol>`. Arrows are decorative, and each merge label is read after its level's card.
+- No new dependencies. Everything is HTML/CSS with small inline SVG arrows.
+
+**How I did it**
+- Loop rendering without measuring the DOM: when both loop ends are in the same stage, the steps from `to` to `from` are wrapped in a 2-column grid. The right column holds the bracket (dashed top/right/bottom border with an SVG arrowhead) and the label. If the ends are in different stages, the component falls back to a "↺ label" note under the `from` step.
+- Problem: in the stacked layout, boxes outside the loop stage were wider than the bracketed ones, so the arrows didn't line up. Fix: when a bracket is drawn, every stage, stage label and stage arrow reserves the same right gutter below `lg` (`max-lg:pr-[6rem]`).
+- A single-stage flow stays at max 28rem even on desktop instead of stretching to 1024px.
+- Problem: the first a11y snapshot of B read "...merged by Chris leader", because the merge label came before the branch name. Fix: moved it after the card in the DOM and used `order-first` to keep it visually above. The figure's label is now a `hidden` span referenced by `aria-labelledby`, so it isn't read twice.
+- Optional `tone` prop (S5 pattern): `bg` inside a `<Section tone="surface">`. Optional `caption` (rendered as figcaption). On `BranchDiagram`, `accessLabel` sets the small "Who can change it" heading and `examples` shows sample branch names.
+- Fixed a TS narrowing bug: a type-predicate helper narrowed `loop` to `never` in the else-branch, so I made it a plain boolean.
+
+**Verification**
+- `npm run build` and `npm run lint` pass on the clean tree.
+- Used a throwaway `/s20` route and preview page (reverted and deleted, never committed). I ran `vite preview` with playwright-core headless Chromium at 375, 768 and 1280, light and dark. Results:
+  - Horizontal overflow 0 at every width/theme. No console errors.
+  - Screenshots checked: the full page plus 2x crops of each figure.
+  - Variants checked: on the page bg, inside a surface band with `tone="bg"`, single stage with no stage labels, and the cross-stage loop fallback.
+- Playwright `ariaSnapshot` confirmed the accessible names and the list structure of both figures.
+
+**Files**
+- Added: `src/components/ui/StoryFlowDiagram.tsx`, `src/components/ui/BranchDiagram.tsx`
+- Changed: `src/components/ui/index.ts`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- dev-2 (S21): put the step, loop and level text in `src/content/` and render `<StoryFlowDiagram>` and `<BranchDiagram>` in the matching sections. See the usage in the S20 report. Use `tone="bg"` if a diagram sits in a `Section tone="surface"`.

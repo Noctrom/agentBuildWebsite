@@ -41,6 +41,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S31 | Nebula & sun build incrementally | dev-2 | S29      | done   |
 | S32 | Brighter space background      | dev-1  | —          | done   |
 | S33 | Snappier scene changes         | dev-1  | S32        | in progress |
+| S34 | Version numbers & batched docs | leader | S33        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -403,5 +404,36 @@ Chris finds page switches sluggish: the previous page's scene lingers into the n
 - [ ] Quickly clicking through several pages never shows a stale scene and never stacks multiple scenes; only the latest page's scene ends up visible
 - [ ] Reduce motion: scene swaps instantly, as today
 - [ ] Still smooth on a mid-range phone (no jank introduced); `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S34 — Version numbers and batched docs
+Triaged from story inbox D11 (story-writer, 2026-10-05). Owner: leader. Runs only after S33 is merged and no story is in flight; changes to `CLAUDE.md` and agent files wait for Chris to confirm directly.
+
+*As Chris, I want stories numbered as versions and the docs filed in batches of 25 so that the backlog, inbox and logs are easy to read and browse as the project grows.*
+
+Chris wants to replace the S and D ids with one version sequence. Each story is +0.01 (S1 → V0.01). Files are grouped in batches of 25, and each whole number gets its own folder. This story becomes **V0.34** under the new scheme. Chris's decisions:
+- **Batch boundaries:** a whole number starts a group. `v0/` holds `v0.00-v0.24`, `v0.25-v0.49`, `v0.50-v0.74`, `v0.75-v0.99`; V1.00 opens `v1/` (`v1.00-v1.24`, …). V0.00 is the starting point, not a story.
+- **History is renumbered:** S<n> → V0.<nn> (S7 → V0.07, S33 → V0.33). A mapping table keeps the old S and D ids. Past commit messages keep their old `S7:` prefixes; published history is never rewritten.
+- **The story-writer assigns versions:** a story gets the next free version when Chris approves it (status `ready`). Unapproved drafts have no number yet. If the leader splits a story, the extra parts take the next free versions.
+- **Logs:** one file per story, named `v0.07-about-page.md`, with the agent named inside.
+
+Target layout:
+```
+BACKLOG.md                      # index only: status legend, one table row per version linking to its details, mapping table (old S/D → V)
+docs/backlog/v0/v0.00-v0.24.md  # full story text, V0.01–V0.24
+docs/backlog/v0/v0.25-v0.49.md
+docs/story-inbox/drafts.md      # unnumbered drafts still being discussed with Chris
+docs/story-inbox/v0/v0.25-v0.49.md   # stories as Chris approved them
+docs/agent-logs/v0/v0.00-v0.24/v0.07-about-page.md
+```
+
+- [ ] All S ids renumbered to versions across the backlog, logs and docs; mapping table (S id, original D id where there was one, V id, title) in `BACKLOG.md`
+- [ ] `BACKLOG.md` becomes a short index; story details live in the batch files under `docs/backlog/`
+- [ ] Existing `docs/agent-logs/dev-1.md` and `dev-2.md` split into one file per story in the right batch folders, content unchanged apart from ids; old files removed
+- [ ] Story inbox moved to `docs/story-inbox/` as above. Approved stories stay in their batch file after triage with status `in backlog` (a record of what Chris approved) instead of being deleted
+- [ ] New-story conventions updated everywhere they're defined (`CLAUDE.md`, `.claude/agents/dev-1.md`, `dev-2.md`, `story-writer.md`): branch `story/v0.34-<slug>`, commit prefix `V0.34:`, log file path and name, who assigns versions, and when to start a new batch file or whole-number folder
+- [ ] Every internal link and path reference still resolves (no references to the old `BACKLOG.md` sections or `docs/story-inbox.md`/log paths left)
+- [ ] `npm run build` and `npm run lint` still pass (docs-only change)
 
 **Open questions:** None.

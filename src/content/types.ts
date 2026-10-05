@@ -74,3 +74,19 @@ export interface SkillGroup {
   category: string
   skills: string[]
 }
+
+/**
+ * Per-page metadata for `PageMeta`: the document title becomes
+ * "<title> · <profile.name>" and `description` fills `<meta name="description">`.
+ * Every page copy file has a `meta` field of this type; Home uses
+ * `HomePageMetaCopy` (no `title`), so its title is just `profile.name`.
+ */
+export interface PageMetaCopy {
+  /** Page name in the browser tab, shown before the site name. */
+  title: string
+  /** Search-result snippet for the page, roughly 50–160 characters. */
+  description: string
+}
+
+/** Home page metadata: no `title`, so the document title is the site name alone. */
+export type HomePageMetaCopy = Omit<PageMetaCopy, 'title'>

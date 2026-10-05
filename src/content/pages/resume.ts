@@ -2,7 +2,11 @@
 // come from `experience` (experience.ts) and `education` (education.ts); the
 // PDF path comes from `profile.resumeUrl`.
 
+import type { PageMetaCopy } from '../types'
+
 export interface ResumePageCopy {
+  /** Document title and meta description for `PageMeta`. */
+  meta: PageMetaCopy
   /** Page heading (the page's h1). */
   title: string
   intro: string
@@ -17,6 +21,11 @@ export interface ResumePageCopy {
 }
 
 export const resumePage: ResumePageCopy = {
+  meta: {
+    title: 'Resume',
+    description:
+      'Placeholder resume description: lorem ipsum summary of experience and education, with a PDF download.',
+  },
   title: 'Resume',
   intro:
     'Lorem ipsum placeholder intro: a summary of my experience and education. Download the PDF for the full version.',

@@ -22,7 +22,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S12 | Deploy to Vercel               | leader | all        | todo   |
 | S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | in progress |
-| S15 | Consistent page copy in content| dev-2  | S6–S10     | in progress |
+| S15 | Consistent page copy in content| dev-2  | S6–S10     | done   |
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | todo   |
 | S17 | Live reload on WSL             | dev-1  | S1         | todo   |
 
@@ -123,9 +123,9 @@ Found in S9 review: `className="bg-bg"` can't override `Card`'s built-in `bg-sur
 ### S15 — Consistent page copy in content
 *As Chris, I want every page's text stored the same way so replacing placeholders is predictable.*
 Found in S6–S10 review: page copy lives in different shapes (`home` typed in `types.ts`, `projectsPage` in `projects.ts`, `aboutPage` untyped, `contactPage`/`resumePage` with types in their own files), and "Code"/"Live demo" labels are defined twice.
-- [ ] One pattern for page copy (file per page, typed, consistent naming), applied to all five pages
-- [ ] Shared labels (e.g. project "Code" / "Live demo") defined once
-- [ ] No visible text changes; build and lint pass
+- [x] One pattern for page copy (file per page, typed, consistent naming), applied to all five pages
+- [x] Shared labels (e.g. project "Code" / "Live demo") defined once
+- [x] No visible text changes; build and lint pass
 
 ### S16 — Home hero uses shared Container
 *As a developer, I want every page to use the same container so alignment can't drift again.*

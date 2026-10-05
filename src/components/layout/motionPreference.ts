@@ -15,9 +15,18 @@ import { useSyncExternalStore } from 'react'
  * this page session and the site keeps working. Updates are live: the OS
  * setting, this tab's control and other tabs (the `storage` event) all
  * notify subscribers.
+ *
+ * V0.49: the same effective state also drives small UI motion. It is
+ * mirrored to `data-motion="reduce" | "full"` on <html> (see
+ * `syncMotionAttribute`), which the `motion-safe:` / `motion-reduce:`
+ * variants and the global reduced-motion rule in styles/index.css key on.
+ * An inline script in index.html sets the attribute before first paint; it
+ * repeats the storage key, the choice values and the media query below, so
+ * keep the two in sync.
  */
 export type MotionChoice = 'on' | 'off' | 'auto-paused'
 
+// Also read by the inline script in index.html (V0.49): keep both in sync.
 const STORAGE_KEY = 'motion-preference'
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 const CHOICES: readonly MotionChoice[] = ['on', 'off', 'auto-paused']
@@ -112,4 +121,23 @@ export function useReducedMotion(): boolean {
 /** Live saved choice (null = following the OS) for React components. */
 export function useMotionChoice(): MotionChoice | null {
   return useSyncExternalStore(subscribe, getMotionChoice, () => null)
+}
+
+/** Value of the `data-motion` attribute on <html> (V0.49). */
+export type MotionAttribute = 'reduce' | 'full'
+
+function applyMotionAttribute() {
+  const value: MotionAttribute = getReducedMotion() ? 'reduce' : 'full'
+  const root = document.documentElement
+  if (root.dataset.motion !== value) root.dataset.motion = value
+}
+
+/**
+ * Keep `data-motion` on <html> in step with the effective setting (V0.49):
+ * the footer switch, auto-pause, other tabs and OS changes all update it
+ * live. Call once at startup; returns a function that stops the sync.
+ */
+export function syncMotionAttribute(): () => void {
+  applyMotionAttribute()
+  return subscribe(applyMotionAttribute)
 }

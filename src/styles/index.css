@@ -223,16 +223,57 @@
 }
 
 /*
- * Reduced motion (S25): hover/focus transitions snap instead of fading, and
- * any CSS animation finishes at once. The canvas background handles reduced
- * motion itself (still frame, see SpaceBackground), and also follows the
- * footer "Animation" switch (V0.41, layout/motionPreference.ts); this CSS
- * rule and `motion-safe:` utilities still follow the OS setting only.
+ * Reduced motion (S25; follows the Animation switch since V0.49): hover/focus
+ * transitions snap instead of fading, and any CSS animation finishes at once.
+ *
+ * The effective setting is the footer "Animation" switch (saved on / off /
+ * auto-paused, layout/motionPreference.ts), else the OS setting. It is
+ * mirrored to `data-motion="reduce" | "full"` on <html>: set before first
+ * paint by the inline script in index.html, then kept live by
+ * syncMotionAttribute() (switch, other tabs, OS change, auto-pause). This
+ * rule and the `motion-safe:` / `motion-reduce:` variants key on that
+ * attribute, so the visitor's choice overrides the OS both ways. Only if
+ * the attribute is missing (the inline script never ran) do they fall back
+ * to the OS media query. The canvas background reads the same store itself.
  */
+@custom-variant motion-safe {
+  &:where([data-motion='full'], [data-motion='full'] *) {
+    @slot;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:root:not([data-motion]), :root:not([data-motion]) *) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant motion-reduce {
+  &:where([data-motion='reduce'], [data-motion='reduce'] *) {
+    @slot;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:where(:root:not([data-motion]), :root:not([data-motion]) *) {
+      @slot;
+    }
+  }
+}
+
+[data-motion='reduce'],
+[data-motion='reduce'] *,
+[data-motion='reduce'] *::before,
+[data-motion='reduce'] *::after {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion]),
+  :root:not([data-motion]) *,
+  :root:not([data-motion]) *::before,
+  :root:not([data-motion]) *::after {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
     animation-duration: 0s !important;

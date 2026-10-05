@@ -11,7 +11,8 @@ const MENU_ID = 'primary-nav-menu'
  * grows a little and a frosted glass bubble fades and expands in behind the
  * label, like the passcode keys on a phone. The current page keeps a steady
  * bubble and does not grow. Keyboard focus shows the bubble plus the focus
- * ring and glow; a press (touch) shows it too. With reduced motion the global
+ * ring and glow; a press (touch) shows it too. With reduced motion (the
+ * Animation switch, else the OS setting; V0.49) the global
  * rule in index.css makes the bubble appear at once, and the grow is only
  * applied under `motion-safe`.
  */

@@ -18,7 +18,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S8  | Projects page                  | dev-2  | S3, S4, S5 | done   |
 | S9  | Resume page                    | dev-2  | S3, S4, S5 | done   |
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
-| S11 | SEO metadata foundation        | dev-1  | S3         | in progress |
+| S11 | SEO metadata foundation        | dev-1  | S3         | done   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
 | S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | done   |
@@ -26,7 +26,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | done   |
 | S17 | Live reload on WSL             | dev-1  | S1         | done   |
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
-| S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | todo   |
+| S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | in progress |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -100,10 +100,10 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 ### S11 — SEO metadata foundation
 *As Chris, I want the site to look good in search results and when shared.*
 Split on 2026-10-04: the 404 page, page copy and `public/` assets belong to dev-2, so those moved to S19. This story builds the mechanism.
-- [ ] `PageMeta` component in `ui/` (props: `title`, `description`) that sets the document `<title>` (format e.g. "About · Chris") and `<meta name="description">`, using React 19's built-in `<title>`/`<meta>` rendering; no extra dependency
-- [ ] `index.html` has site-wide defaults: `<title>`, meta description, Open Graph (`og:title`, `og:description`, `og:type`, `og:image` → `/og-image.png`) and `twitter:card`, all clearly placeholder. Note: crawlers read these without running JS, so OG tags stay site-wide (no per-page OG in an SPA)
-- [ ] Favicon link checked and working
-- [ ] Usage documented in the component's doc comment so dev-2 can wire pages in S19
+- [x] `PageMeta` component in `ui/` (props: `title`, `description`) that sets the document `<title>` (format e.g. "About · Chris") and `<meta name="description">`, using React 19's built-in `<title>`/`<meta>` rendering; no extra dependency
+- [x] `index.html` has site-wide defaults: `<title>`, meta description, Open Graph (`og:title`, `og:description`, `og:type`, `og:image` → `/og-image.png`) and `twitter:card`, all clearly placeholder. Note: crawlers read these without running JS, so OG tags stay site-wide (no per-page OG in an SPA)
+- [x] Favicon link checked and working
+- [x] Usage documented in the component's doc comment so dev-2 can wire pages in S19
 
 ### S12 — Deploy to Vercel
 *As Chris, I want the site live at a public URL.*
@@ -111,6 +111,7 @@ Split on 2026-10-04: the 404 page, page copy and `public/` assets belong to dev-
 - [ ] Production build deploys from `main`; deep links work
 - [ ] Chris has the live URL
 
+Notes from S11: change `og:image` in index.html to an absolute URL once the Vercel domain is known (and consider `og:url`); make sure `public/og-image.png` exists first, or the SPA rewrite serves index.html in its place.
 ### S13 — Align header with page content
 *As a visitor, I want the header and page content to line up so the site looks polished.*
 Found in S7/S10 review: at desktop widths the header's site name starts ~16px right of the page content's left edge. Header puts `px-gutter` inside its `max-w-content` box; `Section` puts `px-gutter` outside it.

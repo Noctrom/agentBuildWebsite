@@ -28,10 +28,10 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | done   |
 | S20 | Workflow diagrams              | dev-1  | S4         | done   |
-| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | in progress |
-| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | todo   |
-| S23 | Space palette, always dark     | dev-1  | PR #2      | in progress |
-| S24 | Animated space background      | dev-1  | S23        | todo   |
+| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | done   |
+| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | in progress |
+| S23 | Space palette, always dark     | dev-1  | PR #2      | done   |
+| S24 | Animated space background      | dev-1  | S23        | in progress |
 | S25 | Space-styled components        | dev-1  | S23, S24   | todo   |
 | S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | todo   |
 | S27 | Remaining page scenes          | dev-2  | S26        | todo   |
@@ -200,11 +200,11 @@ Triaged from story inbox D2 (story-writer, 2026-10-04).
 
 Chris wants a dedicated tab explaining how the site was created: the methodology, setup, how it works, and why it's built this way. The site has two goals at once: a personal website, and a demonstration of using agents professionally. The repo (`https://github.com/Noctrom/agentBuildWebsite`) is private now; Chris will make it public before launch. The repo holds the backlog, agent definitions and story logs for anyone who wants proof, so the page links to the repo rather than to individual files.
 
-- [ ] New page "Behind the Scenes" at `/behind-the-scenes` (route added in `App.tsx`), with its own `PageMeta` (S11/S19 pattern). The nav link is S22 (dev-1), because `navItems` is in `layout/`
-- [ ] Page text is the draft copy below, stored in `src/content/` following the S15 page-copy pattern; no text hardcoded in the page
-- [ ] Diagram A (story flow) appears in "How work flows" and Diagram B (git branches) in "Branches and reviews"
-- [ ] A "View the source on GitHub" button links to the repo URL, opening in a new tab; the URL is defined once in content
-- [ ] Works at 375px and desktop widths; `npm run build` and `npm run lint` pass
+- [x] New page "Behind the Scenes" at `/behind-the-scenes` (route added in `App.tsx`), with its own `PageMeta` (S11/S19 pattern). The nav link is S22 (dev-1), because `navItems` is in `layout/`
+- [x] Page text is the draft copy below, stored in `src/content/` following the S15 page-copy pattern; no text hardcoded in the page
+- [x] Diagram A (story flow) appears in "How work flows" and Diagram B (git branches) in "Branches and reviews"
+- [x] A "View the source on GitHub" button links to the repo URL, opening in a new tab; the URL is defined once in content
+- [x] Works at 375px and desktop widths; `npm run build` and `npm run lint` pass
 
 **Draft copy** (Chris will edit later; use as-is for now):
 
@@ -251,7 +251,7 @@ Split from inbox D2: `navItems` lives in `src/components/layout/` (dev-1). Runs 
 
 ## Sprint 2 — Space theme
 
-Order: dev-1 S23 → S22 → S24 → S25; dev-2 S21, then S26 → S27 once S24 is merged (in parallel with S25), then S28 once S25 and S26 are in. Nothing new merges into `leader` until Chris merges PR #2, so that PR stays reviewable; branches can be built meanwhile.
+Order: dev-1 S23 → S22 → S24 → S25; dev-2 S21, then S26 → S27 once S24 is merged (in parallel with S25), then S28 once S25 and S26 are in. PR #2 (S2–S20) merged by Chris on 2026-10-05.
 
 ### S23 — Space palette & typography (always dark)
 Triaged from story inbox D3 (story-writer, 2026-10-04). Sequencing: built on a branch now; merged only after PR #2 lands. Removes the header toggle, so S22 (nav link) runs after it.
@@ -260,12 +260,12 @@ Triaged from story inbox D3 (story-writer, 2026-10-04). Sequencing: built on a b
 
 Chris chose a space theme for the whole site (galaxies, black holes, nebulas, planets, suns, solar systems) and decided the site is **always dark**: the light theme and the theme toggle from S2 go away. This story sets the foundation; S25 restyles components, S24/S26/S27 add the animated backgrounds. Existing pages, including the S21 Behind the Scenes page and S20 diagrams, should pick up the new look through the tokens without page changes.
 
-- [ ] Light theme removed: no light tokens, no `ThemeToggle`/`useTheme`, no theme script in `index.html`, no toggle in the header; `color-scheme: dark`
-- [ ] New space palette in the tokens: near-black space background, translucent "glass" surface, starlight text, plus nebula accent (violet/blue range) and a warm sun accent (orange/gold range) for highlights
-- [ ] All text/background pairs meet WCAG AA, measured against the solid background and the translucent surface; contrast notes in `index.css` updated
-- [ ] Typography: keep the current font exactly as it is (Chris confirmed 2026-10-04: no new typeface, no separate display font) for headings and body; the space feel comes from color, spacing and the background, not the typeface
-- [ ] Browser UI matches (e.g. `theme-color` meta is dark)
-- [ ] Every existing page still renders correctly at 375px and desktop; `npm run build` and `npm run lint` pass
+- [x] Light theme removed: no light tokens, no `ThemeToggle`/`useTheme`, no theme script in `index.html`, no toggle in the header; `color-scheme: dark`
+- [x] New space palette in the tokens: near-black space background, translucent "glass" surface, starlight text, plus nebula accent (violet/blue range) and a warm sun accent (orange/gold range) for highlights
+- [x] All text/background pairs meet WCAG AA, measured against the solid background and the translucent surface; contrast notes in `index.css` updated
+- [x] Typography: keep the current font exactly as it is (Chris confirmed 2026-10-04: no new typeface, no separate display font) for headings and body; the space feel comes from color, spacing and the background, not the typeface
+- [x] Browser UI matches (e.g. `theme-color` meta is dark)
+- [x] Every existing page still renders correctly at 375px and desktop; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 

@@ -1,8 +1,12 @@
 import { profile } from '../../content'
 import Container from '../ui/Container'
 import { glassClass } from '../ui/tone'
+import AnimationToggle from './AnimationToggle'
 
-/** Site footer: social links and copyright, on a frosted glass band (S25). */
+/**
+ * Site footer: copyright, the animation switch (V0.41) and social links, on a
+ * frosted glass band (S25). Stacked at mobile, one row from sm.
+ */
 export default function Footer() {
   const year = new Date().getFullYear()
   const { email, github, linkedin } = profile.links
@@ -19,6 +23,7 @@ export default function Footer() {
         <p className="text-sm text-muted">
           &copy; {year} {profile.name}
         </p>
+        <AnimationToggle />
         <ul aria-label="Social links" className="flex gap-6">
           {links.map((link) => (
             <li key={link.label}>

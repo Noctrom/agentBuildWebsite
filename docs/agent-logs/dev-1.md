@@ -527,3 +527,54 @@
 - dev-2 (optional, not needed for AA): on Behind the Scenes at 768 the black hole now clearly sits behind the end of the "Branches and reviews" intro and the top-right of the first branch diagram box. It passes (5.27 lowest pixel), but it is the most eye-catching object behind text on the site. Nudging it up/right at tablet widths would give the diagram more calm.
 - dev-2: `public/photo-placeholder.svg` uses the old muted `#a3a8c8` for its label. It still passes, so only update it for consistency if you touch it.
 - S33 (mine): the crossfade composites two canvases whose opacities sum to the budget, so it never exceeds 0.2. Keep that property when reworking the timing.
+
+## S33 — Snappier scene changes between pages (2026-10-05)
+**Branch:** story/S33-snappier-scenes · **Status:** done
+
+**What I did**
+- The old scene starts fading out as soon as the engine gets the new route (`setScene`), no longer after the new scene is built. The fade-out is 160 ms with an ease-out curve, so it dims from the first frame. On desktop it is gone 204–236 ms after the click.
+- A new scene fades in over 250 ms as soon as it is ready. While a generator scene builds (nebula, sun), only the plain page background shows: no old scene and no bright or white frame. Canvases start at opacity 0 over the body background.
+- Rapid clicking cancels the pending build (S29) and fades every layer out. Only the latest route's scene ends up visible. Going back to a scene that is still fading out fades that scene back in instead of rebuilding it.
+- Reduce motion is unchanged: the old scene stays until the new one is ready, then the swap is instant.
+- Contrast budget kept: the layers' opacities never sum to more than 1 (× 0.2). Incoming layers are capped by what the outgoing ones still use. `BACKGROUND_MAX_OPACITY` is unchanged at 0.2.
+- Updated the S24/S26/S29 crossfade docs in the engine header, `SpaceBackground.tsx` and `src/scenes/types.ts`. The 1500 ms first-load intro fade stays, and only the first scene uses it.
+
+**How I did it**
+- Replaced the single `CROSSFADE_MS = 1200` with `FADE_OUT_MS = 160` and `FADE_IN_MS = 250`. An `introDone` flag means a scene shown after the old one has fully faded doesn't get the slow intro fade.
+- `setScene` (motion on) works in this order:
+  - If a layer of the target scene still exists, cancel the pending build, fade that layer back in and fade the others out.
+  - Otherwise fade out all layers, then `beginScene`.
+  - `fadeOut` doesn't restart layers that are already fading out.
+- `updateFades` does two passes. The first computes the eased opacities and sums the outgoing ones. The second caps incoming layers at `1 - outgoing` and writes the styles. Fade-outs use ease-out, fade-ins use ease-in-out.
+- Bug found while testing: a rAF timestamp can be earlier than a fade started in the same frame. That gives a negative `t`, and with ease-out the opacity went above 1 (sum measured up to 0.234). `t` is now clamped to [0, 1], and the sum is back to ≤ 0.2 in every run.
+- Bug found while reviewing: after a quick "back", the shown layer need not be the top one. So `setReducedMotion` now rebuilds the last layer that isn't fading out, not `layers.at(-1)`.
+- I tried 250 ms and then 200 ms fade-outs first. Both landed at about 250–290 ms after the click on desktop, because React renders the new page for 40–80 ms before the effect runs. 160 ms brings it to ~210–235 ms.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`. A rAF sampler logged every canvas's opacity each frame from the click (scripts in the session scratchpad, `s33/fade.mjs`).
+- **1280, no throttle:**
+  - Old scene gone 204–217 ms after the click (fade-out itself 134–150 ms).
+  - New scene added 16–188 ms after the click, full 283–300 ms later.
+  - Max opacity sum 0.2. avgFrame 16.9–17.6 ms, max 33 ms.
+- **375 / DPR 3 / 4x CPU throttle:**
+  - Home → Resume: old gone at 368 ms. React only starts the fade ~120–230 ms after the click under 4x throttle; the fade itself takes 134 ms. Then plain background only (1 layer max). Nebula added at 601 ms, full 283 ms later.
+  - Home → About: old gone at 317 ms, sun added at 384 ms, full 283 ms later.
+  - avgFrame 18.5–19 ms, max 50 ms.
+- **Baseline (leader build) on the same script at 375 / 4x:**
+  - Old scene still visible ~1.3–1.5 s after the click.
+  - avgFrame 19–29 ms, max 33–67 ms.
+- **Rapid tour** (8 clicks 120 ms apart through all routes, ending on Contact):
+  - S33: ends with a single Contact canvas at 0.2, never more than 3 canvases (all mid-fade, sum ≤ 0.2). At 375/4x avgFrame 21.6–23 ms, max 117–133 ms, 16–19 frames over 34 ms.
+  - Baseline: up to 7 canvases stacked, avgFrame 32–33 ms, max 150–183 ms, 33–36 frames over 34 ms, and the final scene only full at ~2.8 s.
+- Quick back (Home → Resume → Home within 100 ms): the Home layer fades back to 0.2 and the Resume layer fades out. No rebuild, sum ≤ 0.2.
+- Reduce motion (375/4x): always a single canvas, instant swaps, rapid tour ends on Contact.
+- Reduce motion toggled mid-fade and mid-navigation: ends on the right scene, one canvas. After a quick back plus a toggle, the shown canvas pixel-matches a fresh Home render.
+- No console errors or warnings on all 7 routes (`/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes`, `/nope`) at 375 and 1280. Each route ends with one canvas at 0.2.
+
+**Files**
+- Changed: `src/components/layout/backgroundEngine.ts`, `src/components/layout/SpaceBackground.tsx` (comment), `src/scenes/types.ts` (comments only), `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- dev-2 / scene owner: `src/scenes/routes.ts` header comment still says the engine "crossfades when the scene id changes". It is still roughly true, but "fades between scenes" would match the new docs. I didn't touch it (scene file).
+- On a throttled phone, most of the click-to-gone time (~120–230 ms) is React rendering the new page before the engine hears about the route. Getting it lower would mean starting the fade from the link click, outside the engine. I didn't do that.

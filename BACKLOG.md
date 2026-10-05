@@ -35,8 +35,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S25 | Space-styled components        | dev-1  | S23, S24   | done   |
 | S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | done   |
 | S27 | Remaining page scenes          | dev-2  | S26        | done   |
-| S28 | Pages fitted to space theme    | dev-2  | S25, S26   | in progress |
-| S29 | Scene engine follow-ups        | dev-1  | S27        | todo   |
+| S28 | Pages fitted to space theme    | dev-2  | S25, S26   | done   |
+| S29 | Scene engine follow-ups        | dev-1  | S27        | in progress |
+| S30 | Space-themed favicon & OG image | dev-2 | S23       | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -343,16 +344,23 @@ Triaged from story inbox D8 (story-writer, 2026-10-04). Page and content files o
 
 After the new components (S25) and showpiece scenes (S26) land, each page needs a pass so content and scene don't fight. Page and content files only.
 
-- [ ] Home hero leaves room for the solar system scene so the sun/planets frame the text instead of sitting behind it
-- [ ] Every page (Home, About, Projects, Resume, Contact, Behind the Scenes, 404) checked over its scene: no page-level leftovers from the light theme, text readable, spacing works with the frosted panels
-- [ ] Anything that needs a component or scene change is reported to the leader, not built in the page
-- [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+- [x] Home hero leaves room for the solar system scene so the sun/planets frame the text instead of sitting behind it
+- [x] Every page (Home, About, Projects, Resume, Contact, Behind the Scenes, 404) checked over its scene: no page-level leftovers from the light theme, text readable, spacing works with the frosted panels
+- [x] Anything that needs a component or scene change is reported to the leader, not built in the page
+- [x] Works at 375px and desktop; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
-- [ ] From S25: Contact's hand-built panel (`rounded-lg border border-border bg-surface p-5`) uses `Card` or `glassClass` + `glass-edge` so it matches the other frosted panels
+- [x] From S25: Contact's hand-built panel (`rounded-lg border border-border bg-surface p-5`) uses `Card` or `glassClass` + `glass-edge` so it matches the other frosted panels
 
 ### S29 — Scene engine follow-ups
 *As a developer, I want the scene code's docs to match how it works, and first visits to heavy scenes to stay smooth.*
 Found in S27 review.
 - [ ] `src/scenes/starfield.ts`: the file header and the `starfieldScene` comment no longer say it is the default for unmapped routes (that is now `lostInSpaceScene` in `routes.ts`)
 - [ ] Investigate the first-visit cost of scenes that bake sprites on create (nebula: ~160 ms main-thread block at 4x CPU throttle). If it causes a visible stutter at the start of a crossfade, add engine support for spreading scene setup over several frames (e.g. an optional async/incremental `create`), documented in `types.ts`; otherwise record the measurement and close
+
+### S30 — Space-themed favicon & OG image
+*As a visitor sharing or bookmarking the site, I want its icon and preview image to match the space theme.*
+Found in S28 review: `public/og-image.png` still uses the pre-S23 palette (sky blue on slate) and `public/favicon.svg` is still the Vite logo.
+- [ ] `public/favicon.svg` replaced with a simple space-palette icon (clearly placeholder, e.g. a planet or star mark), legible at 16px and 32px
+- [ ] `public/og-image.png` regenerated at 1200×630 in the S23 palette, still clearly marked placeholder; no npm dependencies added
+- [ ] `index.html` links unchanged and both files served with the right content type from `vite preview`

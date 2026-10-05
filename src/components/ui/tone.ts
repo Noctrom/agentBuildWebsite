@@ -44,7 +44,8 @@ export const glassClass: Record<SurfaceTone, string> = {
 /**
  * Hover/focus glow for interactive elements: a soft accent halo on hover and a
  * stronger one on keyboard focus (on top of the global focus outline).
- * Transitions snap under prefers-reduced-motion (global rule in index.css).
+ * Transitions snap when motion is reduced: the Animation switch, else the OS
+ * setting (global rule in index.css, V0.49).
  */
 export const glowClass =
   'transition-[color,background-color,border-color,box-shadow] duration-200 hover:shadow-glow focus-visible:shadow-glow-focus'

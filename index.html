@@ -8,6 +8,21 @@
          src/styles/index.css. -->
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#05060f" />
+    <!-- V0.49: set data-motion on <html> before first paint, so a saved
+         Animation "Off" never flashes UI motion. Mirrors getReducedMotion()
+         in src/components/layout/motionPreference.ts (same storage key,
+         values and media query): keep the two in sync. The app keeps the
+         attribute up to date after this. -->
+    <script>
+      (function () {
+        var c = null, r
+        try { c = localStorage.getItem('motion-preference') } catch (e) {}
+        if (c === 'on') r = false
+        else if (c === 'off' || c === 'auto-paused') r = true
+        else r = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)
+        document.documentElement.setAttribute('data-motion', r ? 'reduce' : 'full')
+      })()
+    </script>
     <!-- Site-wide metadata defaults. PLACEHOLDER: replace the text with real
          info (keep the name in sync with profile.name in src/content/profile.ts).
          Tags with data-default-meta are swapped out by PageMeta

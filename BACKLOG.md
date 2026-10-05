@@ -34,8 +34,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S24 | Animated space background      | dev-1  | S23        | done   |
 | S25 | Space-styled components        | dev-1  | S23, S24   | done   |
 | S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | done   |
-| S27 | Remaining page scenes          | dev-2  | S26        | in progress |
-| S28 | Pages fitted to space theme    | dev-2  | S25, S26   | todo   |
+| S27 | Remaining page scenes          | dev-2  | S26        | done   |
+| S28 | Pages fitted to space theme    | dev-2  | S25, S26   | in progress |
+| S29 | Scene engine follow-ups        | dev-1  | S27        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -326,12 +327,12 @@ Triaged from story inbox D7 (story-writer, 2026-10-04). dev-2 works only in `src
 
 dev-2 works only in `src/scenes/`.
 
-- [ ] **About — a sun:** close view of a star with slow surface shimmer and soft flares (warm accent)
-- [ ] **Projects — planets:** a few distinct planets (e.g. ringed, gas giant, rocky) drifting at different depths
-- [ ] **Resume — nebula:** a richer, more colorful nebula than the default
-- [ ] **Contact — distant galaxy:** a quiet starfield with a slowly rotating spiral galaxy
-- [ ] **404 — lost in space:** an empty, sparse starfield (or drifting debris)
-- [ ] Same rules as S24/S26; `npm run build` and `npm run lint` pass
+- [x] **About — a sun:** close view of a star with slow surface shimmer and soft flares (warm accent)
+- [x] **Projects — planets:** a few distinct planets (e.g. ringed, gas giant, rocky) drifting at different depths
+- [x] **Resume — nebula:** a richer, more colorful nebula than the default
+- [x] **Contact — distant galaxy:** a quiet starfield with a slowly rotating spiral galaxy
+- [x] **404 — lost in space:** an empty, sparse starfield (or drifting debris)
+- [x] Same rules as S24/S26; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -349,3 +350,9 @@ After the new components (S25) and showpiece scenes (S26) land, each page needs 
 
 **Open questions:** None.
 - [ ] From S25: Contact's hand-built panel (`rounded-lg border border-border bg-surface p-5`) uses `Card` or `glassClass` + `glass-edge` so it matches the other frosted panels
+
+### S29 — Scene engine follow-ups
+*As a developer, I want the scene code's docs to match how it works, and first visits to heavy scenes to stay smooth.*
+Found in S27 review.
+- [ ] `src/scenes/starfield.ts`: the file header and the `starfieldScene` comment no longer say it is the default for unmapped routes (that is now `lostInSpaceScene` in `routes.ts`)
+- [ ] Investigate the first-visit cost of scenes that bake sprites on create (nebula: ~160 ms main-thread block at 4x CPU throttle). If it causes a visible stutter at the start of a crossfade, add engine support for spreading scene setup over several frames (e.g. an optional async/incremental `create`), documented in `types.ts`; otherwise record the measurement and close

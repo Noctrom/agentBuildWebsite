@@ -33,8 +33,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S23 | Space palette, always dark     | dev-1  | PR #2      | done   |
 | S24 | Animated space background      | dev-1  | S23        | done   |
 | S25 | Space-styled components        | dev-1  | S23, S24   | in progress |
-| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | in progress |
-| S27 | Remaining page scenes          | dev-2  | S26        | todo   |
+| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | done   |
+| S27 | Remaining page scenes          | dev-2  | S26        | in progress |
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
@@ -311,11 +311,11 @@ Triaged from story inbox D6 (story-writer, 2026-10-04). dev-2 works only in `src
 
 Chris wants a different scene per page. These two are the most prominent, so they come first. dev-2 only adds scene files and route mappings in `src/scenes/`.
 
-- [ ] **Home — solar system:** a sun with planets moving slowly on visible orbits, placed so it frames the hero rather than sitting behind its text
-- [ ] **Behind the Scenes — black hole:** a black hole with a glowing accretion disk and faint light-bending around it, kept dim behind the page text and diagrams
-- [ ] Each page shows its scene when visited (including on direct links and refresh); moving between pages changes the scene smoothly (crossfade, skipped with reduce motion)
-- [ ] Same rules as S24: subtle motion, reduce motion = still frame, readable content, smooth on mid-range devices, 375px and desktop
-- [ ] `npm run build` and `npm run lint` pass
+- [x] **Home — solar system:** a sun with planets moving slowly on visible orbits, placed so it frames the hero rather than sitting behind its text
+- [x] **Behind the Scenes — black hole:** a black hole with a glowing accretion disk and faint light-bending around it, kept dim behind the page text and diagrams
+- [x] Each page shows its scene when visited (including on direct links and refresh); moving between pages changes the scene smoothly (crossfade, skipped with reduce motion)
+- [x] Same rules as S24: subtle motion, reduce motion = still frame, readable content, smooth on mid-range devices, 375px and desktop
+- [x] `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 

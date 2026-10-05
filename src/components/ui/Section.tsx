@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import Container from './Container'
+import { glassClass } from './tone'
 
 export type HeadingLevel = 1 | 2 | 3 | 4
 
@@ -12,7 +13,10 @@ export type SectionProps = {
   id?: string
   /** Optional intro paragraph under the heading. */
   intro?: ReactNode
-  /** `surface` gives a full-width raised band to alternate sections. */
+  /**
+   * `surface` gives a full-width frosted glass band to alternate sections;
+   * `default` is transparent, so content sits directly on the space background.
+   */
   tone?: 'default' | 'surface'
   className?: string
   children?: ReactNode
@@ -47,7 +51,7 @@ export default function Section({
       id={id}
       aria-labelledby={headingId}
       className={`scroll-mt-4 py-section ${
-        tone === 'surface' ? 'border-y border-border bg-surface' : ''
+        tone === 'surface' ? `glass-edge border-y border-border ${glassClass.surface}` : ''
       } ${className}`.trim()}
     >
       <Container>

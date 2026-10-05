@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { LinkProps } from 'react-router'
 import Button, { type ButtonVariant } from './Button'
 import { Tag } from './Tag'
-import { surfaceToneClass, type SurfaceTone } from './tone'
+import { glassClass, type SurfaceTone } from './tone'
 
 /**
  * A link rendered as a small button in the card footer. Use `to` for internal
@@ -65,7 +65,7 @@ export default function Card({
 
   return (
     <article
-      className={`flex h-full flex-col overflow-hidden rounded-lg border border-border ${surfaceToneClass[tone]} ${className}`.trim()}
+      className={`glass-edge flex h-full flex-col overflow-hidden rounded-lg border border-border ${glassClass[tone]} ${className}`.trim()}
     >
       {image && (
         <img

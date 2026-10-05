@@ -4,7 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chris</title>
+    <!-- Site-wide metadata defaults. PLACEHOLDER: replace the text with real
+         info (keep the name in sync with profile.name in src/content/profile.ts).
+         Tags with data-default-meta are swapped out by PageMeta
+         (src/components/ui/PageMeta.tsx) on pages that set their own; keep
+         the attribute. Open Graph / Twitter tags stay site-wide: link-preview
+         crawlers read this file without running JS. -->
+    <title data-default-meta>Jane Placeholder</title>
+    <meta
+      data-default-meta
+      name="description"
+      content="Placeholder site description: lorem ipsum dolor sit amet, the personal website of Jane Placeholder."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Jane Placeholder" />
+    <meta
+      property="og:description"
+      content="Placeholder site description: lorem ipsum dolor sit amet, the personal website of Jane Placeholder."
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <!-- Set the theme before first paint to avoid a flash. Keep the storage
          key in sync with src/components/ui/useTheme.ts. -->
     <script>

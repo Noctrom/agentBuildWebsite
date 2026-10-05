@@ -276,3 +276,37 @@
 
 **Follow-ups**
 - dev-2 (S21): put the step, loop and level text in `src/content/` and render `<StoryFlowDiagram>` and `<BranchDiagram>` in the matching sections. See the usage in the S20 report. Use `tone="bg"` if a diagram sits in a `Section tone="surface"`.
+
+## S23 — Space palette & typography (always dark) (2026-10-04)
+**Branch:** story/S23-space-palette · **Status:** done
+
+**What I did**
+- Removed the light theme: light tokens, the `[data-theme]` blocks and the `dark` custom variant are gone. I deleted `ThemeToggle.tsx` and `useTheme.ts`, removed their ui barrel exports and the header toggle, and dropped the pre-paint theme script from `index.html`. `:root` now sets `color-scheme: dark`.
+- New space palette on `:root`: bg `#05060f` (deep space), surface `rgb(139 147 255 / 0.12)` (translucent glass), fg `#e8eaf6` (starlight), muted `#a3a8c8`, accent `#a5a0ff` (nebula violet-blue), accent-hover `#c7c4ff`, border `rgb(139 147 255 / 0.2)`. I added a warm sun accent: `sun` `#fbbf4d`, `sun-hover` `#fdd58a`, `sun-fg` (Tailwind `text-sun`, `bg-sun`, `text-sun-fg`). All existing token names still work, so pages and components needed no changes.
+- WCAG AA: every text pair is checked against the solid bg, the surface composited over bg (`#15172c`) and surface nested twice (`#232645`, e.g. a default Card inside a surface band). The lowest is muted on double surface at 6.27. All numbers are in the `index.css` header.
+- Font: unchanged, per Chris's clarification. The existing `font-sans` stack is used for headings and body.
+- Browser UI: added `<meta name="theme-color" content="#05060f">` and `<meta name="color-scheme" content="dark">`.
+
+**How I did it**
+- Kept the raw values as `--theme-*` variables on `:root`, mapped through `@theme inline`, so S24 can read them from JS/CSS if needed.
+- Contrast: a small script composited the surface over bg per channel (`a*surface + (1-a)*bg`) and computed WCAG ratios. I raised the surface alpha from 0.10 to 0.12 so the S14 `surface` vs `bg` tones stay visibly distinct (1.15:1 for surface vs bg; the old dark theme was about 1.18).
+- Per Chris's mid-story clarification I made no font changes. I had only edited a comment above the font stack, and reverted that too.
+
+**Verification**
+- `npm run build` and `npm run lint` pass on the clean tree.
+- Headless Chromium (playwright-core) against `vite preview`, at 375, 768 and 1280, with both light and dark OS preference, on `/`, `/about`, `/projects`, `/resume`, `/contact` and a 404 route:
+  - No console errors, horizontal overflow 0, no `data-theme`.
+  - Body bg `rgb(5,6,15)`, computed `color-scheme: dark`, theme-color `#05060f`.
+  - h1 and body use the same font stack.
+  - No toggle. The only selector hit was the "Highlights" aria-label on Resume, a substring false positive.
+- A throwaway `/s23` preview (deleted, never committed) showed Buttons, Tags, a sun pill, Cards, `StoryFlowDiagram` and `BranchDiagram` on bg and inside a `Section tone="surface"` (with `tone="bg"`). Tones are clearly distinct and the diagrams read well. I also checked screenshots of Home and About at 375 and of the open mobile menu.
+
+**Files**
+- Changed: `index.html`, `src/styles/index.css`, `src/components/layout/Header.tsx`, `src/components/ui/index.ts`, `docs/agent-logs/dev-1.md`
+- Deleted: `src/components/ui/ThemeToggle.tsx`, `src/components/ui/useTheme.ts`
+
+**Follow-ups**
+- dev-2: no page has hardcoded colors or uses the toggle; nothing to change. `text-sun` / `bg-sun` are available for warm highlights.
+- S24: `Layout` and `body` still paint solid `bg-bg`. The background layer needs those to become transparent or sit above them, and it must stay dim enough to keep the ratios above.
+- S25: the surface is already translucent; S25 can add blur and glow on top.
+- BACKLOG.md / old log entries still mention ThemeToggle historically (leader's files; no action needed).

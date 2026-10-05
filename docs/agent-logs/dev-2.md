@@ -461,3 +461,28 @@
   - About at 375: the sun behind the first lines of the bio (fg text, which passes)
   - Resume at 375: nebula clouds behind the intro
 - `public/og-image.png` still uses the pre-S23 palette (sky-blue accent on slate). It isn't on any page, but it could be regenerated in the space palette. `favicon.svg` is still the Vite logo. Both are placeholders.
+
+## S30 — Space-themed favicon & OG image (2026-10-04)
+**Branch:** story/S30-space-icons · **Status:** done
+
+**What I did**
+- Replaced the Vite logo in `public/favicon.svg` with a placeholder ringed planet: a sun-yellow (#fbbf4d) planet with a nebula (#a5a0ff) ring, on a rounded deep-space (#05060f) tile. It is marked as a placeholder in an SVG comment and in its `<title>`.
+- Regenerated `public/og-image.png` at 1200×630 in the S23 palette. It keeps the S19 layout and the "PLACEHOLDER OG IMAGE" label (now in sun yellow), the dashed frame and the "Replace public/og-image.png" note. I added a starfield and the same ringed planet as the favicon.
+- `index.html` is unchanged. Both files are served with the right content type.
+
+**How I did it**
+- Favicon: hand-written SVG with a 32×32 viewBox and no filters or gradients, so it stays crisp when small. The ring is split into a back arc (drawn before the planet) and a front arc (drawn after it), so it reads as going around the planet. Everything is rotated by -20°. The dark tile keeps it visible on both light and dark browser tabs.
+- OG image: Python/Pillow script in the scratchpad, the same approach as S19, using DejaVu Sans. It draws at 2× and downsamples with Lanczos for smooth edges. The starfield uses a fixed seed, so the script always produces the same image. No npm dependencies were added.
+- My first OG draft had the planet too large, and it overlapped the name. I made it smaller and moved it to the right edge.
+
+**Verification**
+- Rendered the favicon in headless Chromium (playwright-core in the scratchpad) at 16px and 32px, on white and on dark (#202124) backgrounds, and looked at them at true size and enlarged 8×. The planet and ring are clear at both sizes.
+- Looked at the final OG image. `file` reports `PNG image data, 1200 x 630`.
+- `npm run build` and `npm run lint` pass.
+- On `vite preview`, `curl -I /favicon.svg` returns `200`, `Content-Type: image/svg+xml`, and `curl -I /og-image.png` returns `200`, `Content-Type: image/png`. The served `index.html` still links `/favicon.svg` and `/og-image.png`, and `git diff leader -- index.html` is empty.
+
+**Files**
+- Changed: `public/favicon.svg`, `public/og-image.png`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- None new. The S19 note still applies: `og:image` should become an absolute URL once the production domain is known.

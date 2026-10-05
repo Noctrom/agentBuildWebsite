@@ -1,19 +1,8 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
 import { sceneForPath } from '../../scenes/routes'
 import { BackgroundEngine } from './backgroundEngine'
-
-const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
-
-function subscribeReducedMotion(onChange: () => void) {
-  const query = window.matchMedia(REDUCED_MOTION_QUERY)
-  query.addEventListener('change', onChange)
-  return () => query.removeEventListener('change', onChange)
-}
-
-function getReducedMotion() {
-  return window.matchMedia(REDUCED_MOTION_QUERY).matches
-}
+import { useReducedMotion } from './motionPreference'
 
 /**
  * Run `callback` after the next frame has painted and the browser is idle.
@@ -47,14 +36,15 @@ function afterPaint(callback: () => void): () => void {
  * scene mapped to the current route in `src/scenes/routes.ts`; on navigation
  * the old scene fades out at once and the new one fades in when ready (S33).
  * Starts after the page has painted, so it never delays content. Shows a
- * still frame with "reduce motion" on, pauses in hidden tabs, and falls back
- * to a static gradient if the canvas can't run.
+ * still frame when animation is off (the footer control, else the OS
+ * "reduce motion" setting; see motionPreference.ts, V0.41), pauses in hidden
+ * tabs, and falls back to a static gradient if the canvas can't run.
  */
 export default function SpaceBackground() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [engine, setEngine] = useState<BackgroundEngine | null>(null)
   const [failed, setFailed] = useState(false)
-  const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => false)
+  const reducedMotion = useReducedMotion()
   const reducedMotionRef = useRef(reducedMotion)
   const { pathname } = useLocation()
 

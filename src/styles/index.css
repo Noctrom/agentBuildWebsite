@@ -3,49 +3,52 @@
 /*
  * Design tokens — the single source of truth for color, font and spacing.
  *
- * Raw values live in CSS variables on :root (light) and [data-theme='dark'].
- * The @theme block below maps them to Tailwind utilities, so components use
- * semantic classes (bg-bg, bg-surface, text-fg, text-muted, text-accent,
- * border-border, ...) and switch themes automatically. Never use raw palette
- * colors (e.g. text-slate-600) in components.
+ * The site is always dark (S23, space theme): there is no light theme and no
+ * theme toggle. Raw values live in CSS variables on :root; the @theme block
+ * below maps them to Tailwind utilities, so components use semantic classes
+ * (bg-bg, bg-surface, text-fg, text-muted, text-accent, text-sun,
+ * border-border, ...). Never use raw palette colors (e.g. text-slate-600) in
+ * components.
  *
- * The data-theme attribute on <html> is set before first paint by the inline
- * script in index.html, and updated at runtime by src/components/ui/useTheme.ts.
+ * Palette:
+ *   bg       near-black deep space
+ *   surface  translucent "glass" (pale nebula blue at 12% alpha). Over the
+ *            solid bg it composites to #15172c; nested twice, to #232645.
+ *   fg       starlight (cool white)
+ *   muted    dim starlight (lavender grey)
+ *   accent   nebula violet-blue: links, primary actions, focus ring
+ *   sun      warm gold/orange: highlights (use sparingly)
+ *   border   translucent nebula line (decorative, not text)
  *
- * WCAG contrast (text vs bg / vs surface):
- *   light: fg 17.85 / 16.30, muted 7.58 / 6.92, accent 5.93 / 5.42,
- *          accent-fg on accent 5.93
- *   dark:  fg 15.27 / 13.24, muted 7.34 / 6.36, accent 8.79 / 7.62,
- *          accent-fg on accent 8.79
+ * WCAG contrast, all AA (>= 4.5:1 for normal text). Measured against the
+ * solid bg #05060f / surface over bg #15172c / surface nested twice #232645:
+ *   fg            16.87 / 14.72 / 12.22
+ *   muted          8.65 /  7.55 /  6.27
+ *   accent         8.73 /  7.62 /  6.32
+ *   accent-hover  12.28 / 10.72 /  8.90
+ *   sun           12.18 / 10.63 /  8.83
+ *   sun-hover     14.49 / 12.65 / 10.50
+ *   accent-fg on accent 8.73, on accent-hover 12.28
+ *   sun-fg on sun 12.18, on sun-hover 14.49
+ * If you change a color or the surface alpha, recompute these (composite the
+ * surface over bg: c = a * surface + (1 - a) * bg per channel). Anything drawn
+ * behind content later (S24 background) must stay dim enough to keep them.
  */
 
-/* Dark variant follows the resolved theme, not the media query directly. */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
 :root {
-  color-scheme: light;
-  --theme-bg: #ffffff; /* page background */
-  --theme-surface: #f1f5f9; /* cards, raised areas */
-  --theme-fg: #0f172a; /* body text */
-  --theme-muted: #475569; /* secondary text */
-  --theme-accent: #0369a1; /* links, primary actions */
-  --theme-accent-hover: #075985;
-  --theme-accent-fg: #ffffff; /* text on accent backgrounds */
-  --theme-border: #e2e8f0;
-  --theme-ring: #0369a1; /* focus outline */
-}
-
-[data-theme='dark'] {
   color-scheme: dark;
-  --theme-bg: #0b1120;
-  --theme-surface: #162032;
-  --theme-fg: #e2e8f0;
-  --theme-muted: #94a3b8;
-  --theme-accent: #38bdf8;
-  --theme-accent-hover: #7dd3fc;
-  --theme-accent-fg: #0b1120;
-  --theme-border: #1e293b;
-  --theme-ring: #38bdf8;
+  --theme-bg: #05060f; /* page background: deep space */
+  --theme-surface: rgb(139 147 255 / 0.12); /* glass: cards, raised areas */
+  --theme-fg: #e8eaf6; /* body text: starlight */
+  --theme-muted: #a3a8c8; /* secondary text */
+  --theme-accent: #a5a0ff; /* nebula: links, primary actions */
+  --theme-accent-hover: #c7c4ff;
+  --theme-accent-fg: #05060f; /* text on accent backgrounds */
+  --theme-sun: #fbbf4d; /* warm sun highlight */
+  --theme-sun-hover: #fdd58a;
+  --theme-sun-fg: #05060f; /* text on sun backgrounds */
+  --theme-border: rgb(139 147 255 / 0.2);
+  --theme-ring: #a5a0ff; /* focus outline */
 }
 
 @theme inline {
@@ -57,6 +60,9 @@
   --color-accent: var(--theme-accent);
   --color-accent-hover: var(--theme-accent-hover);
   --color-accent-fg: var(--theme-accent-fg);
+  --color-sun: var(--theme-sun);
+  --color-sun-hover: var(--theme-sun-hover);
+  --color-sun-fg: var(--theme-sun-fg);
   --color-border: var(--theme-border);
   --color-ring: var(--theme-ring);
 }

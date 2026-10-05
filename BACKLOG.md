@@ -36,8 +36,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | done   |
 | S27 | Remaining page scenes          | dev-2  | S26        | done   |
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | done   |
-| S29 | Scene engine follow-ups        | dev-1  | S27        | in progress |
+| S29 | Scene engine follow-ups        | dev-1  | S27        | done   |
 | S30 | Space-themed favicon & OG image | dev-2 | S23       | in progress |
+| S31 | Nebula & sun build incrementally | dev-2 | S29      | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -355,8 +356,8 @@ After the new components (S25) and showpiece scenes (S26) land, each page needs 
 ### S29 — Scene engine follow-ups
 *As a developer, I want the scene code's docs to match how it works, and first visits to heavy scenes to stay smooth.*
 Found in S27 review.
-- [ ] `src/scenes/starfield.ts`: the file header and the `starfieldScene` comment no longer say it is the default for unmapped routes (that is now `lostInSpaceScene` in `routes.ts`)
-- [ ] Investigate the first-visit cost of scenes that bake sprites on create (nebula: ~160 ms main-thread block at 4x CPU throttle). If it causes a visible stutter at the start of a crossfade, add engine support for spreading scene setup over several frames (e.g. an optional async/incremental `create`), documented in `types.ts`; otherwise record the measurement and close
+- [x] `src/scenes/starfield.ts`: the file header and the `starfieldScene` comment no longer say it is the default for unmapped routes (that is now `lostInSpaceScene` in `routes.ts`)
+- [x] Investigate the first-visit cost of scenes that bake sprites on create (nebula: ~160 ms main-thread block at 4x CPU throttle). If it causes a visible stutter at the start of a crossfade, add engine support for spreading scene setup over several frames (e.g. an optional async/incremental `create`), documented in `types.ts`; otherwise record the measurement and close
 
 ### S30 — Space-themed favicon & OG image
 *As a visitor sharing or bookmarking the site, I want its icon and preview image to match the space theme.*
@@ -364,3 +365,11 @@ Found in S28 review: `public/og-image.png` still uses the pre-S23 palette (sky b
 - [ ] `public/favicon.svg` replaced with a simple space-palette icon (clearly placeholder, e.g. a planet or star mark), legible at 16px and 32px
 - [ ] `public/og-image.png` regenerated at 1200×630 in the S23 palette, still clearly marked placeholder; no npm dependencies added
 - [ ] `index.html` links unchanged and both files served with the right content type from `vite preview`
+
+### S31 — Nebula & sun scenes build incrementally
+*As a visitor on a phone, I want moving to Resume or About to stay smooth instead of freezing for a moment.*
+Found in S29: at 375px with 4x CPU throttle, the first visit to /resume freezes the page for 217–300 ms (nebula `create` ~185 ms) and /about for 217–267 ms (sun `create` 80–100 ms). S29 added an optional generator `create` to the scene contract (see "Heavy setup" in `src/scenes/types.ts` and dev-1's S29 log entry).
+- [ ] `nebulaScene` and `sunScene` use the generator `create`, yielding often enough that no main-thread task exceeds ~50 ms at 375px / 4x throttle (measure Home → Resume and Home → About)
+- [ ] Caches (e.g. nebula `cloudCache`) are only written after a bake completes, so a cancelled build leaves no half-written state; `resize` stays synchronous via `runToEnd`
+- [ ] Navigating away or back mid-build, toggling reduced motion mid-build, and direct loads all end on the correct scene with no console errors
+- [ ] Other scenes unchanged; `npm run build` and `npm run lint` pass

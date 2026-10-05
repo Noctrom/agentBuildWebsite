@@ -31,9 +31,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | done   |
 | S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | done   |
 | S23 | Space palette, always dark     | dev-1  | PR #2      | done   |
-| S24 | Animated space background      | dev-1  | S23        | in progress |
-| S25 | Space-styled components        | dev-1  | S23, S24   | todo   |
-| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | todo   |
+| S24 | Animated space background      | dev-1  | S23        | done   |
+| S25 | Space-styled components        | dev-1  | S23, S24   | in progress |
+| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | in progress |
 | S27 | Remaining page scenes          | dev-2  | S26        | todo   |
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | todo   |
 
@@ -276,15 +276,15 @@ Triaged from story inbox D5 (story-writer, 2026-10-04). Ownership: this story cr
 
 Chris chose **subtle motion** (not a full 3D scene), **drawn in code** (not image files), using real space imagery (e.g. NASA, Hubble, JWST) as visual reference for colors and shapes. This story builds the shared background layer and the base starfield/nebula used on every page; S26 and S27 add a different scene per page on top of it.
 
-- [ ] A background component fixed behind all content on every route, wired into `Layout`, rendering the scene for the current route (this story ships a default scene used everywhere)
-- [ ] Scenes are self-contained files in their own folder (e.g. `src/scenes/`) with a documented, typed scene interface and a route → scene map in that folder, so another dev can add or change scenes without touching the engine, `Layout` or `ui/` (this is what lets S26/S27 go to dev-2)
-- [ ] Default scene: layered starfield with gentle twinkling, slowly drifting nebula clouds, and a slight parallax between layers on scroll
-- [ ] Drawn in code (canvas/WebGL/SVG/CSS); no large image assets; no heavy 3D libraries without leader approval
-- [ ] Stays dim behind content so text over it meets WCAG AA at every frame
-- [ ] "Reduce motion" on: shows a still frame, no animation
-- [ ] Pauses when the tab is hidden; smooth on a mid-range phone and laptop (no visible jank while scrolling); doesn't delay the page content appearing
-- [ ] If the animation can't run, a static space gradient shows instead and the site still works
-- [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+- [x] A background component fixed behind all content on every route, wired into `Layout`, rendering the scene for the current route (this story ships a default scene used everywhere)
+- [x] Scenes are self-contained files in their own folder (e.g. `src/scenes/`) with a documented, typed scene interface and a route → scene map in that folder, so another dev can add or change scenes without touching the engine, `Layout` or `ui/` (this is what lets S26/S27 go to dev-2)
+- [x] Default scene: layered starfield with gentle twinkling, slowly drifting nebula clouds, and a slight parallax between layers on scroll
+- [x] Drawn in code (canvas/WebGL/SVG/CSS); no large image assets; no heavy 3D libraries without leader approval
+- [x] Stays dim behind content so text over it meets WCAG AA at every frame
+- [x] "Reduce motion" on: shows a still frame, no animation
+- [x] Pauses when the tab is hidden; smooth on a mid-range phone and laptop (no visible jank while scrolling); doesn't delay the page content appearing
+- [x] If the animation can't run, a static space gradient shows instead and the site still works
+- [x] Works at 375px and desktop; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 

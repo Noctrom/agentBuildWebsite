@@ -31,7 +31,7 @@ docs/story-inbox.md  # Draft stories from the story-writer, waiting for leader t
 - **Leader** = the main Claude Code session. Writes/assigns stories in `BACKLOG.md`, reviews dev work, merges, reports progress to Chris. Does not write feature code.
 - **story-writer** (product owner) talks with Chris in its own session (`claude --agent story-writer`) and drafts user stories into `docs/story-inbox.md` (ids `D<n>`, status `draft` or `ready`). It writes no code, runs no git, and never edits `BACKLOG.md`.
 - **dev-1** (foundation & design system) and **dev-2** (pages & content) are subagents in `.claude/agents/`.
-- **Story intake:** the leader checks `docs/story-inbox.md` when planning work. For each `ready` story it reviews scope and criteria, assigns an `S` id and owner, adds it to `BACKLOG.md`, removes it from the inbox, and commits both files on `leader`. `draft` stories are left alone; questions about a story go back to Chris.
+- **Story intake:** when stories become `ready`, the story-writer sends the leader a one-line message (SendMessage). The leader triages at its next convenient point, without interrupting a story in progress. As a fallback in case a message is missed, the leader also checks `docs/story-inbox.md` when planning work. For each `ready` story it reviews scope and criteria, assigns an `S` id and owner, adds it to `BACKLOG.md`, removes it from the inbox, and commits both files on `leader`. `draft` stories are left alone; questions about a story go back to Chris.
 - Each story is done on its own branch `story/<id>-<slug>` in an isolated worktree, then reviewed and merged into `leader` by the leader.
 - Stay inside your owned folders. If you need a change in another dev's area, report it back instead of making it.
 

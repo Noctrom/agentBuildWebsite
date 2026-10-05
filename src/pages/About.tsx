@@ -20,7 +20,7 @@ export default function About() {
               <ul aria-label={group.category} className="mt-3 flex flex-wrap gap-2">
                 {group.skills.map((skill) => (
                   <li key={skill}>
-                    <Tag className="bg-bg">{skill}</Tag>
+                    <Tag tone="bg">{skill}</Tag>
                   </li>
                 ))}
               </ul>

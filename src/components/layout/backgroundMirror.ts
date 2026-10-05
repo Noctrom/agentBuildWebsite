@@ -80,20 +80,26 @@ export function useMirrorFallback() {
 }
 
 /**
- * Keep `canvas` painted with the background pixels behind it. The canvas's
- * backing size follows its rendered size (a ResizeObserver repaints it when
- * it changes, e.g. the menu opening). A canvas that isn't rendered (display
- * none, from lg) is skipped.
+ * Keep `canvas` painted with the background pixels behind it. The canvas is
+ * opaque: the solid page color with the background's layers on top, so it
+ * needs nothing behind it and the compositor can skip what it covers.
+ *
+ * Its rect is measured when its size changes (a ResizeObserver, e.g. the
+ * menu opening), not on every frame: a mirror must sit still in the
+ * viewport, as the sticky top bar does (always at its top-left). Its backing
+ * size follows that rect at the background's scale. A canvas that isn't
+ * rendered (display none, from lg) is skipped.
  */
 export function useBackgroundMirror() {
   const ref = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = ref.current
-    const ctx = canvas?.getContext('2d')
+    const ctx = canvas?.getContext('2d', { alpha: false })
     if (!canvas || !ctx) return
+    const pageColor = getComputedStyle(canvas).getPropertyValue('--theme-bg').trim() || '#05060f'
+    let rect = canvas.getBoundingClientRect()
     const repaint = () => {
-      const rect = canvas.getBoundingClientRect()
       if (rect.width === 0 || rect.height === 0) return
       const scale = source?.scale ?? 1
       const width = Math.max(1, Math.round(rect.width * scale))
@@ -103,12 +109,16 @@ export function useBackgroundMirror() {
       if (canvas.height !== height) canvas.height = height
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.globalAlpha = 1
-      ctx.clearRect(0, 0, width, height)
+      ctx.fillStyle = pageColor
+      ctx.fillRect(0, 0, width, height)
       source?.paintCopy(ctx, rect.left, rect.top)
     }
     mirrors.add(repaint)
     repaint()
-    const observer = new ResizeObserver(repaint)
+    const observer = new ResizeObserver(() => {
+      rect = canvas.getBoundingClientRect()
+      repaint()
+    })
     observer.observe(canvas)
     return () => {
       observer.disconnect()

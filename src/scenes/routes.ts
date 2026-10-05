@@ -1,3 +1,5 @@
+import { blackHoleScene } from './blackHole'
+import { solarSystemScene } from './solarSystem'
 import { starfieldScene } from './starfield'
 import type { Scene } from './types'
 
@@ -11,7 +13,8 @@ import type { Scene } from './types'
  *   '/behind-the-scenes': blackHoleScene,
  */
 export const routeScenes: Readonly<Record<string, Scene>> = {
-  '/': starfieldScene,
+  '/': solarSystemScene,
+  '/behind-the-scenes': blackHoleScene,
 }
 
 /** Scene for routes not listed above, including the 404 page. */

@@ -305,3 +305,46 @@
 **Follow-ups**
 - S22 (dev-1): nav link to `/behind-the-scenes`.
 - Recheck the page after S23 merges (space palette); it uses tokens only.
+
+## S26 — Showpiece scenes: solar system & black hole (2026-10-04)
+**Branch:** story/S26-showpiece-scenes · **Status:** done
+
+**What I did**
+- Home (`/`) shows a solar system. A warm sun (`#fbbf4d` with a white-hot core, limb darkening and a slowly breathing corona) sits in the top-right corner, partly off-screen. Seven planets after NASA imagery (rocky, Venus, Earth, Mars, banded Jupiter, ringed Saturn, Neptune) move slowly along tilted, visible orbits. Periods are 70 to 600 s. The orbit plane runs diagonally down and to the left, so the system frames the hero on the photo side instead of sitting behind the heading and pitch. At 375px it is smaller and tucked into the corner above the centered column. Tablets get a slightly larger system so the inner planets aren't all behind the photo.
+- Behind the Scenes (`/behind-the-scenes`) shows a black hole: a black shadow with a thin photon ring and a tilted, slowly turning accretion disk. The disk passes in front of the shadow and is brighter on the side turning toward us (relativistic beaming). Faint light-bending comes in two parts: the far side of the disk is bent up over the top of the shadow (with a fainter image underneath), and background starlight is stretched into thin tangential arcs around a faint Einstein ring. It sits upper right, mostly beside the prose column at desktop.
+- Both scenes are mapped in `src/scenes/routes.ts`. The other routes keep the default starfield until S27.
+- Correct scene on direct load, refresh and client-side navigation. The engine's 1.2 s crossfade runs between scene ids, and it is instant with reduce motion.
+- Both scenes look complete at time 0 (the reduced-motion still frame), draw at full brightness, and leave dimming to the engine. Neither works around the 0.1 opacity cap.
+
+**How I did it**
+- Each scene draws the shared `createStarfield` first, as a sparser base layer with its own seed and palette, and forwards `resize`/`dispose` to it. Positions are pure functions of `time`, and parallax is a small capped shift of the whole object from `scrollY`.
+- All gradients and paths are baked into sprites on create/resize. Solar system sprites: corona, sun disk, a lit planet body per planet, a night-side shade that is rotated each frame to face away from the sun, and Saturn's rings split into back and front halves. Planets on the far half of their orbit are drawn before the sun and the rest after it, so they pass behind and in front.
+- Black hole sprites: a face-on disk texture (gradient annulus with streaks and dark lanes), a beaming mask, one backdrop sprite (glow plus lensed star arcs), and the lensed-disk/photon-ring sprite. The turning disk is rendered into a small offscreen layer (rotate the texture, squash it, `destination-in` the beaming mask). That layer is drawn as two halves: the far half behind the shadow and the near half in front.
+- Performance problems and fixes, measured at 375px, DPR 3 emulated, 4x CPU throttle:
+  - The black hole first cost about 2.7 ms per tick. Removing the per-frame disk render showed it accounted for about 1.8 ms. The disk only turns 0.045 rad/s, so the rim moves under a pixel per 1/12 s. I now re-render the layer at 12 fps (`DISK_FPS`), which brought the tick to about 1.4 ms.
+  - I also merged the halo and lensed-star sprites into one smaller backdrop sprite (5.2r instead of 7r).
+  - The solar system's orbits were first a full-viewport bitmap and then per-frame ellipse strokes. Disabling them showed their raster cost (not visible in the JS tick) caused most of the dropped frames. They are now baked into a bitmap cropped to the orbits' bounding box and blitted 1:1 at whole-pixel offsets.
+- The diagnostic full-opacity screenshots needed an `!important` stylesheet, because the engine rewrites the canvas's inline opacity every frame. This was done only in the test script.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - Ran `/`, `/behind-the-scenes` and `/about` at 375/768/1280/1920, with and without `reducedMotion: 'reduce'`. That is 24 runs. Every run had one canvas at opacity 0.1, no horizontal overflow and no console or page errors.
+  - Took diagnostic screenshots with the canvas forced to opacity 1 (content hidden and shown) to judge the drawing at every width, as still frames and animated.
+- Scene detection by sampling canvas pixels (sun color or black shadow):
+  - Direct load of `/` gives the solar system, and direct load and refresh of `/behind-the-scenes` give the black hole, at 375 and 1280.
+  - Client-side navigation `/behind-the-scenes` → `/` crossfades. Layer opacities were 0.100/0.000 at +50 ms, about 0.054/0.046 at +600 ms, and a single layer at 0.100 after it finished. `/about` then showed the starfield and `/behind-the-scenes` the black hole again.
+  - With reduce motion the swap was instant (one layer throughout), and the canvas was pixel-identical 1 s apart. Animated runs changed over the same 1 s.
+- Frame cost while auto-scrolling for 5 s (engine rAF tick, which includes the scene draw):
+  - 375px, 4x throttle: starfield 0.8–1.05 ms average, solar system 1.1–1.5 ms, black hole 1.3–1.6 ms (p95 up to about 3.5–3.9 ms on disk re-render frames). 54–60 fps.
+  - Dropped-frame counts varied a lot between identical runs (0 to about 30 per 5 s for both scenes; the starfield baseline was 0–2). The machine was shared with parallel work, so treat those counts as noisy.
+  - 1280 and 1920 without throttling: 60 fps, ticks 0.4–0.9 ms average.
+
+**Files**
+- Added: `src/scenes/solarSystem.ts`, `src/scenes/blackHole.ts`
+- Changed: `src/scenes/routes.ts`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- Leader/Chris: at the current 0.1 cap both scenes are very faint (known open question). They are designed to read well if brightness is raised; the full-opacity screenshots show the intended drawing.
+- S25 (dev-1): once the header is frosted, the sun (and the top of the black hole disk on mobile) will show through it. They currently sit partly under the opaque header at 375px.
+- Headless Chromium uses software raster. If the leader wants firmer numbers, a check on a real mid-range phone would settle the noisy dropped-frame counts.

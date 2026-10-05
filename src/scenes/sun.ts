@@ -1,7 +1,8 @@
+import { runToEnd } from './build'
 import { makeCanvas, makeSoftDot, rgba, type Rgb } from './canvas'
 import { between, createRandom } from './random'
 import { createStarfield } from './starfield'
-import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
+import type { Scene, SceneBuild, SceneFrame, SceneSetup, SceneSize } from './types'
 
 /**
  * About scene (S27): a close view of a star. A large sun sits on the right
@@ -13,6 +14,12 @@ import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
  * Cost per frame: the starfield, the corona, the disk, two granulation
  * layers, two flare glows and a few prominence sprites. Every gradient and
  * path is baked on create/resize.
+ *
+ * The bake takes about 80-100 ms at 375px on a 4x throttled CPU, mostly the
+ * thousands of granulation cells, so `create` is a generator (S31, see
+ * "Heavy setup" in `types.ts`): it yields between sprites and every few
+ * hundred cells, and the engine spreads the work over frames. `resize` runs
+ * the same bake to the end at once with `runToEnd`.
  */
 
 /** Sun color from the `sun` palette (#fbbf4d). */
@@ -22,6 +29,8 @@ const MAX_PARALLAX = 40
 /** Prominence sprite padding (for the glow) and where the feet sit within it, as fractions. */
 const PROMINENCE_PAD = 0.6
 const FOOT = 0.4
+/** Granulation cells stamped between yields (each slice stays well under 5 ms on a slow phone). */
+const CELLS_PER_SLICE = 200
 
 interface Layout {
   cx: number
@@ -134,8 +143,12 @@ function makeDisk(r: number, random: () => number): HTMLCanvasElement {
   return canvas
 }
 
-/** Granulation: many small bright cells, fading out toward the limb. */
-function makeGranulation(r: number, random: () => number, dot: HTMLCanvasElement): HTMLCanvasElement {
+/** Granulation: many small bright cells, fading out toward the limb. Yields every `CELLS_PER_SLICE` cells. */
+function* makeGranulation(
+  r: number,
+  random: () => number,
+  dot: HTMLCanvasElement,
+): Generator<unknown, HTMLCanvasElement, undefined> {
   const canvas = makeCanvas(r * 2, r * 2)
   const ctx = canvas.getContext('2d')
   if (!ctx) return canvas
@@ -147,6 +160,7 @@ function makeGranulation(r: number, random: () => number, dot: HTMLCanvasElement
     const s = cell * between(random, 1.2, 2.2)
     ctx.globalAlpha = between(random, 0.1, 0.38)
     ctx.drawImage(dot, r + Math.cos(a) * d - s / 2, r + Math.sin(a) * d - s / 2, s, s)
+    if (i % CELLS_PER_SLICE === CELLS_PER_SLICE - 1) yield
   }
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'destination-in'
@@ -210,7 +224,7 @@ interface ProminenceSprite {
   phase: number
 }
 
-function createSun(setup: SceneSetup) {
+function* createSun(setup: SceneSetup): SceneBuild {
   const stars = createStarfield(setup, {
     seed: 27,
     density: 0.5,
@@ -221,6 +235,7 @@ function createSun(setup: SceneSetup) {
       [235, 150, 80],
     ],
   })
+  yield
 
   let layout = layoutFor(setup)
   let corona: HTMLCanvasElement | null = null
@@ -230,31 +245,48 @@ function createSun(setup: SceneSetup) {
   let flare: HTMLCanvasElement | null = null
   let prominences: ProminenceSprite[] = []
 
-  function build(size: SceneSize) {
-    layout = layoutFor(size)
+  /**
+   * Bake every sprite for a viewport size. Works on locals and only assigns
+   * the scene's state at the end, so `draw` never sees a half-built mix of sizes.
+   */
+  function* build(size: SceneSize): Generator<unknown, void, undefined> {
+    const nextLayout = layoutFor(size)
     const random = createRandom(2701)
-    const { r } = layout
-    corona = makeCorona(r, random)
-    disk = makeDisk(r, random)
+    const { r } = nextLayout
+    const nextCorona = makeCorona(r, random)
+    yield
+    const nextDisk = makeDisk(r, random)
+    yield
     const cellDot = makeSoftDot([255, 246, 215], 16)
-    granA = makeGranulation(r, random, cellDot)
-    granB = makeGranulation(r, random, cellDot)
-    flare = makeSoftDot([255, 250, 230], 64, 0.15)
-    prominences = PROMINENCES.map((p) => {
+    const nextGranA = yield* makeGranulation(r, random, cellDot)
+    yield
+    const nextGranB = yield* makeGranulation(r, random, cellDot)
+    yield
+    const nextFlare = makeSoftDot([255, 250, 230], 64, 0.15)
+    const nextProminences: ProminenceSprite[] = []
+    for (const p of PROMINENCES) {
       const w = p.width * r
       const h = p.height * r
       const canvas = makeProminence(w, h, random)
-      return {
+      nextProminences.push({
         canvas,
         foot: h * PROMINENCE_PAD * FOOT,
         angle: (p.angle * Math.PI) / 180,
         speed: p.speed,
         phase: p.phase,
-      }
-    })
+      })
+      yield
+    }
+    layout = nextLayout
+    corona = nextCorona
+    disk = nextDisk
+    granA = nextGranA
+    granB = nextGranB
+    flare = nextFlare
+    prominences = nextProminences
   }
 
-  build(setup)
+  yield* build(setup)
 
   function draw(frame: SceneFrame) {
     stars.draw(frame)
@@ -311,7 +343,7 @@ function createSun(setup: SceneSetup) {
     draw,
     resize(next: SceneSize) {
       stars.resize?.(next)
-      build(next)
+      runToEnd(build(next))
     },
     dispose() {
       stars.dispose?.()

@@ -4,6 +4,7 @@ import type {
   ReactNode,
 } from 'react'
 import { Link, type LinkProps } from 'react-router'
+import { glassClass, glowClass } from './tone'
 
 export type ButtonVariant = 'primary' | 'secondary'
 export type ButtonSize = 'sm' | 'md'
@@ -48,14 +49,16 @@ export type ButtonButtonProps = ButtonBaseProps &
 /** Discriminated by `to` (Link), `href` (anchor) or neither (button). */
 export type ButtonProps = ButtonLinkProps | ButtonAnchorProps | ButtonButtonProps
 
-const base =
-  'inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60'
+const base = `inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border font-medium ${glowClass} disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none`
 
+/**
+ * `primary` stays a solid accent fill (the one strong call to action);
+ * `secondary` is frosted glass. Both glow on hover and keyboard focus.
+ */
 const variants: Record<ButtonVariant, string> = {
   primary:
     'border-accent bg-accent text-accent-fg hover:border-accent-hover hover:bg-accent-hover',
-  secondary:
-    'border-border bg-surface text-fg hover:border-accent hover:text-accent',
+  secondary: `border-border ${glassClass.surface} text-fg hover:border-accent hover:text-accent`,
 }
 
 const sizes: Record<ButtonSize, string> = {

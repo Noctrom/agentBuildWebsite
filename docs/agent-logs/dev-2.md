@@ -277,3 +277,256 @@
 
 **Fixes after review**
 - `NotFound.tsx`: removed my extra `<div className="mt-8">` around the home Button. `Section` already wraps its children in a `mt-8` div, so the gap was doubled to 64px. Now the gap between the intro and the button is 32px, the same as on other pages (checked in headless Chromium at 375px and 1280px). The metadata check script still passes, and build and lint pass.
+
+## S21 — Behind the Scenes page (2026-10-04)
+**Branch:** story/S21-behind-the-scenes · **Status:** done
+
+**What I did**
+- Added the page `BehindTheScenes` at `/behind-the-scenes` (route in `App.tsx`, before the `*` catch-all). It has its own `PageMeta`, so the tab reads "Behind the Scenes · Jane Placeholder". I did not add a nav link (that is S22, dev-1).
+- All page text is Chris's draft copy, used as written. It lives in `src/content/pages/behindTheScenes.ts` and follows the S15 page-copy pattern (`meta`, `title`, `intro`, `<section>Title` / `<section>Intro`, `<thing>Label`).
+- Diagram A (`StoryFlowDiagram`) is in "How work flows". It has three stages: Plan (Chris → Story writer → Story inbox → Leader), Build (dev-1 / dev-2 → Leader review → `leader`) and Ship (Pull request → Chris → `main` → Vercel). These are all the S20 steps, in order. The "Send back for fixes" loop goes from review to dev. Both ends are in the Build stage, so it draws as a bracket.
+- Diagram B (`BranchDiagram`) is in "Branches and reviews". It shows `main` ← `leader` ← `story/<id>-<slug>`, with who may change each branch and how work moves up a level.
+- The "View the source on GitHub" button links to `repoUrl`, which is defined once in the content file. It opens in a new tab.
+
+**How I did it**
+- The diagram data is typed with the component types (`FlowStage`, `FlowLoop`, `BranchLevel`), using `import type` from `components/ui`. That import is erased at build time, so there is no runtime cycle with `PageMeta`, which imports `content`.
+- `Button` already gives `http(s)://` hrefs `target="_blank"` and `rel="noopener noreferrer"`, plus a screen-reader "(opens in a new tab)" note. No ui/ change was needed.
+- Sections switch between the default and surface tones. Diagram A sits in a surface band, so it gets `tone="bg"`. Prose sections use `Section`'s `intro` slot. The page only uses existing token classes (`text-fg`, `text-muted`), so the S23 palette will apply.
+- I wrote the diagram step details myself without pronouns for Chris (e.g. "Decides what gets built"). The diagrams say "Chris" rather than "Me", because "Me" reads oddly as a box label. The draft's `main` code span is stored as plain text, because content strings carry no markup.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview` at 375px and 1280px: 28/28 checks passed. Checked: the title, exactly one `<title>` and one meta description, the h1, both figures fully inside the viewport, the loop label and key diagram text visible, no horizontal overflow, the repo link href/`target="_blank"`/`rel="noopener noreferrer"`, and no console errors. I also looked at full-page and per-diagram screenshots at both widths.
+
+**Files**
+- Added: `src/content/pages/behindTheScenes.ts`, `src/pages/BehindTheScenes.tsx`
+- Changed: `src/content/pages/index.ts` (export), `src/App.tsx` (import plus one route), `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- S22 (dev-1): nav link to `/behind-the-scenes`.
+- Recheck the page after S23 merges (space palette); it uses tokens only.
+
+## S26 — Showpiece scenes: solar system & black hole (2026-10-04)
+**Branch:** story/S26-showpiece-scenes · **Status:** done
+
+**What I did**
+- Home (`/`) shows a solar system. A warm sun (`#fbbf4d` with a white-hot core, limb darkening and a slowly breathing corona) sits in the top-right corner, partly off-screen. Seven planets after NASA imagery (rocky, Venus, Earth, Mars, banded Jupiter, ringed Saturn, Neptune) move slowly along tilted, visible orbits. Periods are 70 to 600 s. The orbit plane runs diagonally down and to the left, so the system frames the hero on the photo side instead of sitting behind the heading and pitch. At 375px it is smaller and tucked into the corner above the centered column. Tablets get a slightly larger system so the inner planets aren't all behind the photo.
+- Behind the Scenes (`/behind-the-scenes`) shows a black hole: a black shadow with a thin photon ring and a tilted, slowly turning accretion disk. The disk passes in front of the shadow and is brighter on the side turning toward us (relativistic beaming). Faint light-bending comes in two parts: the far side of the disk is bent up over the top of the shadow (with a fainter image underneath), and background starlight is stretched into thin tangential arcs around a faint Einstein ring. It sits upper right, mostly beside the prose column at desktop.
+- Both scenes are mapped in `src/scenes/routes.ts`. The other routes keep the default starfield until S27.
+- Correct scene on direct load, refresh and client-side navigation. The engine's 1.2 s crossfade runs between scene ids, and it is instant with reduce motion.
+- Both scenes look complete at time 0 (the reduced-motion still frame), draw at full brightness, and leave dimming to the engine. Neither works around the 0.1 opacity cap.
+
+**How I did it**
+- Each scene draws the shared `createStarfield` first, as a sparser base layer with its own seed and palette, and forwards `resize`/`dispose` to it. Positions are pure functions of `time`, and parallax is a small capped shift of the whole object from `scrollY`.
+- All gradients and paths are baked into sprites on create/resize. Solar system sprites: corona, sun disk, a lit planet body per planet, a night-side shade that is rotated each frame to face away from the sun, and Saturn's rings split into back and front halves. Planets on the far half of their orbit are drawn before the sun and the rest after it, so they pass behind and in front.
+- Black hole sprites: a face-on disk texture (gradient annulus with streaks and dark lanes), a beaming mask, one backdrop sprite (glow plus lensed star arcs), and the lensed-disk/photon-ring sprite. The turning disk is rendered into a small offscreen layer (rotate the texture, squash it, `destination-in` the beaming mask). That layer is drawn as two halves: the far half behind the shadow and the near half in front.
+- Performance problems and fixes, measured at 375px, DPR 3 emulated, 4x CPU throttle:
+  - The black hole first cost about 2.7 ms per tick. Removing the per-frame disk render showed it accounted for about 1.8 ms. The disk only turns 0.045 rad/s, so the rim moves under a pixel per 1/12 s. I now re-render the layer at 12 fps (`DISK_FPS`), which brought the tick to about 1.4 ms.
+  - I also merged the halo and lensed-star sprites into one smaller backdrop sprite (5.2r instead of 7r).
+  - The solar system's orbits were first a full-viewport bitmap and then per-frame ellipse strokes. Disabling them showed their raster cost (not visible in the JS tick) caused most of the dropped frames. They are now baked into a bitmap cropped to the orbits' bounding box and blitted 1:1 at whole-pixel offsets.
+- The diagnostic full-opacity screenshots needed an `!important` stylesheet, because the engine rewrites the canvas's inline opacity every frame. This was done only in the test script.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - Ran `/`, `/behind-the-scenes` and `/about` at 375/768/1280/1920, with and without `reducedMotion: 'reduce'`. That is 24 runs. Every run had one canvas at opacity 0.1, no horizontal overflow and no console or page errors.
+  - Took diagnostic screenshots with the canvas forced to opacity 1 (content hidden and shown) to judge the drawing at every width, as still frames and animated.
+- Scene detection by sampling canvas pixels (sun color or black shadow):
+  - Direct load of `/` gives the solar system, and direct load and refresh of `/behind-the-scenes` give the black hole, at 375 and 1280.
+  - Client-side navigation `/behind-the-scenes` → `/` crossfades. Layer opacities were 0.100/0.000 at +50 ms, about 0.054/0.046 at +600 ms, and a single layer at 0.100 after it finished. `/about` then showed the starfield and `/behind-the-scenes` the black hole again.
+  - With reduce motion the swap was instant (one layer throughout), and the canvas was pixel-identical 1 s apart. Animated runs changed over the same 1 s.
+- Frame cost while auto-scrolling for 5 s (engine rAF tick, which includes the scene draw):
+  - 375px, 4x throttle: starfield 0.8–1.05 ms average, solar system 1.1–1.5 ms, black hole 1.3–1.6 ms (p95 up to about 3.5–3.9 ms on disk re-render frames). 54–60 fps.
+  - Dropped-frame counts varied a lot between identical runs (0 to about 30 per 5 s for both scenes; the starfield baseline was 0–2). The machine was shared with parallel work, so treat those counts as noisy.
+  - 1280 and 1920 without throttling: 60 fps, ticks 0.4–0.9 ms average.
+
+**Files**
+- Added: `src/scenes/solarSystem.ts`, `src/scenes/blackHole.ts`
+- Changed: `src/scenes/routes.ts`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- Leader/Chris: at the current 0.1 cap both scenes are very faint (known open question). They are designed to read well if brightness is raised; the full-opacity screenshots show the intended drawing.
+- S25 (dev-1): once the header is frosted, the sun (and the top of the black hole disk on mobile) will show through it. They currently sit partly under the opaque header at 375px.
+- Headless Chromium uses software raster. If the leader wants firmer numbers, a check on a real mid-range phone would settle the noisy dropped-frame counts.
+
+## S27 — Remaining page scenes (2026-10-04)
+**Branch:** story/S27-page-scenes · **Status:** done
+
+**What I did**
+- About (`/about`) shows a sun (`sun.ts`). It is a close view: a large disk in the `sun` palette (#fbbf4d) with a white-hot center, limb darkening and a sunspot group. It sits on the right edge, mostly off-screen, so the limb curves down beside the text. On mobile it sits in the top-right corner. The surface shimmers because two granulation layers slowly crossfade and shift by a pixel. Soft glowing prominences on the visible limb rise and fade, two flare patches swell and dim, and the corona breathes in brightness.
+- Projects (`/projects`) shows planets (`planets.ts`) at four depths:
+  - near: a large banded gas giant with a storm in the bottom-right corner
+  - middle: a ringed ice planet top right
+  - farther: a cratered rocky world on the left edge
+  - farthest: a tiny blue planet near the top
+  All are lit from the upper left. Nearer planets drift further and parallax more on scroll.
+- Resume (`/resume`) shows a richer, more colorful nebula (`nebula.ts`). It has three layers: a broad blue-violet glow, turbulent emission clouds (magenta-red, teal, gold, violet) cut by dark dust lanes, and bright rims that slowly brighten and dim. There are also five young stars with six-point JWST-style spikes. The clouds hug the right edge and the bottom-left corner, leaving the text column mostly clear.
+- Contact (`/contact`) shows a distant galaxy (`galaxy.ts`) over a quiet starfield. It is a tilted two-arm spiral with a warm core, blue-white arm stars, pink star-forming knots and dust lanes, turning about once every nine minutes. There is also a small companion galaxy and two faint background smudges. It sits right of the text on desktop and below the contact card on mobile.
+- 404 shows lost in space (`lostInSpace.ts`): a sparse, dim starfield, 14 rock fragments drifting and tumbling slowly, and a small derelict satellite tumbling in the lower right.
+- `routes.ts`: every real route in `App.tsx` now has its own entry (`/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes`). `defaultScene` is now `lostInSpaceScene`, so only unmapped URLs get the 404 scene. The comment there says so.
+- Every scene is complete at time 0 (the reduced-motion still frame), draws at full brightness, and leaves dimming to the engine. Nothing works around the 0.1 cap.
+
+**How I did it**
+- I reused the S26 approach:
+  - Every scene draws `createStarfield` first, with its own seed, density and palette. The nebula uses stars only, because it draws its own clouds.
+  - Positions are pure functions of `time`.
+  - Parallax is a small, capped shift.
+  - Everything is baked into sprites on create/resize.
+- Each planet, including rings, shading and atmosphere, is a single sprite, so a frame is one `drawImage` per planet. The galaxy is a baked face-on texture that is drawn each frame with rotate, squash and rotate transforms. Its edge fades out so the square never shows.
+- New shared helpers live in `src/scenes/` only:
+  - `canvas.ts`: `makeCanvas`, `rgba`, soft-dot sprite, `spread`
+  - `noise.ts`: seeded value noise and fBm, bake-time only
+- Nebula: my first version stamped soft blobs and strokes, and it looked like bokeh and feathers. The final version bakes domain-warped fractal noise into two low-res bitmaps with `ImageData`. The noise is masked to the area around three cloud paths, colored along a noise ramp, and has dust lanes where a ridged noise peaks. Small screens get a finer bitmap, because at 0.22 scale the features were blocky at 375px.
+- Bake cost, measured as long tasks on in-app navigation at 375px with 4x throttle:
+  - The first nebula bake was about 196 ms.
+  - Three changes brought it to about 160 ms: computing segment distances once per pixel with `Math.sqrt` instead of `Math.hypot`, using fewer octaves, and using a slightly lower mobile resolution.
+  - I also keep the last bake at module level, keyed by viewport size, so a return visit costs nothing. It is two small bitmaps, well under 1 MB.
+  - At 1280 unthrottled the bake is about 60 ms.
+  - The other scenes are 0–80 ms. For comparison, the S26 black hole is about 60 ms.
+- Sun dropped frames: I found the cause with temporary per-part toggles, since removed. With everything drawn, about 33 of 300 frames were over 33 ms, even though the JS tick was only about 1 ms. Turning off the corona alone brought it to 0, so the cost was raster: a large corona sprite rescaled every frame for the "breathing", plus sub-pixel offsets. Now the corona breathes in alpha, and all the big sun sprites are blitted 1:1 at whole device pixels. The result is 0–1 slow frames.
+- Prominences: the first two versions looked like wire coils. They are now two arches per sprite, blurred with `shadowBlur` at bake time.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - Ran all 7 routes (`/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes`, `/nope`) at 375/768/1280, with and without `reducedMotion: 'reduce'`. That is 42 runs. Every run had one canvas at opacity 0.1, no horizontal overflow and no console or page errors.
+  - Took diagnostic full-opacity screenshots (an `!important` style in the test only), with content hidden and shown, and judged every scene at every width.
+- Scene identity, checked with an 8x8 fingerprint of the canvas pixels:
+  - Direct loads of the 7 routes give 7 clearly different scenes (minimum pair distance about 920).
+  - Refresh on `/contact` keeps its scene.
+  - Client-side navigation through `/about`, `/projects`, `/resume`, `/nope`, `/contact`, `/`, `/behind-the-scenes`, `/about/` (trailing slash) and `/resume` lands on the matching scene every time, at 375 and 1280 and in both motion modes.
+- Crossfades: layer opacities were 0.100/0.000 at +50 ms, about 0.05/0.05 at +600 ms, and a single layer at 0.100 at the end. With reduce motion there is one layer throughout, and the canvas is pixel-identical 1 s apart. Animated runs change over the same second.
+- Resize: going 1280 → 375 → 900 on every new route, in both modes, rebuilds cleanly with no errors.
+- Frame cost while auto-scrolling for 5 s (engine rAF tick, including the scene draw):
+  - 375px, DPR 3, 4x CPU throttle, two runs: about, projects, resume and contact were all 0.8–1.0 ms average; 404 was 1.1 ms. All ran at 60 fps with 0–3 slow frames. Home (S26) was 1.2 ms on the same runs.
+  - 768 (DPR 2) and 1280 (DPR 1) unthrottled: 0.26–0.43 ms average, 60 fps.
+
+**Files**
+- Added: `src/scenes/sun.ts`, `src/scenes/planets.ts`, `src/scenes/nebula.ts`, `src/scenes/galaxy.ts`, `src/scenes/lostInSpace.ts`, `src/scenes/canvas.ts`, `src/scenes/noise.ts`
+- Changed: `src/scenes/routes.ts`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- dev-1 / leader: two comments in `starfield.ts` (the header "Default scene (S24)" and the doc comment on `starfieldScene`, "used on every route that has no scene of its own") are now out of date, because `defaultScene` is the lost-in-space scene. The starfield is still the shared base layer. I didn't touch the file (not mine to change).
+- Leader/Chris: at the 0.1 cap all scenes are very faint (the known open brightness question). The full-opacity screenshots show the intended drawing.
+- The first visit to `/resume` blocks the main thread for about 160 ms at 4x throttle (about 40 ms real on a mid-range phone) while the nebula bakes. If that shows up as a stutter at the start of the crossfade on real phones, the bake could be split across frames.
+- At 375px every scene sits partly behind the single content column, because there are no margins to put it in. Placement keeps the big objects in corners and edges.
+
+## S28 — Pages fitted to the space theme (2026-10-04)
+**Branch:** story/S28-page-pass · **Status:** done
+
+**What I did**
+- Home hero leaves room for the solar system. The photo used to sit on the right, on top of the sun and inner planets, at 768 and up. Now the photo is a small avatar above the name, and photo and text share one left column (`md:max-w-md lg:max-w-xl`). The right side of the hero stays empty, so the sun, the orbits and the planets frame the text. On mobile the photo still sits on top (now `size-40`) and fills the orbit area, with the text below the sweep.
+- Every page was checked over its scene at 375/768/1280. Changes made:
+  - `public/photo-placeholder.svg` was still the light-theme slate portrait (`#cbd5e1`). I recolored it to the space palette: a `#15172c` field, a `#2f3361` silhouette and the label in muted `#a3a8c8` (7.55:1).
+  - I found no other light-theme leftovers in page or content code (searched for `dark:`, white/black/gray/slate classes, `bg-bg` and `border-bg`). The About timeline dot's `border-bg` ring is intentional: it cuts the line and reads fine.
+- Contact: the hand-built panel now uses `glassClass.surface` plus `glass-edge`, with the same border and radius as `Card`. Its computed fill, 12px blur and radius match a Card exactly. It is also `w-fit max-w-full`, so it hugs its content (437px at desktop instead of 65ch). That keeps it clear of the galaxy at 768 and 1280. On mobile it is full width, as before.
+- Anything needing a scene, component or token change is under Follow-ups. None of it was built in a page.
+
+**How I did it**
+- I measured before changing anything. A script recomputes the solar system's layout (same formula as `layoutFor` in `solarSystem.ts`), samples every orbit path and reports which hero boxes (heading, title, pitch, buttons, photo) each orbit and the sun cross. I ran it at 375, 390, 414, 768, 1024, 1280, 1440 and 1920.
+  - Before: the photo covered 29–41% of the Mercury to Mars orbits from 768 to 1440, and the sun itself at 768 and 1024.
+  - After: the photo covers nothing from 768 up. From 1024 up, hero text only touches the faint outermost (Neptune) orbit line, at 0–3%. At 768 the text still crosses the outer three orbit lines at 2–7%, because the 5xl name alone is 434px wide.
+- I chose the stacked avatar over shrinking the side photo. Any photo on the right lands inside the inner orbits, because the system is anchored to the top-right of the viewport.
+- In the hero, the image comes first in the DOM, so reading order matches visual order. The `h1` still labels the section.
+- To make Contact frosted, I used `glassClass` and `glass-edge` rather than `Card`. Card would turn the small "Email" label into a heading, and it would render the buttons as small card actions with sr-only suffixes. Using the recipe keeps the existing design.
+- Contrast scan (test script only). For every text element in view, at scroll steps of half a viewport, the script:
+  - samples the scene canvas under the text box
+  - composites it at a forced opacity over `#05060f`, then adds every translucent ancestor fill (blur is ignored, so the result is conservative)
+  - computes the contrast with the text color, using the 95th-percentile brightest pixel so single stars don't count
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - 7 routes (`/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes`, `/nope`) at 375/768/1280, with and without `reducedMotion: 'reduce'`, so 42 runs. Every run had one canvas at opacity 0.1, no horizontal overflow and no console errors.
+  - Looked at screenshots at the real 0.1, plus diagnostic ones with the canvas forced to 0.3 and 1.0 (an `!important` style in the test only, nothing committed). At 0.3 I also took up to four scrolled views per page.
+- Contrast at 0.1: no failures on any route or width. The lowest was 5.22 (a tag on Projects at 768).
+- Contrast at 0.3 (all failures are `text-muted`):
+  - About at 375: the skills intro in the surface band over the sun, 3.41. The sun is fixed top-right, so text passes over it while scrolling.
+  - Projects at 375/768/1280: card descriptions, tags and the footer over the gas giant and the ringed planet, as low as 3.47.
+  - Behind the Scenes at 768: the "Who can change it" diagram label over the black-hole disk, 3.6. The stack intro there scores 4.44.
+  - Home, Resume, Contact and 404 pass at 0.3. The lowest is 4.7 (Home tags at 768).
+
+**Files**
+- Changed: `src/pages/Home.tsx`, `src/pages/Contact.tsx`, `public/photo-placeholder.svg`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- Leader/Chris, if the background goes to about 0.3: muted text fails AA in the places listed under Verification. Fixing it needs one of:
+  - a scene change, placing those objects further from the content column (my scenes, a separate story)
+  - a dimmer cap per scene in the engine (dev-1)
+  - a brighter `muted` token (dev-1)
+  The page layout alone can't avoid it, because the canvas is fixed and every block of text passes under the corner objects while scrolling on mobile.
+- Text that sits right over a bright object at 0.3 but still passes AA:
+  - Projects at 768: the ringed planet behind the end of the intro
+  - Behind the Scenes at 768 and 1280: the black-hole disk behind the last line of the intro
+  - About at 375: the sun behind the first lines of the bio (fg text, which passes)
+  - Resume at 375: nebula clouds behind the intro
+- `public/og-image.png` still uses the pre-S23 palette (sky-blue accent on slate). It isn't on any page, but it could be regenerated in the space palette. `favicon.svg` is still the Vite logo. Both are placeholders.
+
+## S30 — Space-themed favicon & OG image (2026-10-04)
+**Branch:** story/S30-space-icons · **Status:** done
+
+**What I did**
+- Replaced the Vite logo in `public/favicon.svg` with a placeholder ringed planet: a sun-yellow (#fbbf4d) planet with a nebula (#a5a0ff) ring, on a rounded deep-space (#05060f) tile. It is marked as a placeholder in an SVG comment and in its `<title>`.
+- Regenerated `public/og-image.png` at 1200×630 in the S23 palette. It keeps the S19 layout and the "PLACEHOLDER OG IMAGE" label (now in sun yellow), the dashed frame and the "Replace public/og-image.png" note. I added a starfield and the same ringed planet as the favicon.
+- `index.html` is unchanged. Both files are served with the right content type.
+
+**How I did it**
+- Favicon: hand-written SVG with a 32×32 viewBox and no filters or gradients, so it stays crisp when small. The ring is split into a back arc (drawn before the planet) and a front arc (drawn after it), so it reads as going around the planet. Everything is rotated by -20°. The dark tile keeps it visible on both light and dark browser tabs.
+- OG image: Python/Pillow script in the scratchpad, the same approach as S19, using DejaVu Sans. It draws at 2× and downsamples with Lanczos for smooth edges. The starfield uses a fixed seed, so the script always produces the same image. No npm dependencies were added.
+- My first OG draft had the planet too large, and it overlapped the name. I made it smaller and moved it to the right edge.
+
+**Verification**
+- Rendered the favicon in headless Chromium (playwright-core in the scratchpad) at 16px and 32px, on white and on dark (#202124) backgrounds, and looked at them at true size and enlarged 8×. The planet and ring are clear at both sizes.
+- Looked at the final OG image. `file` reports `PNG image data, 1200 x 630`.
+- `npm run build` and `npm run lint` pass.
+- On `vite preview`, `curl -I /favicon.svg` returns `200`, `Content-Type: image/svg+xml`, and `curl -I /og-image.png` returns `200`, `Content-Type: image/png`. The served `index.html` still links `/favicon.svg` and `/og-image.png`, and `git diff leader -- index.html` is empty.
+
+**Files**
+- Changed: `public/favicon.svg`, `public/og-image.png`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- None new. The S19 note still applies: `og:image` should become an absolute URL once the production domain is known.
+
+## S31 — Nebula & sun scenes build incrementally (2026-10-05)
+**Branch:** story/S31-incremental-scenes · **Status:** done
+
+**What I did**
+- `nebulaScene` and `sunScene` now use the S29 generator `create`, so their setup runs in small slices between frames. With 375px, DPR 3 and 4x CPU throttle, Home → Resume and Home → About show no long tasks (none over 50 ms) in 13 of 14 runs. Before, they blocked for 166–178 ms and 78–86 ms.
+- `cloudCache` is written only after a cloud bake finishes. Each scene also bakes into locals and assigns its own state at the end. `resize` stays synchronous through `runToEnd(build(next))`.
+- Navigating away or back mid-build, toggling reduced motion mid-build, resizing mid-build and direct loads all end on the correct scene, with one visible canvas and no console errors.
+- No other scene and no engine file changed. Both scenes render pixel-identical to before.
+
+**How I did it**
+- nebula: `bakeClouds` is a generator that yields every 2 cloud-bitmap rows (`ROWS_PER_SLICE`). `cachedClouds` returns the cached bitmaps or `yield*`s a fresh bake, and assigns the cache only after it finishes. `build` is a generator that yields after the glow bake and `yield*`s the clouds. It sets `margin`, layers and young stars only at the end. I passed `bakeGlow` its margin as a parameter (`edge`) so it no longer reads the shared `margin` mid-build. `create` yields once after the starfield and sprite setup.
+- sun: `makeGranulation` is a generator that yields every 200 cells (`CELLS_PER_SLICE`; there are about 2,800 cells per layer at 375px). `build` yields after the corona, after the disk, between the two granulation layers and after each prominence. It assigns layout and sprites at the end.
+- The random-number sequence is consumed in the same order as before, so the output is identical. I checked this pixel by pixel (see below).
+- Slow frames: the remaining frame gaps are 33 ms (headless vsync at 4x throttle), plus a single 50 ms frame when the About crossfade starts. A trace shows that frame is about 3–5 ms of engine `tick` and about 28 ms of compositor `Commit`, so it is not scene code. In one of 9 About runs that frame was a 60 ms task.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Measurements used headless Chromium (playwright-core) against the built site, clicking the real header links through the hamburger menu. I recorded long tasks (PerformanceObserver) and rAF gaps from the click on.
+  - 375px / DPR 3 / 4x CPU throttle:
+    | Route | Before: longest task | Before: largest frame gap | After: longest task | After: largest frame gap |
+    |---|---|---|---|---|
+    | Resume (7 runs after) | 166–178 ms | 217 ms | none | 33–50 ms |
+    | About (9 runs after) | 78–86 ms | 200–217 ms | none, except one 60 ms task | 34–67 ms |
+  - Trade-off: the crossfade now starts about 500–900 ms after the click (Resume) and about 500–570 ms (About), instead of about 300–390 ms after a freeze.
+  - 1280px, unthrottled:
+    | Route | Before | After |
+    |---|---|---|
+    | Resume | 73–75 ms task, 100–117 ms gap | no long tasks, 33 ms max gap |
+    | About | 83–117 ms gap | no long tasks, 34–50 ms max gap |
+- Visual: I captured full-opacity diagnostic screenshots and raw canvas PNGs (reduced motion, time 0) of /resume and /about at 375 (DPR 3) and 1280, before and after. All 8 pairs are pixel-identical (0 differing pixels).
+- Edge cases at 375/4x, 28 checks, all passing. The visible scene was identified by comparing the top canvas with reduced-motion stills of each route.
+  - Back to Home mid-build gives solar-system. On to Contact mid-build gives galaxy. Away and back mid-build gives the target scene. This was tested for both scenes.
+  - Turning reduce motion on mid-build gives a still frame that does not change over 800 ms and is pixel-identical to the reference. Turning it off again animates. Turning reduce motion off mid-build (after starting reduced) also works.
+  - Resize to 414×700 mid-build shows the right scene at 414×700. With reduced motion, it is pixel-identical to a fresh load at 414×700, so `resize` via `runToEnd` matches.
+  - After a cancelled build, a fresh build is pixel-identical to the reference, so no half-written cache is left.
+  - Direct loads of /resume and /about, with and without reduced motion, all pass.
+  - Every case ended with 1 canvas at opacity 0.1 and no console errors.
+
+**Files**
+- Changed: `src/scenes/nebula.ts`, `src/scenes/sun.ts`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- None required. The other scenes are 15–45 ms at 375/4x (S29 numbers) and could adopt the generator `create` later if wanted.

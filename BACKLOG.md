@@ -28,14 +28,19 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | done   |
 | S20 | Workflow diagrams              | dev-1  | S4         | done   |
-| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | in progress |
-| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | todo   |
-| S23 | Space palette, always dark     | dev-1  | PR #2      | in progress |
-| S24 | Animated space background      | dev-1  | S23        | todo   |
-| S25 | Space-styled components        | dev-1  | S23, S24   | todo   |
-| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | todo   |
-| S27 | Remaining page scenes          | dev-2  | S26        | todo   |
-| S28 | Pages fitted to space theme    | dev-2  | S25, S26   | todo   |
+| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | done   |
+| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | done   |
+| S23 | Space palette, always dark     | dev-1  | PR #2      | done   |
+| S24 | Animated space background      | dev-1  | S23        | done   |
+| S25 | Space-styled components        | dev-1  | S23, S24   | done   |
+| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | done   |
+| S27 | Remaining page scenes          | dev-2  | S26        | done   |
+| S28 | Pages fitted to space theme    | dev-2  | S25, S26   | done   |
+| S29 | Scene engine follow-ups        | dev-1  | S27        | done   |
+| S30 | Space-themed favicon & OG image | dev-2 | S23       | done   |
+| S31 | Nebula & sun build incrementally | dev-2 | S29      | done   |
+| S32 | Brighter space background      | dev-1  | —          | in progress |
+| S33 | Snappier scene changes         | dev-1  | S32        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -200,11 +205,11 @@ Triaged from story inbox D2 (story-writer, 2026-10-04).
 
 Chris wants a dedicated tab explaining how the site was created: the methodology, setup, how it works, and why it's built this way. The site has two goals at once: a personal website, and a demonstration of using agents professionally. The repo (`https://github.com/Noctrom/agentBuildWebsite`) is private now; Chris will make it public before launch. The repo holds the backlog, agent definitions and story logs for anyone who wants proof, so the page links to the repo rather than to individual files.
 
-- [ ] New page "Behind the Scenes" at `/behind-the-scenes` (route added in `App.tsx`), with its own `PageMeta` (S11/S19 pattern). The nav link is S22 (dev-1), because `navItems` is in `layout/`
-- [ ] Page text is the draft copy below, stored in `src/content/` following the S15 page-copy pattern; no text hardcoded in the page
-- [ ] Diagram A (story flow) appears in "How work flows" and Diagram B (git branches) in "Branches and reviews"
-- [ ] A "View the source on GitHub" button links to the repo URL, opening in a new tab; the URL is defined once in content
-- [ ] Works at 375px and desktop widths; `npm run build` and `npm run lint` pass
+- [x] New page "Behind the Scenes" at `/behind-the-scenes` (route added in `App.tsx`), with its own `PageMeta` (S11/S19 pattern). The nav link is S22 (dev-1), because `navItems` is in `layout/`
+- [x] Page text is the draft copy below, stored in `src/content/` following the S15 page-copy pattern; no text hardcoded in the page
+- [x] Diagram A (story flow) appears in "How work flows" and Diagram B (git branches) in "Branches and reviews"
+- [x] A "View the source on GitHub" button links to the repo URL, opening in a new tab; the URL is defined once in content
+- [x] Works at 375px and desktop widths; `npm run build` and `npm run lint` pass
 
 **Draft copy** (Chris will edit later; use as-is for now):
 
@@ -246,12 +251,12 @@ Chris wants a dedicated tab explaining how the site was created: the methodology
 ### S22 — Behind the Scenes nav link
 *As a visitor, I want to find the Behind the Scenes page from the main navigation.*
 Split from inbox D2: `navItems` lives in `src/components/layout/` (dev-1). Runs after S21 so the link never points at a missing page.
-- [ ] "Behind the Scenes" entry links to `/behind-the-scenes` in the desktop nav and mobile menu, with the active-page highlight working
-- [ ] Header still fits without overflow at 375px, 768px and 1280px (check the breakpoint where the menu collapses; adjust it if the extra item crowds the bar)
+- [x] "Behind the Scenes" entry links to `/behind-the-scenes` in the desktop nav and mobile menu, with the active-page highlight working
+- [x] Header still fits without overflow at 375px, 768px and 1280px (check the breakpoint where the menu collapses; adjust it if the extra item crowds the bar)
 
 ## Sprint 2 — Space theme
 
-Order: dev-1 S23 → S22 → S24 → S25; dev-2 S21, then S26 → S27 once S24 is merged (in parallel with S25), then S28 once S25 and S26 are in. Nothing new merges into `leader` until Chris merges PR #2, so that PR stays reviewable; branches can be built meanwhile.
+Order: dev-1 S23 → S22 → S24 → S25; dev-2 S21, then S26 → S27 once S24 is merged (in parallel with S25), then S28 once S25 and S26 are in. PR #2 (S2–S20) merged by Chris on 2026-10-05.
 
 ### S23 — Space palette & typography (always dark)
 Triaged from story inbox D3 (story-writer, 2026-10-04). Sequencing: built on a branch now; merged only after PR #2 lands. Removes the header toggle, so S22 (nav link) runs after it.
@@ -260,12 +265,12 @@ Triaged from story inbox D3 (story-writer, 2026-10-04). Sequencing: built on a b
 
 Chris chose a space theme for the whole site (galaxies, black holes, nebulas, planets, suns, solar systems) and decided the site is **always dark**: the light theme and the theme toggle from S2 go away. This story sets the foundation; S25 restyles components, S24/S26/S27 add the animated backgrounds. Existing pages, including the S21 Behind the Scenes page and S20 diagrams, should pick up the new look through the tokens without page changes.
 
-- [ ] Light theme removed: no light tokens, no `ThemeToggle`/`useTheme`, no theme script in `index.html`, no toggle in the header; `color-scheme: dark`
-- [ ] New space palette in the tokens: near-black space background, translucent "glass" surface, starlight text, plus nebula accent (violet/blue range) and a warm sun accent (orange/gold range) for highlights
-- [ ] All text/background pairs meet WCAG AA, measured against the solid background and the translucent surface; contrast notes in `index.css` updated
-- [ ] Typography: keep the current font exactly as it is (Chris confirmed 2026-10-04: no new typeface, no separate display font) for headings and body; the space feel comes from color, spacing and the background, not the typeface
-- [ ] Browser UI matches (e.g. `theme-color` meta is dark)
-- [ ] Every existing page still renders correctly at 375px and desktop; `npm run build` and `npm run lint` pass
+- [x] Light theme removed: no light tokens, no `ThemeToggle`/`useTheme`, no theme script in `index.html`, no toggle in the header; `color-scheme: dark`
+- [x] New space palette in the tokens: near-black space background, translucent "glass" surface, starlight text, plus nebula accent (violet/blue range) and a warm sun accent (orange/gold range) for highlights
+- [x] All text/background pairs meet WCAG AA, measured against the solid background and the translucent surface; contrast notes in `index.css` updated
+- [x] Typography: keep the current font exactly as it is (Chris confirmed 2026-10-04: no new typeface, no separate display font) for headings and body; the space feel comes from color, spacing and the background, not the typeface
+- [x] Browser UI matches (e.g. `theme-color` meta is dark)
+- [x] Every existing page still renders correctly at 375px and desktop; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -276,15 +281,15 @@ Triaged from story inbox D5 (story-writer, 2026-10-04). Ownership: this story cr
 
 Chris chose **subtle motion** (not a full 3D scene), **drawn in code** (not image files), using real space imagery (e.g. NASA, Hubble, JWST) as visual reference for colors and shapes. This story builds the shared background layer and the base starfield/nebula used on every page; S26 and S27 add a different scene per page on top of it.
 
-- [ ] A background component fixed behind all content on every route, wired into `Layout`, rendering the scene for the current route (this story ships a default scene used everywhere)
-- [ ] Scenes are self-contained files in their own folder (e.g. `src/scenes/`) with a documented, typed scene interface and a route → scene map in that folder, so another dev can add or change scenes without touching the engine, `Layout` or `ui/` (this is what lets S26/S27 go to dev-2)
-- [ ] Default scene: layered starfield with gentle twinkling, slowly drifting nebula clouds, and a slight parallax between layers on scroll
-- [ ] Drawn in code (canvas/WebGL/SVG/CSS); no large image assets; no heavy 3D libraries without leader approval
-- [ ] Stays dim behind content so text over it meets WCAG AA at every frame
-- [ ] "Reduce motion" on: shows a still frame, no animation
-- [ ] Pauses when the tab is hidden; smooth on a mid-range phone and laptop (no visible jank while scrolling); doesn't delay the page content appearing
-- [ ] If the animation can't run, a static space gradient shows instead and the site still works
-- [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+- [x] A background component fixed behind all content on every route, wired into `Layout`, rendering the scene for the current route (this story ships a default scene used everywhere)
+- [x] Scenes are self-contained files in their own folder (e.g. `src/scenes/`) with a documented, typed scene interface and a route → scene map in that folder, so another dev can add or change scenes without touching the engine, `Layout` or `ui/` (this is what lets S26/S27 go to dev-2)
+- [x] Default scene: layered starfield with gentle twinkling, slowly drifting nebula clouds, and a slight parallax between layers on scroll
+- [x] Drawn in code (canvas/WebGL/SVG/CSS); no large image assets; no heavy 3D libraries without leader approval
+- [x] Stays dim behind content so text over it meets WCAG AA at every frame
+- [x] "Reduce motion" on: shows a still frame, no animation
+- [x] Pauses when the tab is hidden; smooth on a mid-range phone and laptop (no visible jank while scrolling); doesn't delay the page content appearing
+- [x] If the animation can't run, a static space gradient shows instead and the site still works
+- [x] Works at 375px and desktop; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -295,12 +300,12 @@ Triaged from story inbox D4 (story-writer, 2026-10-04). Runs after S24 (both tou
 
 Chris wants the rest of the design to match the background. Content sits on frosted, see-through panels so the background shows through but text stays readable.
 
-- [ ] Header and footer are translucent over the background and stay readable while it moves behind them
-- [ ] `Card`, `Section` (tones from S14), `Tag` and `Button` use frosted glass panels (translucent fill + blur + faint border); the existing tone variants remain visibly distinct from each other
-- [ ] Hover/focus states use a subtle glow in the accent colors; keyboard focus is clearly visible
-- [ ] Optional small space details (e.g. orbit-line or star accents on hover/dividers), kept subtle
-- [ ] All motion here is disabled when the OS "reduce motion" setting is on
-- [ ] Works at 375px and desktop; text meets WCAG AA over the panels; `npm run build` and `npm run lint` pass
+- [x] Header and footer are translucent over the background and stay readable while it moves behind them
+- [x] `Card`, `Section` (tones from S14), `Tag` and `Button` use frosted glass panels (translucent fill + blur + faint border); the existing tone variants remain visibly distinct from each other
+- [x] Hover/focus states use a subtle glow in the accent colors; keyboard focus is clearly visible
+- [x] Optional small space details (e.g. orbit-line or star accents on hover/dividers), kept subtle
+- [x] All motion here is disabled when the OS "reduce motion" setting is on
+- [x] Works at 375px and desktop; text meets WCAG AA over the panels; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -311,11 +316,11 @@ Triaged from story inbox D6 (story-writer, 2026-10-04). dev-2 works only in `src
 
 Chris wants a different scene per page. These two are the most prominent, so they come first. dev-2 only adds scene files and route mappings in `src/scenes/`.
 
-- [ ] **Home — solar system:** a sun with planets moving slowly on visible orbits, placed so it frames the hero rather than sitting behind its text
-- [ ] **Behind the Scenes — black hole:** a black hole with a glowing accretion disk and faint light-bending around it, kept dim behind the page text and diagrams
-- [ ] Each page shows its scene when visited (including on direct links and refresh); moving between pages changes the scene smoothly (crossfade, skipped with reduce motion)
-- [ ] Same rules as S24: subtle motion, reduce motion = still frame, readable content, smooth on mid-range devices, 375px and desktop
-- [ ] `npm run build` and `npm run lint` pass
+- [x] **Home — solar system:** a sun with planets moving slowly on visible orbits, placed so it frames the hero rather than sitting behind its text
+- [x] **Behind the Scenes — black hole:** a black hole with a glowing accretion disk and faint light-bending around it, kept dim behind the page text and diagrams
+- [x] Each page shows its scene when visited (including on direct links and refresh); moving between pages changes the scene smoothly (crossfade, skipped with reduce motion)
+- [x] Same rules as S24: subtle motion, reduce motion = still frame, readable content, smooth on mid-range devices, 375px and desktop
+- [x] `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -326,12 +331,12 @@ Triaged from story inbox D7 (story-writer, 2026-10-04). dev-2 works only in `src
 
 dev-2 works only in `src/scenes/`.
 
-- [ ] **About — a sun:** close view of a star with slow surface shimmer and soft flares (warm accent)
-- [ ] **Projects — planets:** a few distinct planets (e.g. ringed, gas giant, rocky) drifting at different depths
-- [ ] **Resume — nebula:** a richer, more colorful nebula than the default
-- [ ] **Contact — distant galaxy:** a quiet starfield with a slowly rotating spiral galaxy
-- [ ] **404 — lost in space:** an empty, sparse starfield (or drifting debris)
-- [ ] Same rules as S24/S26; `npm run build` and `npm run lint` pass
+- [x] **About — a sun:** close view of a star with slow surface shimmer and soft flares (warm accent)
+- [x] **Projects — planets:** a few distinct planets (e.g. ringed, gas giant, rocky) drifting at different depths
+- [x] **Resume — nebula:** a richer, more colorful nebula than the default
+- [x] **Contact — distant galaxy:** a quiet starfield with a slowly rotating spiral galaxy
+- [x] **404 — lost in space:** an empty, sparse starfield (or drifting debris)
+- [x] Same rules as S24/S26; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -342,9 +347,61 @@ Triaged from story inbox D8 (story-writer, 2026-10-04). Page and content files o
 
 After the new components (S25) and showpiece scenes (S26) land, each page needs a pass so content and scene don't fight. Page and content files only.
 
-- [ ] Home hero leaves room for the solar system scene so the sun/planets frame the text instead of sitting behind it
-- [ ] Every page (Home, About, Projects, Resume, Contact, Behind the Scenes, 404) checked over its scene: no page-level leftovers from the light theme, text readable, spacing works with the frosted panels
-- [ ] Anything that needs a component or scene change is reported to the leader, not built in the page
+- [x] Home hero leaves room for the solar system scene so the sun/planets frame the text instead of sitting behind it
+- [x] Every page (Home, About, Projects, Resume, Contact, Behind the Scenes, 404) checked over its scene: no page-level leftovers from the light theme, text readable, spacing works with the frosted panels
+- [x] Anything that needs a component or scene change is reported to the leader, not built in the page
+- [x] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+- [x] From S25: Contact's hand-built panel (`rounded-lg border border-border bg-surface p-5`) uses `Card` or `glassClass` + `glass-edge` so it matches the other frosted panels
+
+### S29 — Scene engine follow-ups
+*As a developer, I want the scene code's docs to match how it works, and first visits to heavy scenes to stay smooth.*
+Found in S27 review.
+- [x] `src/scenes/starfield.ts`: the file header and the `starfieldScene` comment no longer say it is the default for unmapped routes (that is now `lostInSpaceScene` in `routes.ts`)
+- [x] Investigate the first-visit cost of scenes that bake sprites on create (nebula: ~160 ms main-thread block at 4x CPU throttle). If it causes a visible stutter at the start of a crossfade, add engine support for spreading scene setup over several frames (e.g. an optional async/incremental `create`), documented in `types.ts`; otherwise record the measurement and close
+
+### S30 — Space-themed favicon & OG image
+*As a visitor sharing or bookmarking the site, I want its icon and preview image to match the space theme.*
+Found in S28 review: `public/og-image.png` still uses the pre-S23 palette (sky blue on slate) and `public/favicon.svg` is still the Vite logo.
+- [x] `public/favicon.svg` replaced with a simple space-palette icon (clearly placeholder, e.g. a planet or star mark), legible at 16px and 32px
+- [x] `public/og-image.png` regenerated at 1200×630 in the S23 palette, still clearly marked placeholder; no npm dependencies added
+- [x] `index.html` links unchanged and both files served with the right content type from `vite preview`
+
+### S31 — Nebula & sun scenes build incrementally
+*As a visitor on a phone, I want moving to Resume or About to stay smooth instead of freezing for a moment.*
+Found in S29: at 375px with 4x CPU throttle, the first visit to /resume freezes the page for 217–300 ms (nebula `create` ~185 ms) and /about for 217–267 ms (sun `create` 80–100 ms). S29 added an optional generator `create` to the scene contract (see "Heavy setup" in `src/scenes/types.ts` and dev-1's S29 log entry).
+- [x] `nebulaScene` and `sunScene` use the generator `create`, yielding often enough that no main-thread task exceeds ~50 ms at 375px / 4x throttle (measure Home → Resume and Home → About)
+- [x] Caches (e.g. nebula `cloudCache`) are only written after a bake completes, so a cancelled build leaves no half-written state; `resize` stays synchronous via `runToEnd`
+- [x] Navigating away or back mid-build, toggling reduced motion mid-build, and direct loads all end on the correct scene with no console errors
+- [x] Other scenes unchanged; `npm run build` and `npm run lint` pass
+
+### S32 — Brighter space background
+Triaged from story inbox D9 (story-writer, 2026-10-05). Answers the open brightness question (S24/S28): Chris wants a modest step up. Use S28's 0.3 contrast scan (dev-2 log) as input: About (sun), Projects (planets) and Behind the Scenes (black hole) are the tight spots.
+
+*As a visitor, I want the space background to be a bit brighter so that the scenes are actually visible and the theme comes through.*
+
+Chris looked at the live site and finds the background too dim. Today every scene is capped at 10% opacity (`BACKGROUND_MAX_OPACITY = 0.1` in `backgroundEngine.ts`), chosen so all text stays WCAG AA even over pure white. Chris wants it "a little brighter": a clear but modest step up, not a redesign.
+
+- [ ] Scenes are visibly brighter on every page (roughly 1.5–2× today's brightness is the target; the dev picks the exact value and states it in the log)
+- [ ] All text still meets WCAG AA over the brightest possible frame, including muted text on nested surfaces; if needed, panels/surfaces get a little more opaque or text tokens adjust to make room, rather than keeping the background dim
+- [ ] The contrast notes in `backgroundEngine.ts`, `src/scenes/types.ts` and `index.css` are updated to match the new value
+- [ ] No scene becomes distracting behind text (Home hero, Behind the Scenes diagrams, Projects cards checked)
 - [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S33 — Snappier scene changes between pages
+Triaged from story inbox D10 (story-writer, 2026-10-05). Runs after S32 (both edit `backgroundEngine.ts`). Keeps S29's incremental builds; only the fade timing/order changes.
+
+*As a visitor, I want the background to change as soon as I switch pages so that navigation feels quick and the old page's scene doesn't hang around.*
+
+Chris finds page switches sluggish: the previous page's scene lingers into the new page. Two causes in `backgroundEngine.ts`: the crossfade is 1200ms, and the old scene stays fully visible until the new scene has finished building incrementally (S29/S31), which adds more delay before the fade even starts. This replaces the "crossfade smoothly" behavior from S26.
+
+- [ ] On navigation, the old scene starts fading out immediately (not after the new scene is ready) and is gone within ~250ms
+- [ ] The new scene fades in quickly (~250ms) as soon as it's ready; while it builds, only the plain space background shows (no old scene, no flash of a bright or empty white frame)
+- [ ] Quickly clicking through several pages never shows a stale scene and never stacks multiple scenes; only the latest page's scene ends up visible
+- [ ] Reduce motion: scene swaps instantly, as today
+- [ ] Still smooth on a mid-range phone (no jank introduced); `npm run build` and `npm run lint` pass
 
 **Open questions:** None.

@@ -276,3 +276,210 @@
 
 **Follow-ups**
 - dev-2 (S21): put the step, loop and level text in `src/content/` and render `<StoryFlowDiagram>` and `<BranchDiagram>` in the matching sections. See the usage in the S20 report. Use `tone="bg"` if a diagram sits in a `Section tone="surface"`.
+
+## S23 — Space palette & typography (always dark) (2026-10-04)
+**Branch:** story/S23-space-palette · **Status:** done
+
+**What I did**
+- Removed the light theme: light tokens, the `[data-theme]` blocks and the `dark` custom variant are gone. I deleted `ThemeToggle.tsx` and `useTheme.ts`, removed their ui barrel exports and the header toggle, and dropped the pre-paint theme script from `index.html`. `:root` now sets `color-scheme: dark`.
+- New space palette on `:root`: bg `#05060f` (deep space), surface `rgb(139 147 255 / 0.12)` (translucent glass), fg `#e8eaf6` (starlight), muted `#a3a8c8`, accent `#a5a0ff` (nebula violet-blue), accent-hover `#c7c4ff`, border `rgb(139 147 255 / 0.2)`. I added a warm sun accent: `sun` `#fbbf4d`, `sun-hover` `#fdd58a`, `sun-fg` (Tailwind `text-sun`, `bg-sun`, `text-sun-fg`). All existing token names still work, so pages and components needed no changes.
+- WCAG AA: every text pair is checked against the solid bg, the surface composited over bg (`#15172c`) and surface nested twice (`#232645`, e.g. a default Card inside a surface band). The lowest is muted on double surface at 6.27. All numbers are in the `index.css` header.
+- Font: unchanged, per Chris's clarification. The existing `font-sans` stack is used for headings and body.
+- Browser UI: added `<meta name="theme-color" content="#05060f">` and `<meta name="color-scheme" content="dark">`.
+
+**How I did it**
+- Kept the raw values as `--theme-*` variables on `:root`, mapped through `@theme inline`, so S24 can read them from JS/CSS if needed.
+- Contrast: a small script composited the surface over bg per channel (`a*surface + (1-a)*bg`) and computed WCAG ratios. I raised the surface alpha from 0.10 to 0.12 so the S14 `surface` vs `bg` tones stay visibly distinct (1.15:1 for surface vs bg; the old dark theme was about 1.18).
+- Per Chris's mid-story clarification I made no font changes. I had only edited a comment above the font stack, and reverted that too.
+
+**Verification**
+- `npm run build` and `npm run lint` pass on the clean tree.
+- Headless Chromium (playwright-core) against `vite preview`, at 375, 768 and 1280, with both light and dark OS preference, on `/`, `/about`, `/projects`, `/resume`, `/contact` and a 404 route:
+  - No console errors, horizontal overflow 0, no `data-theme`.
+  - Body bg `rgb(5,6,15)`, computed `color-scheme: dark`, theme-color `#05060f`.
+  - h1 and body use the same font stack.
+  - No toggle. The only selector hit was the "Highlights" aria-label on Resume, a substring false positive.
+- A throwaway `/s23` preview (deleted, never committed) showed Buttons, Tags, a sun pill, Cards, `StoryFlowDiagram` and `BranchDiagram` on bg and inside a `Section tone="surface"` (with `tone="bg"`). Tones are clearly distinct and the diagrams read well. I also checked screenshots of Home and About at 375 and of the open mobile menu.
+
+**Files**
+- Changed: `index.html`, `src/styles/index.css`, `src/components/layout/Header.tsx`, `src/components/ui/index.ts`, `docs/agent-logs/dev-1.md`
+- Deleted: `src/components/ui/ThemeToggle.tsx`, `src/components/ui/useTheme.ts`
+
+**Follow-ups**
+- dev-2: no page has hardcoded colors or uses the toggle; nothing to change. `text-sun` / `bg-sun` are available for warm highlights.
+- S24: `Layout` and `body` still paint solid `bg-bg`. The background layer needs those to become transparent or sit above them, and it must stay dim enough to keep the ratios above.
+- S25: the surface is already translucent; S25 can add blur and glow on top.
+- BACKLOG.md / old log entries still mention ThemeToggle historically (leader's files; no action needed).
+
+## S22 — Behind the Scenes nav link (2026-10-04)
+**Branch:** story/S22-bts-nav-link · **Status:** done
+
+**What I did**
+- Added `{ to: '/behind-the-scenes', label: 'Behind the Scenes' }` as the last entry in `navItems.ts`. It shows in the desktop nav and the mobile menu, and the active highlight and `aria-current="page"` work on that route.
+- Moved the header collapse breakpoint from `md` (768px) to `lg` (1024px). Below 1024px the header shows the hamburger. At 1024px and up it shows the inline nav.
+- Added `whitespace-nowrap` to nav links, so "Behind the Scenes" can never break onto two lines inside its pill.
+
+**How I did it**
+- I measured with `md` kept first. The six-item inline nav is about 543px wide. At 768px there was only 23px between the name ("Jane Placeholder") and the nav. It fit on one row, but it looked crowded. A slightly longer real name would wrap the whole nav onto a second row (the header container is `flex-wrap`).
+- At `lg` the gap at 1024px is about 279px, so there is plenty of room for a longer name. Tablets in portrait (768-1023) get the hamburger, which handles six items well. I chose `lg` over a custom breakpoint because it uses a standard Tailwind token and leaves real headroom.
+- I documented the measurement in a comment in `navItems.ts`, so whoever adds a seventh item re-measures first.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - Header measured at 375, 768, 1023, 1024, 1025 and 1280. There is no horizontal overflow at any width. Below 1024 the hamburger shows. From 1024 up all six links sit on one row, each 36px tall (single line), and the header is 61px tall.
+  - 1280: clicking "Behind the Scenes" from Home goes to `/behind-the-scenes` (h1 "Behind the Scenes"). After the transition only that link has `aria-current="page"` and the surface highlight.
+  - 375 and 768: open the hamburger and all six items stack at full width, 40px each. Clicking "Behind the Scenes" navigates and closes the menu (`aria-expanded="false"`). Reopening shows it as current.
+  - A deep link to `/behind-the-scenes` returns 200 with the link marked current.
+  - I checked screenshots of the open menu at 375, the header at 768 (before) and 1024, and the desktop header on the new page.
+
+**Files**
+- Changed: `src/components/layout/navItems.ts`, `src/components/layout/Header.tsx`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- None. (This entry may conflict with S24's dev-1 log entry on merge. Keep both.)
+
+## S24 — Animated space background (2026-10-04)
+**Branch:** story/S24-space-background · **Status:** done
+
+**What I did**
+- Background on every route: `<SpaceBackground>` sits inside `Layout`. It is fixed behind all content and renders the scene mapped to the current route. The default starfield is used everywhere for now.
+- Scene folder `src/scenes/`, owned by dev-2 from S26 on:
+  - `types.ts`: the documented, typed scene contract (`Scene`, `SceneInstance`, `SceneSetup`, `SceneFrame`, `SceneSize`, `SceneBudget`).
+  - `routes.ts`: the route → scene map plus `sceneForPath`.
+  - `starfield.ts`: the default scene, also reusable as a base layer through `createStarfield(setup, options)`.
+  - `random.ts`: a seeded random generator.
+  - The engine itself lives in `components/layout/`.
+- Default scene: three star layers (far, mid, near) with twinkling on the mid and near layers, two slowly drifting nebula cloud layers, and parallax on scroll with a different factor per layer. Colors follow Hubble/JWST nebula imagery.
+- Drawn in code with Canvas 2D. No images, no new dependencies.
+- Contrast: the engine shows the canvas at opacity 0.1. Even a pure white pixel then composites to rgb(30 31 39), so every text token stays at AA at every frame. The worst case is muted text on a surface nested twice, at 4.76.
+- Reduce motion: one still frame drawn at time 0, with no parallax and no crossfade. It is redrawn on resize, and it reacts if the OS setting changes while the page is open.
+- The loop pauses while the tab is hidden. The engine starts only after first paint plus idle, so it never delays content.
+- Fallback: if Canvas 2D is unavailable or a scene throws, the engine stops and a static `.space-fallback` gradient shows. The site keeps working.
+- Crossfade between scenes on navigation is built into the engine for S26: 1.2 s with easing, it handles interruptions, and it is skipped with reduce motion. It only runs when the scene id changes.
+
+**How I did it**
+- Split into an imperative engine (`backgroundEngine.ts`: rAF loop, one canvas per active scene, fades, ResizeObserver, visibilitychange, failure handling) and a thin React wrapper (`SpaceBackground.tsx`). The wrapper uses `useLocation` → `sceneForPath`, `useSyncExternalStore` for `prefers-reduced-motion`, and starts the engine lazily. The engine renders outside React, so nothing re-renders per frame.
+- Contract: `create(setup)` returns `{ draw, resize?, dispose? }`. Each frame, the engine clears the canvas and sets a CSS-pixel transform, then calls `draw` with ctx, size, dpr, time, dt, scrollY, reducedMotion and budget. Scenes draw at full brightness and the engine applies the dimming. So dev-2 cannot break contrast, and the crossfade is just two canvases with opacities summing to 1 × budget.
+- Brightness budget: computed with a WCAG script (white at opacity o over bg, then surface once or twice, against each text token). At 0.12, muted text on a twice-nested surface drops to 4.49, so I used 0.1. The numbers are in the `index.css` header.
+- Layout: removed `bg-bg` from the wrapper and added `relative isolate`. The background is `fixed -z-10` inside that stacking context, so it paints above the body's solid bg and below content. Height is `h-lvh`, so the mobile URL bar showing and hiding doesn't resize the canvas while scrolling.
+- Performance:
+  - The far stars are baked into one bitmap.
+  - The nebulae are baked at 1/4 resolution and drifted with `drawImage`.
+  - Only the mid and near stars are drawn per star.
+  - Fill rate was the bottleneck. At DPR 1.5 the 375px view ran at about 36 fps under 4x CPU throttle, so I capped DPR at 1 and canvas backing size at 1.1 MP. The content is dim and soft, so the loss in sharpness isn't visible.
+- First nebula pass was round, uniform blobs and drifted off-screen at 375. I replaced it with filament chains of blobs along a wandering, center-steered path, plus a few `destination-out` dust holes for texture.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`, at 375/768/1280, on `/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes` and a 404 route, with and without `reducedMotion: 'reduce'`. That is 42 runs. Every run had engine state `running`, one canvas, opacity 0.1, no horizontal overflow and no console errors. Animated runs change between screenshots 700 ms apart; reduced-motion runs are pixel-identical.
+- Contrast: with page content hidden, the brightest background pixel across all 42 runs was rgb(30 30 39). Muted text over it measures 7.10:1 (bare bg).
+- Hidden tab: 30 rAF calls per 500 ms while visible, 0 while hidden, and it resumes on visible.
+- Fallback, with `getContext` forced to null: state `fallback`, gradient shown, page renders, no page errors.
+- Crossfade, with a throwaway second scene on `/about` that I reverted and never committed:
+  - Opacities went 0.099/0.0005 → 0.074/0.026 → 0.017/0.083 → a single layer at 0.1 after about 1.2 s.
+  - Back-navigation mid-fade recovered cleanly.
+  - Navigating between routes with the same scene did not fade.
+  - With reduce motion, the swap was instant.
+- Frame time while auto-scrolling at 375px, DPR 3 emulated: 4x CPU throttle gave 60 fps (avg 16.7 ms, 1 frame over 33 ms in 5 s); no-background baseline 16.6 ms. 1920 and 1280 unthrottled gave 60 fps. Engine JS is about 1 ms per frame at 4x. Headless Chromium uses software raster, so real GPU-backed devices should be faster.
+- Resize from 375 to 1280 redraws correctly, both animated and as a still frame. Screenshots checked at all widths, including the fallback.
+
+**Files**
+- Added: `src/scenes/types.ts`, `src/scenes/routes.ts`, `src/scenes/starfield.ts`, `src/scenes/random.ts`, `src/components/layout/SpaceBackground.tsx`, `src/components/layout/backgroundEngine.ts`
+- Changed: `src/components/layout/Layout.tsx`, `src/styles/index.css`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- dev-2 (S26/S27): add scene files in `src/scenes/` and map routes in `routes.ts`. Read the header of `types.ts`, and see `starfield.ts` / `createStarfield` for reusing the base starfield. Scenes must look complete at `time = 0` (the reduced-motion still frame).
+- S25: the `Header` still paints solid `bg-bg`, so the background is hidden behind it. S25's translucent header will reveal it. `bg-bg` tone elements (Card image area, BranchDiagram badges, `tone="bg"`) stay opaque as before.
+- Leader: the 0.1 opacity cap makes the background deliberately subtle, because the muted-on-double-surface pair limits it. If Chris wants it brighter, the options are raising `BACKGROUND_MAX_OPACITY` together with a lighter `muted` token, or ruling out double-nested surfaces.
+
+## S25 — Space-styled components & layout (2026-10-04)
+**Branch:** story/S25-space-components · **Status:** done
+
+**What I did**
+- Header and footer are translucent. The header is bg at 70% with a 12px backdrop blur. The footer is a frosted surface band. Text stays at AA over the moving background (numbers below).
+- Frosted glass is a translucent fill, a backdrop blur and a faint border:
+  - `Card`, `Section tone="surface"` bands and secondary `Button`s get the fill and the blur.
+  - `Tag`, `TagButton` and the S20 diagram boxes get the glass fill and border, but no blur (see the performance bullet below).
+  - The primary `Button` stays solid accent, so the main call to action still stands out.
+- Tones stay distinct. `tone="bg"` is now a translucent deep tint (`bg-bg-glass`, bg at 80%) instead of solid bg. Inside a surface band, a `tone="bg"` panel measures 1.12:1 against the band over bare bg (it was 1.15 with solid bg) and 1.42 over the brightest background pixel. Each panel also keeps its border.
+- Glow: a shared `glowClass` gives a soft accent halo on hover (`shadow-glow`, mouse only, since Tailwind v4 wraps hover in `@media (hover: hover)`) and a stronger one on keyboard focus (`shadow-glow-focus`), on top of the global 2px focus outline. It's used by Button, TagButton, the nav links and the menu button. The name link and the footer links get the focus glow too.
+- Space detail: a new `glass-edge` utility draws a thin starlight highlight along the top border of cards, surface bands and the footer. It is static.
+- Reduced motion: a global rule sets transition and animation durations to 0, so hover and focus changes snap instead of fading.
+- Contrast notes in `index.css` are updated with the new fills (bg-glass, header, nav pill on the header). `BACKGROUND_MAX_OPACITY` is unchanged.
+
+**How I did it**
+- Tokens in `index.css`: `--color-bg-glass`, `--color-bg-header`, `--blur-glass` (12px), `--shadow-glow` and `--shadow-glow-focus`. The recipes live in `ui/tone.ts`: `surfaceToneClass` (fill only), `glassClass` (fill and blur) and `glowClass`.
+- Contrast: the surface alpha is unchanged, so S23/S24's table still holds for every surface panel. Blur only averages the backdrop, so it can't get brighter than S24's worst-case pixel. I used no saturate or brightness filters, on purpose. I computed the new fills with the same compositing script. The lowest new pair is muted on a nav pill over the header, at 7.05.
+- Performance: I measured auto-scroll frame times at 375px, DPR 3, 4x CPU throttle, against a saved build of `leader` on a second preview port.
+  - With blur on the diagram boxes too, Behind the Scenes had more frames over 33ms in 5s: about 7 per run versus about 1 on baseline. With blur on the BranchDiagram cards only, it was still about 5.
+  - With blur on neither, it matched baseline, so diagram boxes and tags get the fill only.
+  - Inside a blurred band, a nested blur only sees the band (the band is the backdrop root) anyway, not the stars.
+- Bug found in testing: my first reduced-motion rule used the common `0.01ms` duration. Because the default `transition-property` is `all`, every style change became a 0.01ms transition, and the focus check sometimes read the skip link's outline as 0px. I switched to `0s`, and 8 of 8 repeat checks then passed.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`, on 7 routes (`/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes` and a 404) at 375, 768 and 1280, with and without `reducedMotion: 'reduce'`. That is 42 runs:
+  - No horizontal overflow and no console errors in any run.
+  - Header shows `rgba(5,6,15,0.7)` with `blur(12px)`, footer shows the blur, and there is one canvas.
+  - Tabbing through every focusable element on each page, each one had `:focus-visible` with a 2px solid outline.
+- Screenshots checked: full pages at all widths, plus close-ups of TagButton focus, secondary Button hover, nav link focus, primary Button focus and the open mobile menu at 375.
+- Scroll performance (375px, 4x throttle, 3 runs per route): average frame time was 16.7–17.3ms on both baseline and S25 on every route. Long-frame counts overlapped in range between the two builds. dev-2 was building in parallel, so there were occasional noisy bursts on both builds (load average around 3).
+
+**Files**
+- Changed: `src/styles/index.css`, `src/components/ui/tone.ts`, `src/components/ui/Button.tsx`, `src/components/ui/Card.tsx`, `src/components/ui/Section.tsx`, `src/components/ui/Tag.tsx`, `src/components/ui/BranchDiagram.tsx`, `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- dev-2 (S28):
+  - `src/pages/Contact.tsx` has a hand-built panel (`rounded-lg border border-border bg-surface p-5`). It has the glass fill but no blur or edge. Use `Card`, or add `backdrop-blur-glass glass-edge` to match.
+  - The Home avatar uses `bg-surface`, which is fine as is.
+  - Pages can use `glassClass` and `glowClass` from `components/ui/tone.ts` if they build something custom.
+- Leader: the header is not sticky. That isn't in the story, and making it sticky would affect anchor offsets (`scroll-mt`). It's easy to add if Chris wants it.
+
+## S29 — Scene engine follow-ups (2026-10-04)
+**Branch:** story/S29-scene-engine-followups · **Status:** done
+
+**What I did**
+- Fixed the stale comments in `src/scenes/starfield.ts`: the file header and the `starfieldScene` doc no longer say it is the default for unmapped routes. They now point to `lostInSpaceScene` in `routes.ts` and say that `starfieldScene` is unused, kept as the simplest full example. I also fixed the same "default scene" wording in the `types.ts` header example.
+- Measured the first-visit cost of scenes that bake in `create`. It does cause a visible hitch, so I added engine support for building a scene over several frames: `create` may now be a generator function. Existing scenes still work as before.
+
+**How I did it**
+- Measurement: headless Chromium (playwright-core) against `vite preview`, 375px at DPR 3 with 4x CPU throttle. I clicked the real header link Home → Resume and recorded every rAF timestamp, long tasks, and when the new page's `h1` was painted:
+  - The new page paints after 58–151 ms. Then one long task of 174–241 ms runs (the nebula `create`), and that gives a **217–300 ms frame gap**. Every animation on the page freezes, including the twinkling background, and taps and scrolls wait behind it.
+  - Home → About (sun) had a 217–267 ms gap, Contact 133 ms, and Projects 83 ms.
+  - At 1280 without throttling, Resume had a 100–117 ms gap.
+  - I timed `create` alone with temporary instrumentation (removed): nebula 182–186 ms, sun 79–99 ms, galaxy 34–44, solar system 25, black hole 21–23, planets 16–18, lost-in-space 15–17 (375/4x). At 1280 unthrottled: nebula 68, sun 28, the rest 6–14.
+- Contract (`types.ts`): `create(setup): SceneInstance | SceneBuild`, where `SceneBuild = Generator<unknown, SceneInstance, undefined>`. A heavy scene writes `*create(setup) { ...; yield; ...; return instance }`. A new "Heavy setup" section documents when to use it, how often to yield (each slice under ~5 ms on a slow phone), cancellation, resize during a build, and an example.
+- I chose generators over an async/Promise `create` because the engine controls the scheduling: it runs as many slices as fit a time budget and can drop a build at any `yield`. Scenes need no scheduler, abort signal or promise plumbing.
+- Engine (`backgroundEngine.ts`):
+  - A pending build is stepped in `setTimeout` tasks with a 6 ms budget each (`BUILD_SLICE_MS`). The first slice runs in a later task, so the new page always paints first.
+  - The current scene keeps drawing until the instance is returned, and only then does the crossfade start.
+  - Cancellation calls `return()` on the generator, so `finally` blocks run. Builds are cancelled when you navigate to another scene, navigate back to the shown scene, reduce motion changes, the engine is destroyed, or a scene fails.
+  - If the viewport changed during the build, `resize` runs before the scene is shown. A hidden tab runs the build to the end at once, because timers are throttled there.
+  - A reduce-motion change now settles fades, keeps the old layer, rebuilds the target scene and swaps it in without a fade. Before, it removed everything and rebuilt synchronously.
+  - A plain object returned from `create` goes through the same path as before.
+- `src/scenes/build.ts` (new): `isSceneBuild` (used by the engine), and `runToEnd` so scenes can reuse a yielding bake synchronously in `resize`.
+- Proof on a throwaway, uncommitted copy of `nebula.ts` turned into a generator (yield every 2 rows of the cloud bake, `yield*` through `build`, cache written only at the end, `runToEnd` in `resize`). It type-checked as `create: createNebula` with no other change.
+  - 375/4x Home → Resume: **no long tasks, max frame 33–67 ms** (was 217–300). Frames during the build averaged 19 ms.
+  - Trade-off: the crossfade starts about 740 ms after the click instead of right after a 185 ms freeze. At 1280 unthrottled it starts after about 220 ms, with a 33 ms max frame and no long tasks.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Edge cases with the throwaway generator nebula and a temporary `data-scene` attribute (both reverted), 375/4x, checking canvases, opacity, size, lit pixels and console:
+  - Back to Home mid-build: solar-system only.
+  - Resume → Contact mid-build: galaxy only.
+  - Reduce motion turned on mid-build: nebula, still frame (identical 800 ms apart), then animating again after turning it off.
+  - Resize to 414×700 mid-build: nebula at 414×700.
+  - Direct load of `/resume`, with and without reduce motion: correct.
+  - Navigating with reduce motion on: correct.
+  - A full tour of all 7 routes showed the right scene each time, one canvas at opacity 0.1 and no console errors.
+- The final committed code (all scenes still synchronous) measured the same as before, at 375/4x and 1280.
+
+**Files**
+- Added `src/scenes/build.ts`
+- Changed `src/scenes/types.ts`, `src/scenes/starfield.ts`, `src/components/layout/backgroundEngine.ts`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- dev-2: move `nebulaScene` to the generator `create`. The throwaway version above worked: yield every ~2 rows in `bakeClouds`, assign `cloudCache` only after the bake finishes, and use `runToEnd(build(next))` in `resize`. That removes a ~200–300 ms hitch on a slow phone.
+- dev-2: `sunScene` (~80–100 ms at 375/4x) should move to it too. The others are under ~45 ms and can stay as they are.
+- Until a scene adopts the generator path, its first-visit hitch is the same as before.

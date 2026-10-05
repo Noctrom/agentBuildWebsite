@@ -18,3 +18,9 @@ export { projectsPage, type ProjectsPageCopy } from './projects'
 export { resumePage, type ResumePageCopy } from './resume'
 export { contactPage, type ContactPageCopy } from './contact'
 export { notFoundPage, type NotFoundPageCopy } from './notFound'
+export {
+  behindTheScenesPage,
+  repoUrl,
+  type BehindTheScenesPageCopy,
+  type TeamMember,
+} from './behindTheScenes'

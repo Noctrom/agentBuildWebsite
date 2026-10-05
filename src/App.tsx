@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router'
 import Layout from './components/layout/Layout'
 import About from './pages/About'
+import BehindTheScenes from './pages/BehindTheScenes'
 import Contact from './pages/Contact'
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/resume" element={<Resume />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/behind-the-scenes" element={<BehindTheScenes />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

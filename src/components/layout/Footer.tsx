@@ -1,7 +1,8 @@
 import { profile } from '../../content'
 import Container from '../ui/Container'
+import { glassClass } from '../ui/tone'
 
-/** Site footer: social links and copyright. */
+/** Site footer: social links and copyright, on a frosted glass band (S25). */
 export default function Footer() {
   const year = new Date().getFullYear()
   const { email, github, linkedin } = profile.links
@@ -13,7 +14,7 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="border-t border-border bg-surface">
+    <footer className={`glass-edge border-t border-border ${glassClass.surface}`}>
       <Container className="flex flex-col items-center gap-4 py-8 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted">
           &copy; {year} {profile.name}
@@ -23,7 +24,7 @@ export default function Footer() {
             <li key={link.label}>
               <a
                 href={link.href}
-                className="rounded-md text-sm text-muted transition-colors hover:text-accent"
+                className="rounded-md text-sm text-muted transition-colors duration-200 hover:text-accent focus-visible:shadow-glow-focus"
                 {...(link.external
                   ? { target: '_blank', rel: 'noopener noreferrer' }
                   : {})}

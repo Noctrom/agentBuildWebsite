@@ -105,7 +105,7 @@ export default function BranchDiagram({
                     {level.examples.map((example) => (
                       <li
                         key={example}
-                        className="w-fit max-w-full rounded border border-border bg-bg px-2 py-0.5 font-mono text-xs break-all text-muted"
+                        className="w-fit max-w-full rounded border border-border bg-bg-glass px-2 py-0.5 font-mono text-xs break-all text-muted"
                       >
                         {example}
                       </li>

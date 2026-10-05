@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { surfaceToneClass, type SurfaceTone } from './tone'
+import { glowClass, surfaceToneClass, type SurfaceTone } from './tone'
 
 const pill =
   'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium'
@@ -14,7 +14,10 @@ export type TagProps = {
   className?: string
 }
 
-/** Small static label/pill, e.g. a tech tag on a card. */
+/**
+ * Small static label/pill, e.g. a tech tag on a card. Glass fill and faint
+ * border; no backdrop blur (see `glassClass` in tone.ts for why).
+ */
 export function Tag({ children, tone = 'surface', className = '' }: TagProps) {
   return (
     <span
@@ -50,7 +53,7 @@ export function TagButton({
       {...rest}
       type="button"
       aria-pressed={pressed}
-      className={`${pill} cursor-pointer transition-colors ${
+      className={`${pill} cursor-pointer ${glowClass} ${
         pressed
           ? 'border-accent bg-accent text-accent-fg hover:border-accent-hover hover:bg-accent-hover'
           : `border-border ${surfaceToneClass[tone]} text-muted hover:border-accent hover:text-accent`

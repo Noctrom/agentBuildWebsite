@@ -2,19 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 import { profile } from '../../content'
 import Container from '../ui/Container'
-import ThemeToggle from '../ui/ThemeToggle'
+import { glowClass } from '../ui/tone'
 import { navItems } from './navItems'
 
 const MENU_ID = 'primary-nav-menu'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-md px-3 py-2 text-base font-medium transition-colors md:text-sm ${
+  `block whitespace-nowrap rounded-md px-3 py-2 text-base font-medium ${glowClass} lg:text-sm ${
     isActive
       ? 'bg-surface text-accent'
       : 'text-muted hover:bg-surface hover:text-fg'
   }`
 
-/** Site header: name, primary nav (hamburger under md), theme toggle. */
+/**
+ * Site header: name, primary nav (hamburger under lg; see navItems.ts).
+ * Frosted glass (S25): bg at 70% plus backdrop blur, so the space background
+ * shows through but stays dark enough under the text (see index.css).
+ */
 export default function Header() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
@@ -42,11 +46,11 @@ export default function Header() {
   }, [open])
 
   return (
-    <header className="border-b border-border bg-bg">
+    <header className="border-b border-border bg-bg-header backdrop-blur-glass">
       <Container className="flex flex-wrap items-center gap-2 py-3">
         <Link
           to="/"
-          className="mr-auto rounded-md text-lg font-bold text-fg transition-colors hover:text-accent"
+          className="mr-auto rounded-md text-lg font-bold text-fg transition-colors duration-200 hover:text-accent focus-visible:shadow-glow-focus"
         >
           {profile.name}
         </Link>
@@ -58,7 +62,7 @@ export default function Header() {
           aria-controls={MENU_ID}
           aria-label={open ? 'Close menu' : 'Open menu'}
           onClick={() => setOpen((o) => !o)}
-          className="inline-flex size-10 cursor-pointer items-center justify-center rounded-full border border-border text-fg transition-colors hover:bg-surface hover:text-accent md:hidden"
+          className={`inline-flex size-10 cursor-pointer items-center justify-center rounded-full border border-border text-fg ${glowClass} hover:border-accent hover:bg-surface hover:text-accent lg:hidden`}
         >
           {open ? <CloseIcon /> : <MenuIcon />}
         </button>
@@ -66,9 +70,9 @@ export default function Header() {
         <nav
           id={MENU_ID}
           aria-label="Primary"
-          className={`${open ? 'block' : 'hidden'} order-last w-full md:order-none md:block md:w-auto`}
+          className={`${open ? 'block' : 'hidden'} order-last w-full lg:order-none lg:block lg:w-auto`}
         >
-          <ul className="flex flex-col gap-1 pt-2 md:flex-row md:pt-0">
+          <ul className="flex flex-col gap-1 pt-2 lg:flex-row lg:pt-0">
             {navItems.map((item) => (
               <li key={item.to}>
                 <NavLink to={item.to} end={item.to === '/'} className={linkClass}>
@@ -78,8 +82,6 @@ export default function Header() {
             ))}
           </ul>
         </nav>
-
-        <ThemeToggle />
       </Container>
     </header>
   )

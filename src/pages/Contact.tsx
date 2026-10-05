@@ -1,4 +1,5 @@
 import { Button, PageMeta, Section } from '../components/ui'
+import { glassClass } from '../components/ui/tone'
 import { contactPage, profile } from '../content'
 
 /** Contact page: call to action, visible email address and social links. No form. */
@@ -9,7 +10,11 @@ export default function Contact() {
     <>
       <PageMeta {...contactPage.meta} />
       <Section title={contactPage.title} headingLevel={1} intro={profile.contactCta}>
-        <div className="max-w-prose rounded-lg border border-border bg-surface p-5 sm:p-6">
+        {/* Frosted panel matching Card (S25 glass). Sized to its content, so on
+            tablet and desktop it stays clear of the galaxy to its right (S28). */}
+        <div
+          className={`glass-edge w-fit max-w-full rounded-lg border border-border p-5 sm:p-6 ${glassClass.surface}`}
+        >
           <p className="text-sm font-medium text-muted">{contactPage.emailLabel}</p>
           <p className="mt-1 text-lg font-semibold break-all text-fg select-all sm:text-xl">
             {email}

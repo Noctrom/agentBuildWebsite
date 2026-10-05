@@ -1,8 +1,9 @@
+import { runToEnd } from './build'
 import { makeCanvas, makeSoftDot, spread, type Rgb } from './canvas'
 import { createValueNoise, fbm } from './noise'
 import { between, createRandom } from './random'
 import { createStarfield } from './starfield'
-import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
+import type { Scene, SceneBuild, SceneFrame, SceneSetup, SceneSize } from './types'
 
 /**
  * Resume scene (S27): a rich, colorful emission nebula, after Hubble and JWST
@@ -16,6 +17,11 @@ import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
  * Cost per frame: the starfield (stars only), three low-res cloud bitmaps
  * scaled up, and a few star sprites. The clouds are fractal noise baked into
  * the bitmaps on create/resize.
+ *
+ * The cloud bake is slow (about 185 ms at 375px on a 4x throttled CPU), so
+ * `create` is a generator (S31, see "Heavy setup" in `types.ts`): it yields
+ * every couple of bitmap rows and the engine spreads the work over frames.
+ * `resize` runs the same bake to the end at once with `runToEnd`.
  */
 
 type Path = readonly (readonly [number, number])[]
@@ -63,6 +69,8 @@ const EMISSION_RAMP: readonly Rgb[] = [
   [60, 200, 195],
   [90, 130, 240],
 ]
+/** Cloud bitmap rows baked between yields (each slice stays well under 5 ms on a slow phone). */
+const ROWS_PER_SLICE = 2
 /** Low-res bitmap scales; the upscaling blur is part of the look. */
 const GLOW_SCALE = 0.15
 const CLOUD_SCALE = 0.22
@@ -142,9 +150,13 @@ function smoothstep(a: number, b: number, x: number) {
  * Bake the emission clouds and bright rims (two bitmaps of the same size):
  * fractal noise, domain-warped for a turbulent look, masked to the area
  * around the cloud paths, colored along a noise ramp, with dark dust lanes
- * where a ridged noise peaks.
+ * where a ridged noise peaks. Yields every `ROWS_PER_SLICE` rows.
  */
-function bakeClouds(width: number, height: number, margin: number): [HTMLCanvasElement, HTMLCanvasElement] {
+function* bakeClouds(
+  width: number,
+  height: number,
+  margin: number,
+): Generator<unknown, [HTMLCanvasElement, HTMLCanvasElement], undefined> {
   const scale = Math.max(CLOUD_SCALE, Math.min(0.5, MIN_CLOUD_PIXELS / width))
   const cw = Math.max(1, Math.ceil((width + margin * 2) * scale))
   const ch = Math.max(1, Math.ceil((height + margin * 2) * scale))
@@ -226,6 +238,7 @@ function bakeClouds(width: number, height: number, margin: number): [HTMLCanvasE
         rImg.data[i + 3] = 255 * rim * 0.7
       }
     }
+    if (py % ROWS_PER_SLICE === ROWS_PER_SLICE - 1) yield
   }
   cctx.putImageData(cImg, 0, 0)
   rctx.putImageData(rImg, 0, 0)
@@ -236,19 +249,28 @@ function bakeClouds(width: number, height: number, margin: number): [HTMLCanvasE
  * The cloud bake is the slow part of this scene (tens of ms on a phone), so
  * the last result is kept for the same viewport size: coming back to the
  * page doesn't bake again. Two small low-res bitmaps, well under 1 MB.
+ * Written only once a bake has finished: a build abandoned mid-bake leaves
+ * the cache as it was.
  */
 let cloudCache: { key: string; bitmaps: [HTMLCanvasElement, HTMLCanvasElement] } | null = null
 
-function cachedClouds(width: number, height: number, margin: number) {
+function* cachedClouds(
+  width: number,
+  height: number,
+  margin: number,
+): Generator<unknown, [HTMLCanvasElement, HTMLCanvasElement], undefined> {
   const key = `${width}x${height}`
-  if (cloudCache?.key !== key) cloudCache = { key, bitmaps: bakeClouds(width, height, margin) }
-  return cloudCache.bitmaps
+  if (cloudCache?.key === key) return cloudCache.bitmaps
+  const bitmaps = yield* bakeClouds(width, height, margin)
+  cloudCache = { key, bitmaps }
+  return bitmaps
 }
 
-function createNebula(setup: SceneSetup) {
+function* createNebula(setup: SceneSetup): SceneBuild {
   // Stars only: this scene draws its own, richer clouds.
   const stars = createStarfield(setup, { seed: 272, density: 0.9, nebulaColors: [] })
   const glowDots = GLOW_COLORS.map((c) => makeSoftDot(c, 64))
+  yield
 
   let layers: CloudLayer[] = []
   let youngStars: YoungStar[] = []
@@ -256,13 +278,13 @@ function createNebula(setup: SceneSetup) {
   let margin = 0
 
   /** Broad background glow: big soft blobs along the paths. */
-  function bakeGlow(width: number, height: number, random: () => number) {
+  function bakeGlow(width: number, height: number, edge: number, random: () => number) {
     const unit = Math.sqrt(width * height)
-    const canvas = makeCanvas((width + margin * 2) * GLOW_SCALE, (height + margin * 2) * GLOW_SCALE)
+    const canvas = makeCanvas((width + edge * 2) * GLOW_SCALE, (height + edge * 2) * GLOW_SCALE)
     const ctx = canvas.getContext('2d')
     if (!ctx) return canvas
     ctx.scale(GLOW_SCALE, GLOW_SCALE)
-    ctx.translate(margin, margin)
+    ctx.translate(edge, edge)
     PATHS.forEach((path, p) => {
       const n = Math.round(40 * PATH_WEIGHT[p])
       for (let i = 0; i < n; i++) {
@@ -277,13 +299,19 @@ function createNebula(setup: SceneSetup) {
     return canvas
   }
 
-  function build({ width, height }: SceneSize) {
+  /**
+   * Bake everything for a viewport size. Works on locals and only assigns the
+   * scene's state at the end, so `draw` never sees a half-built mix of sizes.
+   */
+  function* build({ width, height }: SceneSize): Generator<unknown, void, undefined> {
     const random = createRandom(2720)
     const unit = Math.sqrt(width * height)
-    margin = Math.round(Math.max(width, height) * 0.08)
-    const glow = bakeGlow(width, height, random)
-    const [cloud, rims] = cachedClouds(width, height, margin)
+    const nextMargin = Math.round(Math.max(width, height) * 0.08)
+    const glow = bakeGlow(width, height, nextMargin, random)
+    yield
+    const [cloud, rims] = yield* cachedClouds(width, height, nextMargin)
     const cloudPhase = random() * 6
+    margin = nextMargin
     layers = [
       { canvas: glow, parallax: 0.01, sx: 0.006, sy: 0.004, phase: random() * 6, breathe: 0 },
       { canvas: cloud, parallax: 0.025, sx: -0.008, sy: 0.005, phase: cloudPhase, breathe: 0 },
@@ -304,7 +332,7 @@ function createNebula(setup: SceneSetup) {
     })
   }
 
-  build(setup)
+  yield* build(setup)
 
   function draw(frame: SceneFrame) {
     const { ctx, width, height, time, scrollY } = frame
@@ -335,7 +363,7 @@ function createNebula(setup: SceneSetup) {
     draw,
     resize(next: SceneSize) {
       stars.resize?.(next)
-      build(next)
+      runToEnd(build(next))
     },
     dispose() {
       stars.dispose?.()

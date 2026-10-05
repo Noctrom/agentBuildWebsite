@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router'
+import { useLayoutEffect } from 'react'
+import { Outlet, useLocation, useNavigationType } from 'react-router'
 import Footer from './Footer'
 import Header from './Header'
 import SpaceBackground from './SpaceBackground'
@@ -9,6 +10,8 @@ import SpaceBackground from './SpaceBackground'
  * above the body's solid bg but below all content.
  */
 export default function Layout() {
+  useScrollToTopOnNavigate()
+
   return (
     <div className="relative isolate flex min-h-dvh flex-col text-fg">
       <SpaceBackground />
@@ -25,4 +28,23 @@ export default function Layout() {
       <Footer />
     </div>
   )
+}
+
+/**
+ * Start each new page at the top (V0.35). With the sticky header the nav can
+ * be used from far down a page, and the router keeps the scroll position, so
+ * the next page would otherwise open part way down. Links with a hash scroll
+ * to their target instead (scroll-padding keeps it below the header).
+ * Back/forward (POP) is left to the browser's own scroll restoration.
+ */
+function useScrollToTopOnNavigate() {
+  const { pathname, hash } = useLocation()
+  const navigationType = useNavigationType()
+
+  useLayoutEffect(() => {
+    if (navigationType === 'POP') return
+    const target = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null
+    if (target) target.scrollIntoView()
+    else window.scrollTo(0, 0)
+  }, [pathname, hash, navigationType])
 }

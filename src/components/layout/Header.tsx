@@ -1,29 +1,35 @@
-import { useEffect, useRef, useState, type FocusEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import Container from '../ui/Container'
 import { glowClass } from '../ui/tone'
-import { navItems } from './navItems'
+import { navItems, type NavItem } from './navItems'
 
 const MENU_ID = 'primary-nav-menu'
 
 /**
- * Nav button (V0.38). No hover color or background: on hover the button
- * grows a little and a frosted glass bubble fades and expands in behind the
- * label, like the passcode keys on a phone. The current page keeps a steady
- * bubble and does not grow. Keyboard focus shows the bubble plus the focus
- * ring and glow; a press (touch) shows it too. With reduced motion (the
- * Animation switch, else the OS setting; V0.49) the global
- * rule in index.css makes the bubble appear at once, and the grow is only
- * applied under `motion-safe`.
+ * Nav button (V0.38, slimmed in V0.47). No hover color or background: on
+ * hover the button grows a little and a frosted glass bubble fades and
+ * expands in behind the label, like the passcode keys on a phone. The current
+ * page keeps a steady bubble and does not grow.
+ *
+ * Keyboard focus shows the bubble plus the focus ring and glow. The ring is
+ * drawn on the expander (below), not the link, so from lg it wraps the
+ * expanded button rather than the collapsed box. A press (touch) shows the
+ * bubble too.
+ *
+ * Motion follows the Animation switch, else the OS setting (V0.49): the grow
+ * and the expand transitions are only applied under `motion-safe`, and the
+ * global reduced-motion rule in index.css zeroes any other transition, so
+ * with motion off everything snaps.
  */
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `group relative block whitespace-nowrap rounded-full px-4 py-2 text-base font-medium transition-transform duration-150 ease-out focus-visible:shadow-glow-focus lg:text-sm ${
-    isActive ? 'text-fg' : 'text-muted motion-safe:hover:scale-[1.06]'
+  `group relative block origin-left whitespace-nowrap rounded-full text-base font-medium focus-visible:outline-none lg:text-sm ${
+    isActive ? 'text-fg' : 'text-muted motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:scale-[1.06]'
   }`
 
 /** The bubble: same glass recipe as V0.25 panels (fill, blur, faint border, rim). */
 const bubbleBase =
-  'pointer-events-none absolute inset-0 rounded-full border border-border bg-surface glass-edge transition-[opacity,scale] duration-150 ease-out'
+  'pointer-events-none absolute inset-0 rounded-full border border-border bg-surface glass-edge motion-safe:transition-[opacity,scale] motion-safe:duration-150 motion-safe:ease-out'
 
 /**
  * Blur is only switched on while the bubble shows: six hidden blurred layers
@@ -36,32 +42,82 @@ const bubbleClass = (isActive: boolean) =>
       : 'scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-hover:backdrop-blur-glass group-focus-visible:scale-100 group-focus-visible:opacity-100 group-focus-visible:backdrop-blur-glass group-active:scale-100 group-active:opacity-100 group-active:backdrop-blur-glass'
   }`
 
-/** Frosted header glass (S25): bg at 80% (V0.35) plus backdrop blur. */
+/** Focus ring and glow, drawn on the expander when the link has keyboard focus. */
+const focusRing =
+  'group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-ring group-focus-visible:shadow-glow-focus'
+
+/**
+ * Expander: the bubble plus the full label. Below lg, and for buttons that
+ * never collapse (no short label, or the current page), it is the button
+ * itself, in flow.
+ *
+ * From lg, a collapsible button (V0.47) is sized by its short label (an
+ * in-flow, aria-hidden span) and the expander is laid over it, absolutely
+ * positioned, so expanding never moves anything. Collapsed it is clipped to
+ * the short label's box (`max-w-full`: 100% of the link) and its label is
+ * transparent; on hover or focus the clip opens to the full label's width,
+ * `--expanded-w` (measured by NavButton), while the full label fades in over
+ * the short one. Animating to the real width, rather than to a fixed cap,
+ * keeps the expand speed the same for every button. Until measured,
+ * `--expanded-w` is unset, so the max-width is `none` and it simply opens.
+ *
+ * No opacity on the expander itself: an ancestor with opacity below 1 is a
+ * backdrop root and would stop the bubble's blur mid-fade.
+ */
+const expanderClass = (collapsible: boolean) =>
+  `relative block rounded-full ${focusRing} ${
+    collapsible
+      ? 'lg:absolute lg:inset-y-0 lg:left-0 lg:w-max lg:max-w-full lg:overflow-hidden lg:group-hover:max-w-(--expanded-w) lg:group-focus-visible:max-w-(--expanded-w) motion-safe:transition-[max-width] motion-safe:duration-200 motion-safe:ease-out'
+      : ''
+  }`
+
+/**
+ * Full label: always the accessible name. From lg it is hidden while
+ * collapsed, and keeps its own width (`w-max`) inside the clipped expander.
+ */
+const fullLabelClass = (collapsible: boolean) =>
+  `relative block px-4 py-2 ${
+    collapsible
+      ? 'lg:w-max lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out'
+      : ''
+  }`
+
+/** Short label (lg only, aria-hidden): sizes the collapsed button and fades out as it expands. */
+const shortLabelClass =
+  'hidden px-4 py-2 group-hover:opacity-0 group-focus-visible:opacity-0 lg:block motion-safe:transition-opacity motion-safe:duration-150 motion-safe:ease-out'
+
+/** Frosted header glass (S25): bg at 80% (V0.35) plus backdrop blur. Top bar only (below lg). */
 const glass = 'bg-bg-header backdrop-blur-glass'
 
 /**
- * Site navigation (V0.38: vertical rail). There is no site name in it; the
- * Home button leads home and the name lives on the Home page and footer.
+ * Site navigation (V0.38: vertical rail; V0.47: slim, see-through rail).
+ * There is no site name in it; the Home button leads home and the name lives
+ * on the Home page and footer.
  *
- * - From lg: a slim rail fixed to the left edge, full height, buttons stacked
- *   in navItems order. Layout pads the page by the rail width (`pl-rail`), so
- *   nothing sits under it, and there is no top bar.
+ * - From lg: a rail fixed to the left edge, full height, with the buttons
+ *   stacked in navItems order and vertically centered. It has no fill and no
+ *   divider, so the space background shows through. It is only as wide as
+ *   its content: the short labels (Proj, Res, Cont, BTS) plus the current
+ *   page's full name, so it widens on pages with a long name. Its measured
+ *   width is published as `--rail-width` on <html> (see below).
  * - Under lg: a sticky top bar (V0.35) with only the hamburger. It opens the
- *   same vertical buttons as an overlay below the bar.
+ *   same vertical buttons, with full labels, as an overlay below the bar.
  *
- * Frosted glass (S25): bg at 80% plus backdrop blur, so the space background
- * shows through but stays dark enough under the text, even with bright page
- * content scrolled beneath it (see index.css).
+ * `--rail-width` (V0.47): the rail's real rendered width in px from lg, 0px
+ * below lg. Set by a ResizeObserver on <header>, so it follows route changes
+ * (the current page's button changes width) and breakpoint changes. Layout
+ * pads the page by it (`lg:pl-(--rail-width)`), so content never sits under
+ * the rail; scenes can use it to center in the area beside the rail.
  *
  * The top bar's height is published as `--header-height` on <html>, which
  * index.css uses for `scroll-padding-top`, so anchors and focused elements
  * land below it. From lg the bar is hidden, so the value is 0 (index.css also
  * forces 0 from lg).
  *
- * The glass sits on its own layer behind the content instead of on <header>:
- * an element with a backdrop filter is a backdrop root, so the mobile menu
- * (a child that hangs below the bar) and the bubbles could not blur the page
- * behind them.
+ * Below lg the glass sits on its own layer behind the content instead of on
+ * <header>: an element with a backdrop filter is a backdrop root, so the
+ * mobile menu (a child that hangs below the bar) and the bubbles could not
+ * blur the page behind them.
  *
  * Under lg the menu is an overlay below the bar rather than part of it, so
  * opening it doesn't push the page down from wherever the visitor scrolled
@@ -121,6 +177,27 @@ export default function Header() {
     }
   }, [])
 
+  // Publish the rail's width (V0.47). Below lg the header is the sticky top
+  // bar, not a rail, so 0. Rounded up to whole px: a fractional padding left a
+  // 1px horizontal overflow. Runs before paint, so the padding is right on the
+  // first frame and on every route change.
+  useLayoutEffect(() => {
+    const header = headerRef.current
+    if (!header) return
+    const root = document.documentElement
+    const publish = () => {
+      const isRail = getComputedStyle(header).position === 'fixed'
+      root.style.setProperty('--rail-width', isRail ? `${Math.ceil(header.getBoundingClientRect().width)}px` : '0px')
+    }
+    publish()
+    const observer = new ResizeObserver(publish)
+    observer.observe(header)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--rail-width')
+    }
+  }, [])
+
   // Focus moving out of the header (Tab past the last link, the skip link)
   // closes the menu. A null relatedTarget (window blur) leaves it open.
   function onBlur(event: FocusEvent<HTMLElement>) {
@@ -132,11 +209,11 @@ export default function Header() {
     <header
       ref={headerRef}
       onBlur={onBlur}
-      className="sticky top-0 z-40 lg:fixed lg:inset-y-0 lg:left-0 lg:w-rail"
+      className="sticky top-0 z-40 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col lg:justify-center-safe"
     >
       <div
         aria-hidden="true"
-        className={`absolute inset-0 -z-10 border-b border-border lg:border-r lg:border-b-0 ${glass}`}
+        className={`absolute inset-0 -z-10 border-b border-border lg:hidden ${glass}`}
       />
       <div ref={barRef} className="lg:hidden">
         <Container className="flex items-center justify-end py-3">
@@ -157,24 +234,67 @@ export default function Header() {
       <nav
         id={MENU_ID}
         aria-label="Primary"
-        className={`${open ? 'block' : 'hidden'} absolute inset-x-0 top-full max-h-[calc(100dvh-var(--header-height,4rem))] overflow-y-auto overscroll-contain border-b border-border ${glass} lg:static lg:block lg:h-full lg:max-h-none lg:border-0 lg:bg-transparent lg:backdrop-blur-none`}
+        className={`${open ? 'block' : 'hidden'} absolute inset-x-0 top-full max-h-[calc(100dvh-var(--header-height,4rem))] overflow-y-auto overscroll-contain border-b border-border ${glass} lg:static lg:block lg:max-h-none lg:overflow-visible lg:border-0 lg:bg-transparent lg:backdrop-blur-none`}
       >
-        <ul className="mx-auto flex max-w-page flex-col items-start gap-1 px-gutter py-3 lg:mx-0 lg:max-w-none lg:gap-2 lg:px-4 lg:py-6">
+        <ul className="mx-auto flex max-w-page flex-col items-start gap-1 px-gutter py-3 lg:mx-0 lg:max-w-none lg:gap-2 lg:px-3 lg:py-6">
           {navItems.map((item) => (
             <li key={item.to}>
-              <NavLink to={item.to} end={item.to === '/'} className={linkClass}>
-                {({ isActive }) => (
-                  <>
-                    <span aria-hidden="true" className={bubbleClass(isActive)} />
-                    <span className="relative">{item.label}</span>
-                  </>
-                )}
-              </NavLink>
+              <NavButton item={item} />
             </li>
           ))}
         </ul>
       </nav>
     </header>
+  )
+}
+
+/**
+ * One nav button. From lg a button with a short label shows it collapsed
+ * (unless it is the current page) and expands to the full label on hover or
+ * focus; see expanderClass. The short label is aria-hidden, so the accessible
+ * name is always the full page name.
+ *
+ * The full label's width is written straight to the expander as
+ * `--expanded-w` (no re-render), the target of the expand animation. A
+ * ResizeObserver keeps it right if the font or text size changes.
+ */
+function NavButton({ item }: { item: NavItem }) {
+  const expanderRef = useRef<HTMLSpanElement>(null)
+  const fullRef = useRef<HTMLSpanElement>(null)
+
+  useLayoutEffect(() => {
+    const expander = expanderRef.current
+    const full = fullRef.current
+    if (!expander || !full) return
+    const publish = () =>
+      expander.style.setProperty('--expanded-w', `${full.getBoundingClientRect().width}px`)
+    publish()
+    const observer = new ResizeObserver(publish)
+    observer.observe(full)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <NavLink to={item.to} end={item.to === '/'} className={linkClass}>
+      {({ isActive }) => {
+        const collapsible = Boolean(item.shortLabel) && !isActive
+        return (
+          <>
+            {collapsible && (
+              <span aria-hidden="true" className={shortLabelClass}>
+                {item.shortLabel}
+              </span>
+            )}
+            <span ref={expanderRef} className={expanderClass(collapsible)}>
+              <span aria-hidden="true" className={bubbleClass(isActive)} />
+              <span ref={fullRef} className={fullLabelClass(collapsible)}>
+                {item.label}
+              </span>
+            </span>
+          </>
+        )
+      }}
+    </NavLink>
   )
 }
 

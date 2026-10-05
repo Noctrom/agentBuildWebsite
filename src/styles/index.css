@@ -222,7 +222,9 @@
 /*
  * Reduced motion (S25): hover/focus transitions snap instead of fading, and
  * any CSS animation finishes at once. The canvas background handles reduced
- * motion itself (still frame, see SpaceBackground).
+ * motion itself (still frame, see SpaceBackground), and also follows the
+ * footer "Animation" switch (V0.41, layout/motionPreference.ts); this CSS
+ * rule and `motion-safe:` utilities still follow the OS setting only.
  */
 @media (prefers-reduced-motion: reduce) {
   *,

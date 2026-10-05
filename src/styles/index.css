@@ -1,1 +1,102 @@
 @import 'tailwindcss';
+
+/*
+ * Design tokens — the single source of truth for color, font and spacing.
+ *
+ * Raw values live in CSS variables on :root (light) and [data-theme='dark'].
+ * The @theme block below maps them to Tailwind utilities, so components use
+ * semantic classes (bg-bg, bg-surface, text-fg, text-muted, text-accent,
+ * border-border, ...) and switch themes automatically. Never use raw palette
+ * colors (e.g. text-slate-600) in components.
+ *
+ * The data-theme attribute on <html> is set before first paint by the inline
+ * script in index.html, and updated at runtime by src/components/ui/useTheme.ts.
+ *
+ * WCAG contrast (text vs bg / vs surface):
+ *   light: fg 17.85 / 16.30, muted 7.58 / 6.92, accent 5.93 / 5.42,
+ *          accent-fg on accent 5.93
+ *   dark:  fg 15.27 / 13.24, muted 7.34 / 6.36, accent 8.79 / 7.62,
+ *          accent-fg on accent 8.79
+ */
+
+/* Dark variant follows the resolved theme, not the media query directly. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  color-scheme: light;
+  --theme-bg: #ffffff; /* page background */
+  --theme-surface: #f1f5f9; /* cards, raised areas */
+  --theme-fg: #0f172a; /* body text */
+  --theme-muted: #475569; /* secondary text */
+  --theme-accent: #0369a1; /* links, primary actions */
+  --theme-accent-hover: #075985;
+  --theme-accent-fg: #ffffff; /* text on accent backgrounds */
+  --theme-border: #e2e8f0;
+  --theme-ring: #0369a1; /* focus outline */
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --theme-bg: #0b1120;
+  --theme-surface: #162032;
+  --theme-fg: #e2e8f0;
+  --theme-muted: #94a3b8;
+  --theme-accent: #38bdf8;
+  --theme-accent-hover: #7dd3fc;
+  --theme-accent-fg: #0b1120;
+  --theme-border: #1e293b;
+  --theme-ring: #38bdf8;
+}
+
+@theme inline {
+  /* Colors -> bg-*, text-*, border-*, ring-*, etc. */
+  --color-bg: var(--theme-bg);
+  --color-surface: var(--theme-surface);
+  --color-fg: var(--theme-fg);
+  --color-muted: var(--theme-muted);
+  --color-accent: var(--theme-accent);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-accent-fg: var(--theme-accent-fg);
+  --color-border: var(--theme-border);
+  --color-ring: var(--theme-ring);
+}
+
+@theme {
+  /* Fonts -> font-sans, font-mono */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    monospace;
+
+  /* Spacing: Tailwind's base unit (p-4 = 1rem) plus semantic layout tokens. */
+  --spacing: 0.25rem;
+  --spacing-gutter: 1rem; /* horizontal page padding (px-gutter) */
+  --spacing-section: 4rem; /* vertical space between sections (py-section) */
+
+  /* Content width -> max-w-content (max-w-prose is Tailwind built-in, 65ch) */
+  --container-content: 64rem;
+  /* Outer width of <Container>: content width plus both gutters -> max-w-page */
+  --container-page: calc(var(--container-content) + 2 * var(--spacing-gutter));
+}
+
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}

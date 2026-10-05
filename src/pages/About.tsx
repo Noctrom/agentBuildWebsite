@@ -1,5 +1,5 @@
 import { Section, Tag } from '../components/ui'
-import { aboutPage, experience, formatYearMonth, PRESENT_LABEL, profile, skills } from '../content'
+import { aboutPage, experience, formatYearMonth, profile, sharedLabels, skills } from '../content'
 
 export default function About() {
   return (
@@ -46,7 +46,7 @@ export default function About() {
                 <time dateTime={job.start}>{formatYearMonth(job.start)}</time>
                 {' – '}
                 {job.end === null ? (
-                  PRESENT_LABEL
+                  sharedLabels.present
                 ) : (
                   <time dateTime={job.end}>{formatYearMonth(job.end)}</time>
                 )}

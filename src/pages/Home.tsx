@@ -1,14 +1,14 @@
 import { useId } from 'react'
 import { Button, Card, Section, type CardAction } from '../components/ui'
-import { featuredProjects, home, profile, type Project } from '../content'
+import { featuredProjects, homePage, profile, sharedLabels, type Project } from '../content'
 
 /** The home page previews at most this many featured projects. */
 const MAX_FEATURED = 3
 
 function projectActions(project: Project): CardAction[] {
   const actions: CardAction[] = []
-  if (project.repoUrl) actions.push({ label: home.repoLabel, href: project.repoUrl })
-  if (project.demoUrl) actions.push({ label: home.demoLabel, href: project.demoUrl })
+  if (project.repoUrl) actions.push({ label: sharedLabels.projectRepo, href: project.repoUrl })
+  if (project.demoUrl) actions.push({ label: sharedLabels.projectDemo, href: project.demoUrl })
   return actions
 }
 
@@ -33,9 +33,9 @@ export default function Home() {
               {profile.pitch}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
-              <Button to="/projects">{home.viewProjectsLabel}</Button>
+              <Button to="/projects">{homePage.viewProjectsLabel}</Button>
               <Button href={profile.resumeUrl} download variant="secondary">
-                {home.downloadResumeLabel}
+                {homePage.downloadResumeLabel}
               </Button>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function Home() {
       </section>
 
       {featured.length > 0 && (
-        <Section title={home.featuredHeading} intro={home.featuredIntro} className="pt-0">
+        <Section title={homePage.featuredTitle} intro={homePage.featuredIntro} className="pt-0">
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((project) => (
               <li key={project.id}>
@@ -66,7 +66,7 @@ export default function Home() {
           </ul>
           <div className="mt-8">
             <Button to="/projects" variant="secondary">
-              {home.seeAllProjectsLabel}
+              {homePage.seeAllProjectsLabel}
             </Button>
           </div>
         </Section>

@@ -3,9 +3,9 @@ import {
   education,
   experience,
   formatYearMonth,
-  PRESENT_LABEL,
   profile,
   resumePage,
+  sharedLabels,
   type YearMonth,
 } from '../content'
 
@@ -15,7 +15,7 @@ function DateRange({ start, end }: { start: YearMonth; end: YearMonth | null }) 
     <p className="text-sm text-muted">
       <time dateTime={start}>{formatYearMonth(start)}</time>
       {' – '}
-      {end === null ? PRESENT_LABEL : <time dateTime={end}>{formatYearMonth(end)}</time>}
+      {end === null ? sharedLabels.present : <time dateTime={end}>{formatYearMonth(end)}</time>}
     </p>
   )
 }

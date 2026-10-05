@@ -164,3 +164,34 @@
 
 **Follow-ups**
 - dev-1: `Card`'s `className` can't override its background (`bg-surface` wins over e.g. `bg-bg`), so cards can't sit on a `tone="surface"` Section. About's `<Tag className="bg-bg">` may hit the same conflict. A `tone`/`variant` prop or class merging in Card/Tag would fix it.
+
+## S15 — Consistent page copy in content (2026-10-04)
+**Branch:** story/S15-page-copy · **Status:** done
+
+**What I did**
+- One pattern for page copy, used by all five pages. Each page has its own file in `src/content/pages/` (`home.ts`, `about.ts`, `projects.ts`, `resume.ts`, `contact.ts`). Each file exports `<page>Page`, typed by `<Page>PageCopy`.
+- Shared labels are defined once in `src/content/labels.ts` as `sharedLabels`: `projectRepo` ("Code"), `projectDemo` ("Live demo") and `present` ("Present", which replaces `PRESENT_LABEL`). Home and Projects both take card action labels from there.
+- No visible text changes: rendered text and accessible names are byte-identical before and after (see Verification).
+
+**How I did it**
+- **The pattern (follow it for new pages):**
+  - `src/content/pages/<page>.ts` declares `export interface <Page>PageCopy` and `export const <page>Page: <Page>PageCopy` in the same file, so the shape and the text are edited together. `pages/index.ts` re-exports them and its doc comment repeats these rules. The `src/content` barrel does `export * from './pages'`.
+  - Field names: `title` is the page's h1, `intro` is the text under it, `<section>Title`/`<section>Intro` are for h2 sections, and `<thing>Label` is for button, link and accessible-name text.
+  - Data (profile, projects, experience, education, skills) stays in its own files with types in `types.ts`. Page copy holds only UI text. A label used on more than one page goes in `labels.ts`.
+  - S11 meta: each page adds a `meta: { title: string; description: string }` field to its own `<Page>PageCopy`, or a shared `PageMeta` type in `labels.ts`/`types.ts`. Every page, including Home (whose h1 is `profile.name`), already has its own copy object to hold it.
+- Renames to fit the pattern: `home` → `homePage` (`featuredHeading` → `featuredTitle`, `HomeContent` → `HomePageCopy`); `contactPage.heading` → `title`; `emailButton`/`githubButton`/`linkedinButton` → `...ButtonLabel`; `ContactPageContent`/`ResumePageContent` → `...PageCopy`; `aboutPage` now has an `AboutPageCopy` type. `projectsPage` moved out of `projects.ts` (data only now), and `ProjectsPageCopy`/`HomeContent` moved out of `types.ts`.
+- I found Contact's hardcoded `aria-label="Contact links"` and moved it to `contactPage.linksLabel`.
+- `format.ts` now reads `sharedLabels.present`, so "Present" lives in one place. `PRESENT_LABEL` is removed. About and Resume use `sharedLabels.present`.
+- Home and Projects each still have their own small `projectActions` helper. They really differ: Projects makes the demo button primary. Only the labels are shared.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Before/after render diff: playwright-core (scratchpad) against `vite preview` dumped `document.title`, `body.innerText` and every `aria-label`/`alt`/`title` attribute for `/`, `/about`, `/projects`, `/projects` with the "Go" filter active, `/resume` and `/contact`, at 1280px and 375px. I ran it on `leader` (63c1571) and on this branch. `diff` shows no differences at either width. There is no horizontal overflow at either width.
+
+**Files**
+- Added: `src/content/labels.ts`, `src/content/pages/index.ts`, `src/content/pages/projects.ts`
+- Moved and changed: `src/content/{home,about,contact,resume}.ts` → `src/content/pages/`
+- Changed: `src/content/index.ts`, `src/content/types.ts`, `src/content/projects.ts`, `src/content/format.ts`, `src/pages/{Home,About,Projects,Resume,Contact}.tsx`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- Leader/dev-1 (S11): add `meta` per page as described above. Content exports renamed: `home` → `homePage`, `PRESENT_LABEL` → `sharedLabels.present`, `ContactPageContent`/`ResumePageContent` → `...PageCopy`. Nothing in `src/components/` used them (only `profile`), so dev-1's S13 isn't affected.

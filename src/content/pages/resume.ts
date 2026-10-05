@@ -1,8 +1,8 @@
-// PLACEHOLDER: headings and labels for the resume page (/resume). The entries
-// themselves come from `experience` (experience.ts) and `education`
-// (education.ts); the PDF path comes from `profile.resumeUrl`.
+// PLACEHOLDER: UI copy for the resume page (/resume). The entries themselves
+// come from `experience` (experience.ts) and `education` (education.ts); the
+// PDF path comes from `profile.resumeUrl`.
 
-export interface ResumePageContent {
+export interface ResumePageCopy {
   /** Page heading (the page's h1). */
   title: string
   intro: string
@@ -16,7 +16,7 @@ export interface ResumePageContent {
   educationIntro: string
 }
 
-export const resumePage: ResumePageContent = {
+export const resumePage: ResumePageCopy = {
   title: 'Resume',
   intro:
     'Lorem ipsum placeholder intro: a summary of my experience and education. Download the PDF for the full version.',

@@ -61,7 +61,11 @@
  *   bg-glass (bg at 80%, tone="bg" inside a surface band)
  *     fg 16.50 / 15.80, muted 8.96 / 8.58, accent 8.54 / 8.18,
  *     sun 11.92 / 11.41
- *   header (bg at 80% since V0.35; was 70%)
+ *   header (bg at 80% since V0.35; was 70%). From lg the same glass is
+ *   the left nav rail (V0.38) and the "nav pill" is the button bubble; page
+ *   content never scrolls under the rail, only the canvas. Measured scan
+ *   (V0.38, all routes at 1024/1280/1920): brightest pixel in a rail label
+ *   box rgb(23 24 45): fg 14.55, muted 7.90, accent 7.53.
  *     fg 16.87 / 15.82, muted 9.15 / 8.59, accent 8.73 / 8.19
  *     nav pill (surface on header): muted 7.98 / 7.45, accent 7.61 / 7.11
  *   The header is sticky (V0.35), so page content scrolls under it too, not
@@ -127,6 +131,9 @@
   --spacing: 0.25rem;
   --spacing-gutter: 1rem; /* horizontal page padding (px-gutter) */
   --spacing-section: 4rem; /* vertical space between sections (py-section) */
+  /* Width of the fixed left nav rail from lg (V0.38) -> w-rail, pl-rail.
+     Fits the widest button ("Behind the Scenes") grown by its hover scale. */
+  --spacing-rail: 12rem;
 
   /* Content width -> max-w-content (max-w-prose is Tailwind built-in, 65ch) */
   --container-content: 64rem;
@@ -149,11 +156,15 @@
   /*
    * Sticky header (V0.35): anchors, the skip link target and elements
    * scrolled into view on focus stop below the header, not under it.
-   * --header-height is the header's measured height, set by Header.tsx;
+   * --header-height is the top bar's measured height, set by Header.tsx;
    * 4rem is its height under lg, used until the first measurement.
+   * From lg there is no top bar (V0.38: the nav is a left rail), so 0.
    */
   html {
     scroll-padding-top: var(--header-height, 4rem);
+    @variant lg {
+      scroll-padding-top: 0;
+    }
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

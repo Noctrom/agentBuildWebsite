@@ -48,8 +48,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.38](docs/backlog/v0/v0.25-v0.49.md#v038--vertical-navigation-rail-with-bubble-hover) | Vertical navigation rail with bubble hover | dev-1 | V0.35 | done |
 | [V0.39](docs/backlog/v0/v0.25-v0.49.md#v039--contact-galaxy-swirls) | Contact galaxy swirls | dev-2 | — | in progress |
 | [V0.40](docs/backlog/v0/v0.25-v0.49.md#v040--contact-galaxy-core-breathes-and-stars-twinkle) | Contact galaxy core breathes and stars twinkle | dev-2 | V0.39 | todo |
-| [V0.41](docs/backlog/v0/v0.25-v0.49.md#v041--animation-onoff-control-in-the-footer) | Animation on/off control in the footer | dev-1 | V0.38 | todo |
-| [V0.42](docs/backlog/v0/v0.25-v0.49.md#v042--auto-pause-animation-on-low-powered-devices) | Auto-pause animation on low-powered devices | dev-1 | V0.41 | todo |
+| [V0.41](docs/backlog/v0/v0.25-v0.49.md#v041--animation-onoff-control-in-the-footer) | Animation on/off control in the footer | dev-1 | V0.38 | done |
+| [V0.42](docs/backlog/v0/v0.25-v0.49.md#v042--auto-pause-animation-on-low-powered-devices) | Auto-pause animation on low-powered devices | dev-1 | V0.41 | in progress |
 | [V0.43](docs/backlog/v0/v0.25-v0.49.md#v043--behind-the-scenes-black-hole-moves-to-the-center) | Behind the Scenes black hole moves to the center | dev-2 | V0.38, V0.46 | todo |
 | [V0.44](docs/backlog/v0/v0.25-v0.49.md#v044--behind-the-scenes-black-hole-comes-alive) | Behind the Scenes black hole comes alive | dev-2 | V0.43 | todo |
 | [V0.45](docs/backlog/v0/v0.25-v0.49.md#v045--blue-gas-giant-orbits-the-black-hole) | Blue gas giant orbits the black hole | dev-2 | V0.44 | todo |

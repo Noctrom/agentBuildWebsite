@@ -32,7 +32,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | done   |
 | S23 | Space palette, always dark     | dev-1  | PR #2      | done   |
 | S24 | Animated space background      | dev-1  | S23        | done   |
-| S25 | Space-styled components        | dev-1  | S23, S24   | in progress |
+| S25 | Space-styled components        | dev-1  | S23, S24   | done   |
 | S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | done   |
 | S27 | Remaining page scenes          | dev-2  | S26        | in progress |
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | todo   |
@@ -295,12 +295,12 @@ Triaged from story inbox D4 (story-writer, 2026-10-04). Runs after S24 (both tou
 
 Chris wants the rest of the design to match the background. Content sits on frosted, see-through panels so the background shows through but text stays readable.
 
-- [ ] Header and footer are translucent over the background and stay readable while it moves behind them
-- [ ] `Card`, `Section` (tones from S14), `Tag` and `Button` use frosted glass panels (translucent fill + blur + faint border); the existing tone variants remain visibly distinct from each other
-- [ ] Hover/focus states use a subtle glow in the accent colors; keyboard focus is clearly visible
-- [ ] Optional small space details (e.g. orbit-line or star accents on hover/dividers), kept subtle
-- [ ] All motion here is disabled when the OS "reduce motion" setting is on
-- [ ] Works at 375px and desktop; text meets WCAG AA over the panels; `npm run build` and `npm run lint` pass
+- [x] Header and footer are translucent over the background and stay readable while it moves behind them
+- [x] `Card`, `Section` (tones from S14), `Tag` and `Button` use frosted glass panels (translucent fill + blur + faint border); the existing tone variants remain visibly distinct from each other
+- [x] Hover/focus states use a subtle glow in the accent colors; keyboard focus is clearly visible
+- [x] Optional small space details (e.g. orbit-line or star accents on hover/dividers), kept subtle
+- [x] All motion here is disabled when the OS "reduce motion" setting is on
+- [x] Works at 375px and desktop; text meets WCAG AA over the panels; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 
@@ -348,3 +348,4 @@ After the new components (S25) and showpiece scenes (S26) land, each page needs 
 - [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
+- [ ] From S25: Contact's hand-built panel (`rounded-lg border border-border bg-surface p-5`) uses `Card` or `glassClass` + `glass-edge` so it matches the other frosted panels

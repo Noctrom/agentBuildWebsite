@@ -2,8 +2,11 @@ import { between, createRandom } from './random'
 import type { Scene, SceneFrame, SceneInstance, SceneSetup, SceneSize } from './types'
 
 /**
- * Default scene (S24): a layered starfield with gentle twinkling, slowly
- * drifting nebula clouds and a slight parallax between layers on scroll.
+ * Starfield (S24): a layered starfield with gentle twinkling, slowly drifting
+ * nebula clouds and a slight parallax between layers on scroll. It was the
+ * first scene; since S27 every route has its own scene (see `routes.ts`, where
+ * unmapped routes such as the 404 page get `lostInSpaceScene`), and most of
+ * them draw this starfield as their base.
  *
  * Other scenes can reuse it as their base: call `createStarfield(setup)` in
  * your scene's `create`, forward `resize`/`dispose`, and call its `draw(frame)`
@@ -262,7 +265,11 @@ export function createStarfield(setup: SceneSetup, options: StarfieldOptions = {
   }
 }
 
-/** The default scene used on every route that has no scene of its own. */
+/**
+ * The starfield on its own, as a scene. No route uses it at the moment (the
+ * default for unmapped routes is `lostInSpaceScene` in `routes.ts`); it stays
+ * as the simplest complete example of the scene contract.
+ */
 export const starfieldScene: Scene = {
   id: 'starfield',
   create: (setup) => createStarfield(setup),

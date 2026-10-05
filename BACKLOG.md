@@ -40,7 +40,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S30 | Space-themed favicon & OG image | dev-2 | S23       | done   |
 | S31 | Nebula & sun build incrementally | dev-2 | S29      | done   |
 | S32 | Brighter space background      | dev-1  | —          | done   |
-| S33 | Snappier scene changes         | dev-1  | S32        | in progress |
+| S33 | Snappier scene changes         | dev-1  | S32        | done   |
 | S34 | Version numbers & batched docs | leader | S33        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
@@ -399,13 +399,15 @@ Triaged from story inbox D10 (story-writer, 2026-10-05). Runs after S32 (both ed
 
 Chris finds page switches sluggish: the previous page's scene lingers into the new page. Two causes in `backgroundEngine.ts`: the crossfade is 1200ms, and the old scene stays fully visible until the new scene has finished building incrementally (S29/S31), which adds more delay before the fade even starts. This replaces the "crossfade smoothly" behavior from S26.
 
-- [ ] On navigation, the old scene starts fading out immediately (not after the new scene is ready) and is gone within ~250ms
-- [ ] The new scene fades in quickly (~250ms) as soon as it's ready; while it builds, only the plain space background shows (no old scene, no flash of a bright or empty white frame)
-- [ ] Quickly clicking through several pages never shows a stale scene and never stacks multiple scenes; only the latest page's scene ends up visible
-- [ ] Reduce motion: scene swaps instantly, as today
-- [ ] Still smooth on a mid-range phone (no jank introduced); `npm run build` and `npm run lint` pass
+- [x] On navigation, the old scene starts fading out immediately (not after the new scene is ready) and is gone within ~250ms
+- [x] The new scene fades in quickly (~250ms) as soon as it's ready; while it builds, only the plain space background shows (no old scene, no flash of a bright or empty white frame)
+- [x] Quickly clicking through several pages never shows a stale scene and never stacks multiple scenes; only the latest page's scene ends up visible
+- [x] Reduce motion: scene swaps instantly, as today
+- [x] Still smooth on a mid-range phone (no jank introduced); `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
+
+Review note (leader, 2026-10-05): old scene gone in 204–236 ms on desktop; at 375px / 4x CPU throttle 301–368 ms after the click, because React renders the new page before the engine hears about the route (the fade itself is 116–200 ms). Accepted: down from ~1.3–1.5 s. Follow-up nit: `src/scenes/routes.ts` comment still says "crossfades".
 
 ### S34 — Version numbers and batched docs
 Triaged from story inbox D11 (story-writer, 2026-10-05). Owner: leader. Runs only after S33 is merged and no story is in flight; changes to `CLAUDE.md` and agent files wait for Chris to confirm directly.

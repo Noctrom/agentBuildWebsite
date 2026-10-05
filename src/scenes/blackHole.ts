@@ -39,20 +39,39 @@ const SPIN = 0.045
  */
 const DISK_FPS = 12
 const PARALLAX = 0.03
-const MAX_PARALLAX = 40
+
+/**
+ * Height of the (sticky) site header: the shadow and photon ring stay below
+ * it, also after the parallax lift.
+ */
+const HEADER_BAND = 65
 
 interface Layout {
   cx: number
   cy: number
   /** Shadow radius in CSS px; everything else scales from it. */
   r: number
+  /** Most the scroll parallax lifts the hole, in CSS px. */
+  lift: number
 }
 
 function layoutFor({ width, height }: SceneSize): Layout {
   if (width < 768) {
-    return { cx: width * 0.78, cy: height * 0.13, r: Math.max(24, width * 0.08) }
+    // Phones: top right above the centered column. The lift is small so the
+    // shadow never slides under the sticky header.
+    const r = Math.max(24, width * 0.08)
+    const lift = 8
+    return { cx: width * 0.78, cy: Math.max(height * 0.13, HEADER_BAND + lift + r * 1.1), r, lift }
   }
-  return { cx: width * 0.8, cy: height * 0.3, r: Math.max(40, Math.min(width, height) * 0.075) }
+  if (width < 1024) {
+    // Tablets (V0.36): the prose and diagrams span almost the full width, so
+    // the hole sits high in the top-right corner, beside the page title and
+    // above the end of the intro, instead of behind the text.
+    const r = Math.max(36, Math.min(width, height) * 0.06)
+    const lift = 16
+    return { cx: width - r * 1.75, cy: HEADER_BAND + lift + r * 1.5, r, lift }
+  }
+  return { cx: width * 0.8, cy: height * 0.3, r: Math.max(40, Math.min(width, height) * 0.075), lift: 40 }
 }
 
 function makeCanvas(width: number, height: number): HTMLCanvasElement {
@@ -320,7 +339,7 @@ function createBlackHole(setup: SceneSetup) {
     stars.draw(frame)
     const { ctx, time, scrollY } = frame
     const { cx, r } = layout
-    const cy = layout.cy - Math.min(scrollY * PARALLAX, MAX_PARALLAX)
+    const cy = layout.cy - Math.min(scrollY * PARALLAX, layout.lift)
 
     // The glow breathes slowly.
     ctx.globalAlpha = 0.85 + 0.15 * Math.sin(time * 0.3)

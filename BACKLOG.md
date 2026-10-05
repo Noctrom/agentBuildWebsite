@@ -43,7 +43,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.33](docs/backlog/v0/v0.25-v0.49.md#v033--snappier-scene-changes-between-pages) | Snappier scene changes | dev-1 | V0.32 | done |
 | [V0.34](docs/backlog/v0/v0.25-v0.49.md#v034--version-numbers-and-batched-docs) | Version numbers & batched docs | leader | V0.33 | done |
 | [V0.35](docs/backlog/v0/v0.25-v0.49.md#v035--sticky-header) | Sticky header | dev-1 | V0.34 | in progress |
-| [V0.36](docs/backlog/v0/v0.25-v0.49.md#v036--black-hole-clear-of-text-at-tablet-width) | Black hole clear of text at tablet width | dev-2 | V0.34 | in progress |
+| [V0.36](docs/backlog/v0/v0.25-v0.49.md#v036--black-hole-clear-of-text-at-tablet-width) | Black hole clear of text at tablet width | dev-2 | V0.34 | done |
 | [V0.37](docs/backlog/v0/v0.25-v0.49.md#v037--behind-the-scenes-shows-version-ids) | Behind the Scenes shows version ids | dev-2 | V0.34 | done |
 | [V0.38](docs/backlog/v0/v0.25-v0.49.md#v038--vertical-navigation-rail-with-bubble-hover) | Vertical navigation rail with bubble hover | dev-1 | V0.35 | todo |
 

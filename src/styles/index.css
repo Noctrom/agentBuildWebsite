@@ -61,9 +61,16 @@
  *   bg-glass (bg at 80%, tone="bg" inside a surface band)
  *     fg 16.50 / 15.80, muted 8.96 / 8.58, accent 8.54 / 8.18,
  *     sun 11.92 / 11.41
- *   header (bg at 70%)
- *     fg 16.87 / 15.18, muted 9.15 / 8.24
- *     nav pill (surface on header): muted 7.98 / 7.18, accent 7.61 / 6.84
+ *   header (bg at 80% since V0.35; was 70%)
+ *     fg 16.87 / 15.82, muted 9.15 / 8.59, accent 8.73 / 8.19
+ *     nav pill (surface on header): muted 7.98 / 7.45, accent 7.61 / 7.11
+ *   The header is sticky (V0.35), so page content scrolls under it too, not
+ *   just the canvas. At 80% even pure white content (a photo, say) blurred
+ *   under it composites to rgb(55 56 63), the same worst-case pixel as
+ *   above: fg 9.76, muted 5.30, accent 5.05; on the nav pill muted 5.25,
+ *   accent 5.00. At 70% white content would put muted at 3.58, so keep the
+ *   header at 80% or more. (Measured with today's pages at 70%, the
+ *   brightest thing under it was a blurred primary button: accent 5.25.)
  * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.63; the
  * faint border keeps panels outlined.
  * Glow shadows are drawn outside elements, never under their text.
@@ -85,8 +92,8 @@
   --theme-ring: #a5a0ff; /* focus outline */
   /* S25 glass: deep tint for tone="bg" panels (translucent, see note above) */
   --theme-bg-glass: rgb(5 6 15 / 0.8);
-  /* S25 glass: header tint (bg at 70%) */
-  --theme-bg-header: rgb(5 6 15 / 0.7);
+  /* S25 glass: header tint (bg at 80% since V0.35, see note above) */
+  --theme-bg-header: rgb(5 6 15 / 0.8);
 }
 
 @theme inline {
@@ -139,7 +146,14 @@
 }
 
 @layer base {
+  /*
+   * Sticky header (V0.35): anchors, the skip link target and elements
+   * scrolled into view on focus stop below the header, not under it.
+   * --header-height is the header's measured height, set by Header.tsx;
+   * 4rem is its height under lg, used until the first measurement.
+   */
   html {
+    scroll-padding-top: var(--header-height, 4rem);
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

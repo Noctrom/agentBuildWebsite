@@ -31,8 +31,18 @@
  *   accent-fg on accent 8.73, on accent-hover 12.28
  *   sun-fg on sun 12.18, on sun-hover 14.49
  * If you change a color or the surface alpha, recompute these (composite the
- * surface over bg: c = a * surface + (1 - a) * bg per channel). Anything drawn
- * behind content later (S24 background) must stay dim enough to keep them.
+ * surface over bg: c = a * surface + (1 - a) * bg per channel).
+ *
+ * Space background (S24): the scene canvas is shown at opacity 0.1
+ * (BACKGROUND_MAX_OPACITY in components/layout/backgroundEngine.ts), so its
+ * brightest possible pixel (pure white) composites to rgb(30 31 39). Worst
+ * case over that pixel, same columns (bare / surface / surface twice):
+ *   fg            13.70 / 11.30 /  9.29
+ *   muted          7.03 /  5.79 /  4.76
+ *   accent         7.09 /  5.85 /  4.81
+ *   sun            9.90 /  8.16 /  6.71
+ * At opacity 0.12, muted on surface-twice drops to 4.49, so 0.1 is the cap.
+ * The static fallback gradient (.space-fallback) stays below the same bound.
  */
 
 :root {
@@ -104,5 +114,20 @@
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /*
+   * Static space gradient shown by <SpaceBackground> when the animated canvas
+   * can't run (S24). Every stop is far dimmer than white at 10% over bg, so
+   * the contrast budget above holds.
+   */
+  .space-fallback {
+    background-color: var(--color-bg);
+    background-image:
+      radial-gradient(ellipse 60% 45% at 18% 22%, rgb(124 92 255 / 0.1), transparent 70%),
+      radial-gradient(ellipse 55% 40% at 82% 68%, rgb(64 96 230 / 0.09), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 60% 15%, rgb(190 72 190 / 0.06), transparent 70%);
   }
 }

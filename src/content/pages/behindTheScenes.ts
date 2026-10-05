@@ -1,14 +1,14 @@
 // Copy for the Behind the Scenes page (/behind-the-scenes): how this site is
 // built by a team of AI agents. The section text is Chris's approved draft
-// (BACKLOG.md, S21); Chris will edit it later. The diagram data feeds the
-// StoryFlowDiagram and BranchDiagram components (S20).
+// (BACKLOG.md, V0.21); Chris will edit it later. The diagram data feeds the
+// StoryFlowDiagram and BranchDiagram components (V0.20).
 
 import type { BranchLevel, FlowLoop, FlowStage } from '../../components/ui'
 import type { PageMetaCopy } from '../types'
 
 /**
  * The source repository. Defined once here; the repo link appears only on
- * this page (Chris's decision, S21).
+ * this page (Chris's decision, V0.21).
  */
 export const repoUrl = 'https://github.com/Noctrom/agentBuildWebsite'
 
@@ -105,7 +105,7 @@ export const behindTheScenesPage: BehindTheScenesPageCopy = {
 
   flowTitle: 'How work flows',
   flowIntro:
-    'Every change starts as a user story ("As a visitor, I want…") with acceptance criteria. The leader assigns it to one developer, who builds it on its own branch in an isolated copy of the repo, checks that the build and linter pass, and writes a log entry explaining what it did and why. The leader reviews the work against the criteria and either sends it back with requested changes or merges it.',
+    'Every change starts as a user story ("As a visitor, I want…") with acceptance criteria. The leader assigns it to one developer, who builds it on its own branch in an isolated copy of the repo, checks that the build and linter pass, and writes a log file for the story explaining what it did and why. The leader reviews the work against the criteria and either sends it back with requested changes or merges it.',
   flowDiagram: {
     label: 'How a story moves through the team, from idea to the live site',
     stages: [
@@ -171,11 +171,11 @@ export const behindTheScenesPage: BehindTheScenesPageCopy = {
       },
       {
         id: 'story',
-        name: 'story/<id>-<slug>',
+        name: 'story/v0.xx-<slug>',
         description: 'One branch per story, in its own isolated copy of the repo.',
         access: 'Only the developer assigned the story. No pushing or merging.',
         mergeLabel: 'Merged by the leader after review',
-        examples: ['story/S20-workflow-diagrams', 'story/S21-behind-the-scenes'],
+        examples: ['story/v0.20-workflow-diagrams', 'story/v0.21-behind-the-scenes'],
       },
     ],
   },

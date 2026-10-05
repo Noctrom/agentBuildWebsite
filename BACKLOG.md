@@ -27,7 +27,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S17 | Live reload on WSL             | dev-1  | S1         | done   |
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | done   |
-| S20 | Workflow diagrams              | dev-1  | S4         | in progress |
+| S20 | Workflow diagrams              | dev-1  | S4         | done   |
 | S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | todo   |
 | S22 | Behind the Scenes nav link     | dev-1  | S21        | todo   |
 
@@ -177,13 +177,13 @@ The "send back for fixes" loop between leader review and the dev must be visible
 
 **Diagram B, git branches:** `main` ← `leader` ← `story/<id>-<slug>` branches, showing that devs only commit to story branches, only the leader merges into `leader`, and only Chris merges into `main` (via PR).
 
-- [ ] Both diagrams render as components in `src/components/ui/` (exported from the barrel) with typed props for every label; no label text hardcoded in the components
-- [ ] Diagram A shows every step above in order, including the review → fix loop
-- [ ] Diagram B shows the three branch levels and who may change each one
-- [ ] Readable at 375px (diagram reflows vertically, no horizontal page scroll) and at desktop widths
-- [ ] Legible in light and dark themes, using the existing theme tokens; text meets WCAG AA contrast
-- [ ] Accessible: each diagram has a text alternative (e.g. `aria-label`/`<title>` or a visually hidden ordered list of the steps)
-- [ ] No new heavy dependencies (inline SVG or HTML/CSS is fine); `npm run build` and `npm run lint` pass
+- [x] Both diagrams render as components in `src/components/ui/` (exported from the barrel) with typed props for every label; no label text hardcoded in the components
+- [x] Diagram A shows every step above in order, including the review → fix loop
+- [x] Diagram B shows the three branch levels and who may change each one
+- [x] Readable at 375px (diagram reflows vertically, no horizontal page scroll) and at desktop widths
+- [x] Legible in light and dark themes, using the existing theme tokens; text meets WCAG AA contrast
+- [x] Accessible: each diagram has a text alternative (e.g. `aria-label`/`<title>` or a visually hidden ordered list of the steps)
+- [x] No new heavy dependencies (inline SVG or HTML/CSS is fine); `npm run build` and `npm run lint` pass
 
 **Open questions:** None.
 

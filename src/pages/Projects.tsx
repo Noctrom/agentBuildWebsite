@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { projects, projectsPage, projectTags, type Project } from '../content'
+import { projects, projectsPage, projectTags, sharedLabels, type Project } from '../content'
 import { Card, Section, TagButton, type CardAction } from '../components/ui'
 
 function projectActions(project: Project): CardAction[] {
   const actions: CardAction[] = []
-  if (project.repoUrl) actions.push({ label: projectsPage.repoLabel, href: project.repoUrl })
+  if (project.repoUrl) actions.push({ label: sharedLabels.projectRepo, href: project.repoUrl })
   if (project.demoUrl) {
-    actions.push({ label: projectsPage.demoLabel, href: project.demoUrl, variant: 'primary' })
+    actions.push({ label: sharedLabels.projectDemo, href: project.demoUrl, variant: 'primary' })
   }
   return actions
 }

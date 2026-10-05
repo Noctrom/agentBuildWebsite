@@ -47,21 +47,6 @@ export interface Project {
   featured: boolean
 }
 
-/** Copy for the projects page (S8). */
-export interface ProjectsPageCopy {
-  title: string
-  intro: string
-  /** Accessible label for the tag filter group. */
-  filterLabel: string
-  /** Label for the button that clears the filter. */
-  allLabel: string
-  /** Card action labels. */
-  repoLabel: string
-  demoLabel: string
-  /** Result count announced politely when the filter changes. */
-  resultCount: (shown: number, total: number) => string
-}
-
 export interface Experience {
   id: string
   role: string
@@ -88,22 +73,4 @@ export interface Education {
 export interface SkillGroup {
   category: string
   skills: string[]
-}
-
-/** UI strings for the home page (labels and headings, not bio data). */
-export interface HomeContent {
-  /** Hero button linking to /projects. */
-  viewProjectsLabel: string
-  /** Hero button that downloads the resume. */
-  downloadResumeLabel: string
-  /** Heading of the featured projects preview. */
-  featuredHeading: string
-  /** Optional intro under the featured heading. */
-  featuredIntro?: string
-  /** Button below the preview linking to /projects. */
-  seeAllProjectsLabel: string
-  /** Card action label for a project's repository link. */
-  repoLabel: string
-  /** Card action label for a project's live demo link. */
-  demoLabel: string
 }

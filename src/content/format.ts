@@ -1,3 +1,4 @@
+import { sharedLabels } from './labels'
 import type { YearMonth } from './types'
 
 // Fixed English month names: output never depends on the visitor's locale or
@@ -17,9 +18,6 @@ const MONTHS = [
   'Dec',
 ] as const
 
-/** Label used for an open-ended range (`end: null`). */
-export const PRESENT_LABEL = 'Present'
-
 /**
  * Format a `YearMonth` for display: `formatYearMonth('2023-03')` → `'Mar 2023'`.
  * Falls back to the raw value if it isn't a valid `YYYY-MM` string.
@@ -36,5 +34,5 @@ export function formatYearMonth(value: YearMonth): string {
  * `'Mar 2023 – Present'`. `end: null` means the role/course is ongoing.
  */
 export function formatDateRange(start: YearMonth, end: YearMonth | null): string {
-  return `${formatYearMonth(start)} – ${end === null ? PRESENT_LABEL : formatYearMonth(end)}`
+  return `${formatYearMonth(start)} – ${end === null ? sharedLabels.present : formatYearMonth(end)}`
 }

@@ -1,11 +1,12 @@
 export type * from './types'
+// Data
 export { profile } from './profile'
-export { projects, featuredProjects, projectTags, projectsPage } from './projects'
+export { projects, featuredProjects, projectTags } from './projects'
 export { experience } from './experience'
 export { education } from './education'
 export { skills } from './skills'
-export { contactPage, type ContactPageContent } from './contact'
-export { aboutPage } from './about'
-export { formatYearMonth, formatDateRange, PRESENT_LABEL } from './format'
-export { home } from './home'
-export { resumePage, type ResumePageContent } from './resume'
+// Page copy (one file per page, see pages/index.ts) and labels shared by pages
+export * from './pages'
+export { sharedLabels, type SharedLabels } from './labels'
+// Helpers
+export { formatYearMonth, formatDateRange } from './format'

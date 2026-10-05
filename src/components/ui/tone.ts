@@ -4,9 +4,10 @@
  * `<Section tone="surface">` band.
  *
  * Both tones are frosted glass (S25): a translucent fill plus a backdrop blur,
- * so the space background shows through. `surface` is a pale nebula tint
- * (lighter than the page); `bg` is a deep space tint (darker than a surface
- * band), so the two stay visibly distinct. Contrast numbers are in
+ * so the space background shows through. `surface` is a nebula-blue tint
+ * (lighter than the page; since S32 a darker, more opaque tint that also
+ * dims bright scene pixels behind it); `bg` is a deep space tint (darker than
+ * a surface band), so the two stay visibly distinct. Contrast numbers are in
  * styles/index.css.
  *
  * Use the `tone` prop rather than `className="bg-..."`: an extra `bg-*` class

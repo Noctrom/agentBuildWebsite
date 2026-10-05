@@ -65,10 +65,10 @@
  *
  * Brightness (contrast budget)
  * - Draw at full brightness. The engine shows the canvas at a fixed low opacity
- *   (`budget.maxOpacity`, 0.1) over the page background, so even pure white
- *   ends up at most rgb(30 31 39). That keeps every text color in `index.css`
- *   at WCAG AA (>= 4.5:1) at every frame, including muted text on a surface
- *   panel nested twice. Scenes cannot break contrast, and should not try to
+ *   (`budget.maxOpacity`, 0.2 since S32) over the page background, so even
+ *   pure white ends up at most rgb(55 56 63). That keeps every text color in
+ *   `index.css` at WCAG AA (>= 4.5:1) at every frame, on the bare background
+ *   and on surface panels nested twice (lowest: accent, 4.96). Scenes cannot break contrast, and should not try to
  *   compensate by brightening further; contrast against text is not their job.
  * - Because the output is scaled down, contrast *inside* the scene matters:
  *   use alpha 0.4-1 for things that should be visible.

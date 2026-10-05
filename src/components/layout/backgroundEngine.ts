@@ -13,12 +13,15 @@ import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '.
  */
 
 /**
- * Opacity the scene canvas is shown at over the page background. Even pure
- * white then composites to rgb(30 31 39), which keeps every text token in
- * `index.css` at WCAG AA, including muted text on a surface nested twice
- * (4.76:1). Recompute before raising it.
+ * Opacity the scene canvas is shown at over the page background (S24: 0.1,
+ * raised to 0.2 in S32). Even pure white then composites to rgb(55 56 63),
+ * which keeps every text token in `index.css` at WCAG AA over every panel;
+ * the tightest pairs are accent on a surface nested twice (4.96:1) and accent
+ * on the bare background (5.05:1). At 0.22 bare accent drops to 4.7, so this
+ * is the cap with the current tokens. Recompute (table in `index.css`) before
+ * raising it.
  */
-export const BACKGROUND_MAX_OPACITY = 0.1
+export const BACKGROUND_MAX_OPACITY = 0.2
 
 /**
  * Canvas resolution caps. The background is dim and soft, so it gains little

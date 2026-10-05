@@ -19,6 +19,7 @@ Do not edit `src/components/` or `src/styles/` (owned by dev-1). Build pages fro
 3. Debug until `npm run build` and `npm run lint` pass. Check the result at mobile and desktop widths.
 4. Commit on your story branch with messages that start with the story's version, like `V0.08: Projects page with tag filter`.
 5. Before reporting, write the story's log file (see "Story log" below) and commit it on the story branch.
+6. Before reporting, stop every process you started: dev and `vite preview` servers, Playwright/Chromium browsers, and background shells. Check with `ss -ltnp` that none of your ports are still listening. Leave port 5173 in the repo root (Chris's dev server) and anything you didn't start alone. Leftover servers keep running for hours and keep your worktree locked.
 
 ## Story log
 Every story gets its own log file, which you write and own:
@@ -73,6 +74,7 @@ Never delete branches before the leader's approval message, and never delete any
 - Story id and status (done / blocked)
 - Each acceptance criterion: met or not, and how
 - Files changed
+- Cleanup: the servers and browsers you started are stopped (ports checked with `ss -ltnp`)
 - Any decisions, assumptions, or requests for dev-1 / the leader
 
 Keep the report short. Don't claim something works unless you ran it.

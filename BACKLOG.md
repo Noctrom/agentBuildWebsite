@@ -27,6 +27,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S17 | Live reload on WSL             | dev-1  | S1         | done   |
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | in progress |
+| S20 | Workflow diagrams              | dev-1  | S4         | in progress |
+| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | todo   |
+| S22 | Behind the Scenes nav link     | dev-1  | S21        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -159,3 +162,82 @@ Split from S11. Uses dev-1's `PageMeta` from S11.
 - [ ] Each page copy file gets `meta: { title, description }` (placeholder text) and every page, including 404, renders `PageMeta` with it
 - [ ] Placeholder Open Graph image at `public/og-image.png` (1200×630, clearly placeholder)
 - [ ] Browser tab shows the right title on each route, and on an unknown URL
+
+### S20 — Workflow diagrams
+Triaged from story inbox D1 (story-writer, 2026-10-04).
+
+*As a visitor to the Behind the Scenes page, I want diagrams of how the agent team and the git workflow run so that I can understand the process at a glance instead of reading walls of text.*
+
+Chris wants the Behind the Scenes page (D2) to show visually how this site is built. Two diagrams, built as reusable components that D2 places on the page. All labels come in as props (text lives in `src/content/`, per `CLAUDE.md`).
+
+**Diagram A, story flow:** how one piece of work moves through the team.
+Chris → story-writer (interview, drafts stories) → story inbox → leader (triage, assigns) → dev-1 / dev-2 (build on a story branch) → leader review (build + lint, approve or send back) → `leader` branch → pull request → Chris reviews & merges → `main` → Vercel deploy.
+The "send back for fixes" loop between leader review and the dev must be visible.
+
+**Diagram B, git branches:** `main` ← `leader` ← `story/<id>-<slug>` branches, showing that devs only commit to story branches, only the leader merges into `leader`, and only Chris merges into `main` (via PR).
+
+- [ ] Both diagrams render as components in `src/components/ui/` (exported from the barrel) with typed props for every label; no label text hardcoded in the components
+- [ ] Diagram A shows every step above in order, including the review → fix loop
+- [ ] Diagram B shows the three branch levels and who may change each one
+- [ ] Readable at 375px (diagram reflows vertically, no horizontal page scroll) and at desktop widths
+- [ ] Legible in light and dark themes, using the existing theme tokens; text meets WCAG AA contrast
+- [ ] Accessible: each diagram has a text alternative (e.g. `aria-label`/`<title>` or a visually hidden ordered list of the steps)
+- [ ] No new heavy dependencies (inline SVG or HTML/CSS is fine); `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S21 — Behind the Scenes page
+Triaged from story inbox D2 (story-writer, 2026-10-04).
+
+*As a hiring manager, I want to see how Chris built this site with a team of AI agents so that I can judge how Chris works with agents in a professional way.*
+
+Chris wants a dedicated tab explaining how the site was created: the methodology, setup, how it works, and why it's built this way. The site has two goals at once: a personal website, and a demonstration of using agents professionally. The repo (`https://github.com/Noctrom/agentBuildWebsite`) is private now; Chris will make it public before launch. The repo holds the backlog, agent definitions and story logs for anyone who wants proof, so the page links to the repo rather than to individual files.
+
+- [ ] New page "Behind the Scenes" at `/behind-the-scenes` (route added in `App.tsx`), with its own `PageMeta` (S11/S19 pattern). The nav link is S22 (dev-1), because `navItems` is in `layout/`
+- [ ] Page text is the draft copy below, stored in `src/content/` following the S15 page-copy pattern; no text hardcoded in the page
+- [ ] Diagram A (story flow) appears in "How work flows" and Diagram B (git branches) in "Branches and reviews"
+- [ ] A "View the source on GitHub" button links to the repo URL, opening in a new tab; the URL is defined once in content
+- [ ] Works at 375px and desktop widths; `npm run build` and `npm run lint` pass
+
+**Draft copy** (Chris will edit later; use as-is for now):
+
+> **Heading:** Behind the Scenes
+> **Intro:** This site has two jobs. It's my personal website, and it's a working example of how I build software with a team of AI agents. Everything here, from the first scaffold to this page, was planned, built and reviewed through the process below.
+>
+> **Why build it this way**
+> AI coding agents are fast, but speed without structure produces messy code and surprises. I wanted to show that agents can work the way a good engineering team does: clear requirements, owned areas of the codebase, small reviewable changes, and a human who signs off on what ships. This site is small enough to follow end to end and real enough to prove the point.
+>
+> **The team**
+> - **Me:** product owner and final reviewer. I decide what gets built and I approve every change that reaches production.
+> - **Story writer:** talks with me about what I want and turns it into user stories with clear, testable acceptance criteria.
+> - **Leader:** plans the backlog, assigns stories, reviews every change, merges approved work and reports progress back to me. It doesn't write feature code.
+> - **dev-1:** owns the foundation and design system: layout, theme, and reusable components.
+> - **dev-2:** owns the pages and content.
+>
+> Each agent has a written role definition, owned folders it stays inside, and rules it follows. If a dev needs a change in someone else's area, it reports back instead of making it.
+>
+> **How work flows**
+> Every change starts as a user story ("As a visitor, I want…") with acceptance criteria. The leader assigns it to one developer, who builds it on its own branch in an isolated copy of the repo, checks that the build and linter pass, and writes a log entry explaining what it did and why. The leader reviews the work against the criteria and either sends it back with requested changes or merges it.
+> *[Diagram A]*
+>
+> **Branches and reviews**
+> No agent can push to production. Developers commit only to their story branch. Only the leader merges into the integration branch. Changes reach `main`, and the live site, only through a pull request that I review and merge myself.
+> *[Diagram B]*
+>
+> **The stack**
+> React and TypeScript, built with Vite, styled with Tailwind CSS, routed with React Router, and deployed as a static site on Vercel. The agents run in Claude Code.
+>
+> **How the site works**
+> All text and data, including this page, lives in typed content files, separate from the page code. Pages are assembled from a small set of shared components (buttons, cards, sections, tags), so the design stays consistent and updating content never means touching layout code.
+>
+> **See for yourself**
+> The full repository is public: the backlog, every agent's role definition, their story logs, and the commit history showing each story from branch to merge.
+> *[Button: View the source on GitHub]*
+
+**Open questions:** None. Chris confirmed: the repo link appears only on this page (not in the footer or elsewhere); naming Claude Code is fine; the "repository is public" line stays because Chris will make the repo public before launch.
+
+### S22 — Behind the Scenes nav link
+*As a visitor, I want to find the Behind the Scenes page from the main navigation.*
+Split from inbox D2: `navItems` lives in `src/components/layout/` (dev-1). Runs after S21 so the link never points at a missing page.
+- [ ] "Behind the Scenes" entry links to `/behind-the-scenes` in the desktop nav and mobile menu, with the active-page highlight working
+- [ ] Header still fits without overflow at 375px, 768px and 1280px (check the breakpoint where the menu collapses; adjust it if the extra item crowds the bar)

@@ -18,14 +18,15 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S8  | Projects page                  | dev-2  | S3, S4, S5 | done   |
 | S9  | Resume page                    | dev-2  | S3, S4, S5 | done   |
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
-| S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
+| S11 | SEO metadata foundation        | dev-1  | S3         | in progress |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
 | S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | done   |
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | done   |
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | done   |
 | S17 | Live reload on WSL             | dev-1  | S1         | done   |
-| S18 | About skill tags use tone prop| dev-2  | S14        | todo   |
+| S18 | About skill tags use tone prop| dev-2  | S14        | in progress |
+| S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -96,11 +97,13 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 - [x] Short call-to-action text
 - [x] No form yet (no backend)
 
-### S11 — 404 & SEO
-*As a visitor who follows a bad link, I want a helpful page; as Chris, I want the site to look good when shared.*
-- [ ] Catch-all route renders a 404 page linking home
-- [ ] Per-page `<title>` and meta description
-- [ ] Favicon and Open Graph tags (placeholder image)
+### S11 — SEO metadata foundation
+*As Chris, I want the site to look good in search results and when shared.*
+Split on 2026-10-04: the 404 page, page copy and `public/` assets belong to dev-2, so those moved to S19. This story builds the mechanism.
+- [ ] `PageMeta` component in `ui/` (props: `title`, `description`) that sets the document `<title>` (format e.g. "About · Chris") and `<meta name="description">`, using React 19's built-in `<title>`/`<meta>` rendering; no extra dependency
+- [ ] `index.html` has site-wide defaults: `<title>`, meta description, Open Graph (`og:title`, `og:description`, `og:type`, `og:image` → `/og-image.png`) and `twitter:card`, all clearly placeholder. Note: crawlers read these without running JS, so OG tags stay site-wide (no per-page OG in an SPA)
+- [ ] Favicon link checked and working
+- [ ] Usage documented in the component's doc comment so dev-2 can wire pages in S19
 
 ### S12 — Deploy to Vercel
 *As Chris, I want the site live at a public URL.*
@@ -147,3 +150,11 @@ Found 2026-10-04: the repo lives on the Windows drive (`/mnt/c`) and is run from
 Found in S14 review: About's skill tags sit in a `tone="surface"` Section and pass `className="bg-bg"`, which can't override `Tag`'s built-in background, so they blend into the band in both themes.
 - [ ] `src/pages/About.tsx`: `<Tag className="bg-bg">` → `<Tag tone="bg">`; no page passes `bg-*` classes to `Card` or `Tag`
 - [ ] Skill tags are visibly distinct from the band in light and dark themes
+
+### S19 — 404 page & per-page metadata
+*As a visitor who follows a bad link, I want a helpful page; as Chris, I want each page to have its own title and description.*
+Split from S11. Uses dev-1's `PageMeta` from S11.
+- [ ] Catch-all route (`path="*"`) inside the Layout renders a `NotFound` page with copy from `src/content/pages/notFound.ts` and a button home
+- [ ] Each page copy file gets `meta: { title, description }` (placeholder text) and every page, including 404, renders `PageMeta` with it
+- [ ] Placeholder Open Graph image at `public/og-image.png` (1200×630, clearly placeholder)
+- [ ] Browser tab shows the right title on each route, and on an unknown URL

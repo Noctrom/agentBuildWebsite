@@ -195,3 +195,26 @@
 
 **Follow-ups**
 - Leader/dev-1 (S11): add `meta` per page as described above. Content exports renamed: `home` → `homePage`, `PRESENT_LABEL` → `sharedLabels.present`, `ContactPageContent`/`ResumePageContent` → `...PageCopy`. Nothing in `src/components/` used them (only `profile`), so dev-1's S13 isn't affected.
+
+## S16 — Home hero uses shared Container (2026-10-04)
+**Branch:** story/S16-hero-container · **Status:** done
+
+**What I did**
+- The Home hero now uses `<Container>` from `components/ui`. The `<section>` keeps only `py-section`, and the old inner `mx-auto max-w-content` div is now `<Container className="flex flex-col-reverse items-center gap-10 md:flex-row md:justify-between">`. No page uses its own container classes anymore: `grep -rn "px-gutter\|max-w-content\|max-w-page" src/pages` returns nothing.
+- The hero's edges still match the header, sections and footer at 375px, 768px and 1280px, and nothing else looks different (see Verification).
+
+**How I did it**
+- The hero stays a plain `<section>` rather than a `Section` because it has a custom two-column layout and its h1 is `profile.name`. It only borrows the shared horizontal container. I put the flex layout on Container through its `className` prop, so the extra wrapper div wasn't needed. Container's `max-w-page` (content width plus both gutters) with `px-gutter` gives exactly the same content box as the old `px-gutter` section plus the `max-w-content` div.
+- Container had everything I needed. I made no changes outside `src/pages/`.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- I used headless Chromium (playwright-core in the scratchpad) against `vite preview` on `/`, ran once on `leader` (399a46b) and once on this branch, at 375, 768 and 1280px:
+  - Content-box edges (left/right): header, hero, Featured section and footer are 16/359 at 375px, 16/752 at 768px and 128/1152 at 1280px, identical before and after. The h1 and photo positions are also identical.
+  - Full-page screenshots in light and dark at all three widths are byte-identical between before and after (`cmp`). There was no horizontal overflow and no console errors.
+
+**Files**
+- Changed: `src/pages/Home.tsx`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- None.

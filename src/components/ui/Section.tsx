@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react'
+import Container from './Container'
 
 export type HeadingLevel = 1 | 2 | 3 | 4
 
@@ -25,8 +26,8 @@ const headingSizes: Record<HeadingLevel, string> = {
 }
 
 /**
- * Page section: heading, optional intro and content, with the standard page
- * gutter, vertical rhythm and content width. Renders `<section>`, never
+ * Page section: heading, optional intro and content, with vertical rhythm and
+ * the shared `Container` (page gutter + content width). Renders `<section>`, never
  * `<main>` (pages already sit inside Layout's `<main>`).
  */
 export default function Section({
@@ -45,11 +46,11 @@ export default function Section({
     <section
       id={id}
       aria-labelledby={headingId}
-      className={`scroll-mt-4 px-gutter py-section ${
+      className={`scroll-mt-4 py-section ${
         tone === 'surface' ? 'border-y border-border bg-surface' : ''
       } ${className}`.trim()}
     >
-      <div className="mx-auto max-w-content">
+      <Container>
         <Heading
           id={headingId}
           className={`font-bold tracking-tight text-fg ${headingSizes[headingLevel]}`}
@@ -58,7 +59,7 @@ export default function Section({
         </Heading>
         {intro && <p className="mt-3 max-w-prose text-lg text-muted">{intro}</p>}
         {children && <div className="mt-8">{children}</div>}
-      </div>
+      </Container>
     </section>
   )
 }

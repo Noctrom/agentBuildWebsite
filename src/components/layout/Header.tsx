@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 import { profile } from '../../content'
+import Container from '../ui/Container'
 import ThemeToggle from '../ui/ThemeToggle'
 import { navItems } from './navItems'
 
@@ -42,7 +43,7 @@ export default function Header() {
 
   return (
     <header className="border-b border-border bg-bg">
-      <div className="mx-auto flex max-w-content flex-wrap items-center gap-2 px-gutter py-3">
+      <Container className="flex flex-wrap items-center gap-2 py-3">
         <Link
           to="/"
           className="mr-auto rounded-md text-lg font-bold text-fg transition-colors hover:text-accent"
@@ -79,7 +80,7 @@ export default function Header() {
         </nav>
 
         <ThemeToggle />
-      </div>
+      </Container>
     </header>
   )
 }

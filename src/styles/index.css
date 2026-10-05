@@ -77,6 +77,8 @@
 
   /* Content width -> max-w-content (max-w-prose is Tailwind built-in, 65ch) */
   --container-content: 64rem;
+  /* Outer width of <Container>: content width plus both gutters -> max-w-page */
+  --container-page: calc(var(--container-content) + 2 * var(--spacing-gutter));
 }
 
 @layer base {

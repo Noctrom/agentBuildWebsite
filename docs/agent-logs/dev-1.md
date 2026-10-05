@@ -310,3 +310,31 @@
 - S24: `Layout` and `body` still paint solid `bg-bg`. The background layer needs those to become transparent or sit above them, and it must stay dim enough to keep the ratios above.
 - S25: the surface is already translucent; S25 can add blur and glow on top.
 - BACKLOG.md / old log entries still mention ThemeToggle historically (leader's files; no action needed).
+
+## S22 — Behind the Scenes nav link (2026-10-04)
+**Branch:** story/S22-bts-nav-link · **Status:** done
+
+**What I did**
+- Added `{ to: '/behind-the-scenes', label: 'Behind the Scenes' }` as the last entry in `navItems.ts`. It shows in the desktop nav and the mobile menu, and the active highlight and `aria-current="page"` work on that route.
+- Moved the header collapse breakpoint from `md` (768px) to `lg` (1024px). Below 1024px the header shows the hamburger. At 1024px and up it shows the inline nav.
+- Added `whitespace-nowrap` to nav links, so "Behind the Scenes" can never break onto two lines inside its pill.
+
+**How I did it**
+- I measured with `md` kept first. The six-item inline nav is about 543px wide. At 768px there was only 23px between the name ("Jane Placeholder") and the nav. It fit on one row, but it looked crowded. A slightly longer real name would wrap the whole nav onto a second row (the header container is `flex-wrap`).
+- At `lg` the gap at 1024px is about 279px, so there is plenty of room for a longer name. Tablets in portrait (768-1023) get the hamburger, which handles six items well. I chose `lg` over a custom breakpoint because it uses a standard Tailwind token and leaves real headroom.
+- I documented the measurement in a comment in `navItems.ts`, so whoever adds a seventh item re-measures first.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - Header measured at 375, 768, 1023, 1024, 1025 and 1280. There is no horizontal overflow at any width. Below 1024 the hamburger shows. From 1024 up all six links sit on one row, each 36px tall (single line), and the header is 61px tall.
+  - 1280: clicking "Behind the Scenes" from Home goes to `/behind-the-scenes` (h1 "Behind the Scenes"). After the transition only that link has `aria-current="page"` and the surface highlight.
+  - 375 and 768: open the hamburger and all six items stack at full width, 40px each. Clicking "Behind the Scenes" navigates and closes the menu (`aria-expanded="false"`). Reopening shows it as current.
+  - A deep link to `/behind-the-scenes` returns 200 with the link marked current.
+  - I checked screenshots of the open menu at 375, the header at 768 (before) and 1024, and the desktop header on the new page.
+
+**Files**
+- Changed: `src/components/layout/navItems.ts`, `src/components/layout/Header.tsx`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- None. (This entry may conflict with S24's dev-1 log entry on merge. Keep both.)

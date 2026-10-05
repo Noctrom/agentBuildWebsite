@@ -23,8 +23,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | in progress |
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | done   |
-| S16 | Home hero uses shared Container| dev-2  | S13, S15   | todo   |
-| S17 | Live reload on WSL             | dev-1  | S1         | todo   |
+| S16 | Home hero uses shared Container| dev-2  | S13, S15   | in progress |
+| S17 | Live reload on WSL             | dev-1  | S1         | in progress |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 

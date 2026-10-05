@@ -4,12 +4,22 @@ import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '.
 /**
  * Imperative engine behind <SpaceBackground> (S24). Owns one <canvas> per
  * active scene inside `container`, the requestAnimationFrame loop, resizing,
- * crossfades, reduced motion and pausing while the tab is hidden. Scenes only
- * draw; see `src/scenes/types.ts` for the contract.
+ * fades between scenes, reduced motion and pausing while the tab is hidden.
+ * Scenes only draw; see `src/scenes/types.ts` for the contract.
  *
- * Scenes with heavy setup can build incrementally (S29): their `create` is a
- * generator, which the engine steps in time-boxed tasks while the current
- * scene keeps animating, then crossfades once the new instance is ready.
+ * Scene changes (S33): on navigation the current scene starts fading out at
+ * once (FADE_OUT_MS) and the new one fades in (FADE_IN_MS) as soon as it is
+ * ready. Scenes with heavy setup build incrementally (S29): their `create` is
+ * a generator, which the engine steps in time-boxed tasks; meanwhile the old
+ * scene fades away and only the plain page background shows. A plain
+ * `create` is ready at once, which gives a short crossfade. Going back to a
+ * scene that is still fading out fades it back in instead of rebuilding it.
+ * With reduce motion on, the old scene stays until the new one is ready and
+ * is then swapped instantly.
+ *
+ * Contrast budget: the layers' opacities never sum to more than 1 (times
+ * BACKGROUND_MAX_OPACITY), so overlapping fades are never brighter than one
+ * scene at full opacity.
  */
 
 /**
@@ -31,8 +41,15 @@ export const BACKGROUND_MAX_OPACITY = 0.2
  */
 const MAX_DPR = 1
 const MAX_CANVAS_PIXELS = 1_100_000
-/** Crossfade between scenes on navigation. */
-const CROSSFADE_MS = 1200
+/**
+ * Fade-out of the old scene, started as soon as the scene changes (S33).
+ * React renders the new page first (~40-80 ms after the click on desktop,
+ * more on a slow phone), so 160 here means the old scene is gone ~250 ms
+ * after the click on desktop. It eases out, so it visibly dims at once.
+ */
+const FADE_OUT_MS = 160
+/** Fade-in of a new scene once it is ready (S33). */
+const FADE_IN_MS = 250
 /** Fade-in of the first scene after load. */
 const INTRO_MS = 1500
 /** Largest time step passed to scenes (e.g. after a long frame). */
@@ -82,12 +99,19 @@ function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2
 }
 
+/** Fast start: a fade-out is visible from its first frame. */
+function easeOut(t: number) {
+  return 1 - (1 - t) ** 2
+}
+
 export class BackgroundEngine {
   private readonly container: HTMLElement
   private readonly onFail: () => void
   private reducedMotion: boolean
   private layers: Layer[] = []
   private pending: PendingBuild | null = null
+  /** False until the first scene is shown; that one uses the slower intro fade. */
+  private introDone = false
   private size: SceneSize = { width: 0, height: 0, dpr: 1 }
   private frameId = 0
   private lastNow = 0
@@ -107,26 +131,49 @@ export class BackgroundEngine {
   }
 
   /**
-   * Show `scene`, crossfading from the current one unless reduced motion is
-   * on. A generator `create` is built over several tasks first; the current
-   * scene stays on screen until it is ready.
+   * Show `scene`. The current scene starts fading out now and the new one
+   * fades in once it is ready (a generator `create` is built over several
+   * tasks first). With reduced motion on, the current scene stays until the
+   * new one is ready and is then swapped instantly.
    */
   setScene(scene: Scene) {
     if (this.failed || this.destroyed) return
     if (this.pending?.scene.id === scene.id) return
-    const current = this.layers.at(-1)
-    if (current && current.scene.id === scene.id) {
-      // Back on the shown scene before the next one finished building.
-      this.cancelPending()
+    if (this.reducedMotion) {
+      const current = this.layers.at(-1)
+      if (current && current.scene.id === scene.id) {
+        // Back on the shown scene before the next one finished building.
+        this.cancelPending()
+        return
+      }
+      this.beginScene(scene, false)
       return
     }
+    const now = performance.now()
+    // A layer of this scene that is shown, fading in, or still fading out.
+    const existing = this.layers.findLast((layer) => layer.scene.id === scene.id)
+    if (existing) {
+      // Back on a scene that is still on screen: keep it instead of rebuilding.
+      this.cancelPending()
+      for (const layer of this.layers) {
+        if (layer !== existing) this.fadeOut(layer, now)
+      }
+      if (existing.fadeTo !== 1) this.startFade(existing, 1, FADE_IN_MS, now)
+      this.refresh()
+      return
+    }
+    for (const layer of this.layers) this.fadeOut(layer, now)
+    this.refresh()
     this.beginScene(scene, false)
   }
 
   setReducedMotion(reducedMotion: boolean) {
     if (this.reducedMotion === reducedMotion) return
     this.reducedMotion = reducedMotion
-    const target = this.pending?.scene ?? this.layers.at(-1)?.scene
+    // The scene being shown: the one building, else the layer fading in or
+    // shown (after a quick "back" it need not be the top layer).
+    const target =
+      this.pending?.scene ?? this.layers.findLast((layer) => layer.fadeTo !== 0)?.scene
     // Settle any fade now: drop outgoing layers, show the incoming one fully.
     const now = performance.now()
     for (const layer of [...this.layers]) {
@@ -249,14 +296,15 @@ export class BackgroundEngine {
       return
     }
     const now = performance.now()
-    const current = this.layers.at(-1)
     const animate = !this.reducedMotion && !instant
-    if (instant) {
+    if (!animate) {
       for (const old of [...this.layers]) this.removeLayer(old)
     } else {
-      for (const old of this.layers) this.startFade(old, 0, animate ? CROSSFADE_MS : 0, now)
+      // Normally already fading out since setScene; this only catches stragglers.
+      for (const old of this.layers) this.fadeOut(old, now)
     }
-    this.startFade(layer, 1, animate ? (current ? CROSSFADE_MS : INTRO_MS) : 0, now)
+    this.startFade(layer, 1, animate ? (this.introDone ? FADE_IN_MS : INTRO_MS) : 0, now)
+    this.introDone = true
     this.layers.push(layer)
     this.container.appendChild(layer.canvas)
     this.refresh()
@@ -307,16 +355,42 @@ export class BackgroundEngine {
     layer.fadeMs = ms
   }
 
-  /** Advance fades; returns true while any fade is still running. */
+  /** Start fading `layer` out, unless it already is. */
+  private fadeOut(layer: Layer, now: number) {
+    if (layer.fadeTo !== 0) this.startFade(layer, 0, FADE_OUT_MS, now)
+  }
+
+  /**
+   * Advance fades; returns true while any fade is still running. Layers
+   * fading in are capped so all opacities sum to at most 1 (contrast budget).
+   */
   private updateFades(now: number): boolean {
     let running = false
-    for (const layer of [...this.layers]) {
-      const t = layer.fadeMs > 0 ? Math.min(1, (now - layer.fadeStart) / layer.fadeMs) : 1
-      layer.opacity = layer.fadeFrom + (layer.fadeTo - layer.fadeFrom) * easeInOut(t)
-      layer.canvas.style.opacity = String(layer.opacity * BACKGROUND_MAX_OPACITY)
+    let outgoing = 0
+    const done: Layer[] = []
+    for (const layer of this.layers) {
+      // A rAF timestamp can be earlier than a fade started in the same frame,
+      // so clamp below too.
+      const t =
+        layer.fadeMs > 0 ? Math.min(1, Math.max(0, (now - layer.fadeStart) / layer.fadeMs)) : 1
+      const ease = layer.fadeTo === 0 ? easeOut(t) : easeInOut(t)
+      layer.opacity = layer.fadeFrom + (layer.fadeTo - layer.fadeFrom) * ease
       if (t < 1) running = true
-      else if (layer.fadeTo === 0) this.removeLayer(layer)
+      else if (layer.fadeTo === 0) done.push(layer)
+      if (layer.fadeTo === 0) outgoing += layer.opacity
     }
+    let room = Math.max(0, 1 - outgoing)
+    for (const layer of this.layers) {
+      if (layer.fadeTo !== 0) {
+        if (layer.opacity > room) {
+          layer.opacity = room
+          running = true
+        }
+        room -= layer.opacity
+      }
+      layer.canvas.style.opacity = String(layer.opacity * BACKGROUND_MAX_OPACITY)
+    }
+    for (const layer of done) this.removeLayer(layer)
     return running
   }
 

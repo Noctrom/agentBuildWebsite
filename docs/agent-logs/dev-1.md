@@ -110,3 +110,26 @@
 **Follow-ups**
 - dev-2: import from `src/components/ui` (barrel). Wrap card grids in `<ul>`/`<li>`. Wrap filter TagButtons in `role="group"` with an `aria-label`.
 - Cards use `bg-surface`. Inside a `tone="surface"` Section they are set apart only by their border, so prefer default-tone sections for card grids.
+
+## S13 — Align header with page content (2026-10-04)
+**Branch:** story/S13-align-header · **Status:** done
+
+**What I did**
+- Header, footer and `Section` content now share the same left and right edges at 375px, 768px and 1280px (previously the header and footer content sat 16px inside the page content on desktop).
+- Added one shared container pattern: a `Container` component in `ui/`, used by Header, Footer and Section.
+
+**How I did it**
+- Root cause: Header/Footer put `px-gutter` inside their `max-w-content` box (content 64rem minus gutters), while Section put `px-gutter` outside it (content a full 64rem).
+- New token `--container-page` = content width + 2 gutters (gives `max-w-page`). `Container` renders one element with `mx-auto w-full max-w-page px-gutter`, so the content inside is exactly 64rem on desktop and viewport minus gutters on mobile. That keeps Section's existing content width, so pages don't shift.
+- Chose a component over a shared class string: one import, an `as` prop for semantics, and a `className` for flex/padding-y extras (Header and Footer pass their flex layout through it). Section's full-width `surface` band stays on the `<section>`; Container sits inside it.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`, measuring content edges on all 5 routes: header, site name, footer and every section have identical edges: 16/359 at 375px, 16/752 at 768px, 128/1152 at 1280px.
+
+**Files**
+- Added: `src/components/ui/Container.tsx`
+- Changed: `src/components/ui/Section.tsx`, `src/components/ui/index.ts`, `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `src/styles/index.css`
+
+**Follow-ups**
+- dev-2: the Home hero (`src/pages/Home.tsx`) builds its own container (`px-gutter` on the section, `mx-auto max-w-content` inside). It lines up today, but should switch to `<Container>` from `components/ui` so there is only one pattern.

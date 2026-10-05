@@ -8,12 +8,16 @@ import SpaceBackground from './SpaceBackground'
  * App shell used as the parent layout route for every page. The wrapper is
  * transparent and isolated so the fixed <SpaceBackground> (z-index -10) paints
  * above the body's solid bg but below all content.
+ *
+ * From lg the navigation is a rail fixed to the left edge (V0.38), so the
+ * shell is padded by the rail width: main, the footer and every Container
+ * sit to the right of it. The background stays full width behind the rail.
  */
 export default function Layout() {
   useScrollToTopOnNavigate()
 
   return (
-    <div className="relative isolate flex min-h-dvh flex-col text-fg">
+    <div className="relative isolate flex min-h-dvh flex-col text-fg lg:pl-rail">
       <SpaceBackground />
       <a
         href="#main"

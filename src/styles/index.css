@@ -127,6 +127,9 @@
   --spacing: 0.25rem;
   --spacing-gutter: 1rem; /* horizontal page padding (px-gutter) */
   --spacing-section: 4rem; /* vertical space between sections (py-section) */
+  /* Width of the fixed left nav rail from lg (V0.38) -> w-rail, pl-rail.
+     Fits the widest button ("Behind the Scenes") grown by its hover scale. */
+  --spacing-rail: 12rem;
 
   /* Content width -> max-w-content (max-w-prose is Tailwind built-in, 65ch) */
   --container-content: 64rem;
@@ -149,11 +152,15 @@
   /*
    * Sticky header (V0.35): anchors, the skip link target and elements
    * scrolled into view on focus stop below the header, not under it.
-   * --header-height is the header's measured height, set by Header.tsx;
+   * --header-height is the top bar's measured height, set by Header.tsx;
    * 4rem is its height under lg, used until the first measurement.
+   * From lg there is no top bar (V0.38: the nav is a left rail), so 0.
    */
   html {
     scroll-padding-top: var(--header-height, 4rem);
+    @variant lg {
+      scroll-padding-top: 0;
+    }
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

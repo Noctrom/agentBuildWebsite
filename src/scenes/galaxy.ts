@@ -59,15 +59,32 @@ interface Layout {
 }
 
 /**
- * Where the galaxy sits. The whole tilted disk (radius 1.05r) sweeps through
- * every orientation as it turns, so its outline, not just the time-0 frame,
- * has to stay clear of the text. Phones: below the contact panel and above
- * the footer text (0.75 instead of S27's 0.76 so the arm tips clear the
- * footer at 375x812). Tablet and up: right of the panel.
+ * Phones: the free band between the contact panel's text and the footer
+ * text, measured on /contact (V0.39, with the V0.41 footer). The panel's
+ * buttons end ~495 px from the top of the page; the footer text starts
+ * ~130 px above the bottom of a short page. Each keeps an ~8 px gap.
+ */
+const PHONE_BAND_TOP = 503
+const PHONE_BAND_BOTTOM = 138
+/** Half the height the turning disk sweeps on screen, in galaxy radii (measured). */
+const SWEEP_HALF_HEIGHT = 0.64
+
+/**
+ * Where the galaxy sits. The whole tilted disk sweeps through every
+ * orientation as it turns, so its outline, not just the time-0 frame, has to
+ * stay clear of the text.
+ * - Phones: centred in the band between the panel and the footer text, sized
+ *   to fit it (at most S27's 0.44 * width). Very short phones (e.g. 375x667)
+ *   have no room for it; the galaxy then overlaps the panel at 100 px radius.
+ * - Tablet and up: right of the panel. Since V0.38 the desktop nav is a left
+ *   rail, which moves the content right but not as far as the galaxy.
  */
 function layoutFor({ width, height }: SceneSize): Layout {
   if (width < 768) {
-    return { cx: width * 0.6, cy: height * 0.75, r: Math.max(110, width * 0.44) }
+    const top = PHONE_BAND_TOP
+    const bottom = height - PHONE_BAND_BOTTOM
+    const r = Math.max(100, Math.min(width * 0.44, (bottom - top) / 2 / SWEEP_HALF_HEIGHT))
+    return { cx: width * 0.6, cy: (top + bottom) / 2, r }
   }
   return { cx: width * 0.76, cy: height * 0.46, r: Math.max(150, Math.min(width * 0.2, height * 0.36)) }
 }

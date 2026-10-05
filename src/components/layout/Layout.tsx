@@ -14,6 +14,9 @@ import SpaceBackground from './SpaceBackground'
  * From lg the navigation is a rail fixed to the left edge (V0.38), so the
  * shell is padded by the rail width: main, the footer and every Container
  * sit to the right of it. The background stays full width behind the rail.
+ * The width is the rail's measured width, `--rail-width` on <html>, set by
+ * Header.tsx (V0.47): it changes per page, as the current page's full name
+ * can widen the slim rail.
  *
  * The auto-pause toast (V0.42) opens when the background pauses itself on a
  * slow device, only in that page session, and closes early if the
@@ -27,7 +30,7 @@ export default function Layout() {
   const closeNotice = useCallback(() => setNoticeOpen(false), [])
 
   return (
-    <div className="relative isolate flex min-h-dvh flex-col text-fg lg:pl-rail">
+    <div className="relative isolate flex min-h-dvh flex-col text-fg lg:pl-(--rail-width)">
       <SpaceBackground onAutoPause={openNotice} />
       <a
         href="#main"

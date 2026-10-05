@@ -131,9 +131,6 @@
   --spacing: 0.25rem;
   --spacing-gutter: 1rem; /* horizontal page padding (px-gutter) */
   --spacing-section: 4rem; /* vertical space between sections (py-section) */
-  /* Width of the fixed left nav rail from lg (V0.38) -> w-rail, pl-rail.
-     Fits the widest button ("Behind the Scenes") grown by its hover scale. */
-  --spacing-rail: 12rem;
 
   /* Content width -> max-w-content (max-w-prose is Tailwind built-in, 65ch) */
   --container-content: 64rem;
@@ -162,7 +159,14 @@
    * --notice-height (V0.42) is the auto-pause toast's height while it is
    * open, set by AutoPauseNotice.tsx, so focused elements stop above it.
    */
+  /*
+   * --rail-width (V0.47) is the left nav rail's measured width from lg (0px
+   * below lg), set inline on <html> by Header.tsx before first paint and on
+   * every route change; Layout pads the page by it. 0px is only the value
+   * before that script runs.
+   */
   html {
+    --rail-width: 0px;
     scroll-padding-top: var(--header-height, 4rem);
     scroll-padding-bottom: var(--notice-height, 0px);
     @variant lg {

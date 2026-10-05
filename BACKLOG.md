@@ -20,7 +20,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
-| S13 | Align header with page content | dev-1  | S3         | in progress |
+| S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | todo   |
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | in progress |
 
@@ -108,8 +108,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 ### S13 — Align header with page content
 *As a visitor, I want the header and page content to line up so the site looks polished.*
 Found in S7/S10 review: at desktop widths the header's site name starts ~16px right of the page content's left edge. Header puts `px-gutter` inside its `max-w-content` box; `Section` puts `px-gutter` outside it.
-- [ ] Header, footer and `Section` content share the same left and right edges at 375px, 768px and 1280px
-- [ ] One consistent container pattern used by layout and `Section`
+- [x] Header, footer and `Section` content share the same left and right edges at 375px, 768px and 1280px
+- [x] One consistent container pattern used by layout and `Section`
 
 ### S14 — Card & Tag background tones
 *As a developer, I want cards and tags to stand out on any section background.*

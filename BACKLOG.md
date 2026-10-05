@@ -21,7 +21,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
 | S13 | Align header with page content | dev-1  | S3         | done   |
-| S14 | Card & Tag background tones    | dev-1  | S4         | todo   |
+| S14 | Card & Tag background tones    | dev-1  | S4         | in progress |
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | in progress |
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | todo   |
 

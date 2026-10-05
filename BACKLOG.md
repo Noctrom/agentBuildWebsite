@@ -20,9 +20,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S10 | Contact page                   | dev-2  | S3, S4, S5 | done   |
 | S11 | 404 page & SEO metadata        | dev-1  | S3         | todo   |
 | S12 | Deploy to Vercel               | leader | all        | todo   |
-| S13 | Align header with page content | dev-1  | S3         | todo   |
+| S13 | Align header with page content | dev-1  | S3         | in progress |
 | S14 | Card & Tag background tones    | dev-1  | S4         | todo   |
-| S15 | Consistent page copy in content| dev-2  | S6–S10     | todo   |
+| S15 | Consistent page copy in content| dev-2  | S6–S10     | in progress |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 

@@ -54,9 +54,9 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.44](docs/backlog/v0/v0.25-v0.49.md#v044--behind-the-scenes-black-hole-comes-alive) | Behind the Scenes black hole comes alive | dev-2 | V0.43 | todo |
 | [V0.45](docs/backlog/v0/v0.25-v0.49.md#v045--blue-gas-giant-orbits-the-black-hole) | Blue gas giant orbits the black hole | dev-2 | V0.44 | todo |
 | [V0.46](docs/backlog/v0/v0.25-v0.49.md#v046--behind-the-scenes-one-band-tighter-even-spacing) | Behind the Scenes: one band, tighter even spacing | dev-2 | — | todo |
-| [V0.47](docs/backlog/v0/v0.25-v0.49.md#v047--slim-see-through-nav-rail-with-short-labels) | Slim, see-through nav rail with short labels | dev-1 | V0.49 | todo |
+| [V0.47](docs/backlog/v0/v0.25-v0.49.md#v047--slim-see-through-nav-rail-with-short-labels) | Slim, see-through nav rail with short labels | dev-1 | V0.49 | in progress |
 | [V0.48](docs/backlog/v0/v0.25-v0.49.md#v048--phone-top-bar-shows-the-space-background) | Phone top bar shows the space background | dev-1 | V0.47 | todo |
-| [V0.49](docs/backlog/v0/v0.25-v0.49.md#v049--animation-switch-also-controls-ui-motion) | Animation switch also controls UI motion | dev-1 | V0.42 | in progress |
+| [V0.49](docs/backlog/v0/v0.25-v0.49.md#v049--animation-switch-also-controls-ui-motion) | Animation switch also controls UI motion | dev-1 | V0.42 | done |
 
 ## Old ids
 

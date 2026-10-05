@@ -159,9 +159,12 @@
    * --header-height is the top bar's measured height, set by Header.tsx;
    * 4rem is its height under lg, used until the first measurement.
    * From lg there is no top bar (V0.38: the nav is a left rail), so 0.
+   * --notice-height (V0.42) is the auto-pause toast's height while it is
+   * open, set by AutoPauseNotice.tsx, so focused elements stop above it.
    */
   html {
     scroll-padding-top: var(--header-height, 4rem);
+    scroll-padding-bottom: var(--notice-height, 0px);
     @variant lg {
       scroll-padding-top: 0;
     }

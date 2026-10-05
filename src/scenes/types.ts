@@ -3,7 +3,7 @@
  *
  * A scene is a self-contained Canvas 2D drawing: a starfield, a solar system,
  * a black hole... The background engine (`components/layout/SpaceBackground`)
- * owns the canvas, the animation loop, resizing, crossfades between scenes,
+ * owns the canvas, the animation loop, resizing, fades between scenes,
  * "reduce motion", pausing in hidden tabs and the static fallback. A scene only
  * draws. You can add or change scenes without touching the engine, `Layout` or
  * `ui/`:
@@ -33,8 +33,10 @@
  * - If `create` does more than a few ms of work, write it as a generator
  *   function instead: do a slice of work, `yield`, repeat, and finally
  *   `return` the instance. The engine runs the slices in small time-boxed
- *   tasks between frames, keeps the current scene on screen and animating
- *   meanwhile, and only starts the crossfade once the instance is returned.
+ *   tasks between frames and fades the new scene in (~250 ms) once the
+ *   instance is returned. Since S33 the previous scene fades out (~160 ms)
+ *   as soon as the visitor navigates, so a long build shows the plain page
+ *   background meanwhile.
  *   `yield` often enough that one slice stays under ~5 ms on a slow phone
  *   (e.g. every few rows of an `ImageData` bake); yielding often is cheap,
  *   since the engine runs as many slices per task as fit its time budget.
@@ -79,7 +81,8 @@
  *   `dt`, so a still frame at any time looks right.
  * - With `reducedMotion` true the engine calls `draw` once (and again after a
  *   resize) with `time = 0` and `scrollY = 0`: the scene must look complete
- *   and good at time 0. There is no crossfade between scenes in that mode.
+ *   and good at time 0. Scenes swap instantly in that mode (the old one stays
+ *   until the new one is ready).
  * - Keep motion subtle: slow drift, gentle twinkle, slight parallax on scroll
  *   (`frame.scrollY`). Nothing should flash or move fast behind text.
  *
@@ -154,7 +157,7 @@ export type SceneBuild = Generator<unknown, SceneInstance, undefined>
 
 /** A background scene. Export one per file from `src/scenes/`. */
 export interface Scene {
-  /** Unique, stable id (kebab-case). The engine only crossfades when the id changes. */
+  /** Unique, stable id (kebab-case). The engine only changes scenes when the id changes. */
   id: string
   /**
    * Build the scene: return the instance directly, or (for heavy setup) be a

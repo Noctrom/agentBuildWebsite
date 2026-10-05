@@ -4,8 +4,8 @@ import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '.
 /**
  * Imperative engine behind <SpaceBackground> (S24). Owns one <canvas> per
  * active scene inside `container`, the requestAnimationFrame loop, resizing,
- * crossfades, reduced motion and pausing while the tab is hidden. Scenes only
- * draw; see `src/scenes/types.ts` for the contract.
+ * fades between scenes, reduced motion and pausing while the tab is hidden.
+ * Scenes only draw; see `src/scenes/types.ts` for the contract.
  *
  * Scene changes (S33): on navigation the current scene starts fading out at
  * once (FADE_OUT_MS) and the new one fades in (FADE_IN_MS) as soon as it is
@@ -43,10 +43,11 @@ const MAX_DPR = 1
 const MAX_CANVAS_PIXELS = 1_100_000
 /**
  * Fade-out of the old scene, started as soon as the scene changes (S33).
- * React's render and effect take a few tens of ms after the click, so 200
- * here means the old scene is gone ~250 ms after the click.
+ * React renders the new page first (~40-80 ms after the click on desktop,
+ * more on a slow phone), so 160 here means the old scene is gone ~250 ms
+ * after the click on desktop. It eases out, so it visibly dims at once.
  */
-const FADE_OUT_MS = 200
+const FADE_OUT_MS = 160
 /** Fade-in of a new scene once it is ready (S33). */
 const FADE_IN_MS = 250
 /** Fade-in of the first scene after load. */
@@ -96,6 +97,11 @@ export interface BackgroundEngineOptions {
 
 function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2
+}
+
+/** Fast start: a fade-out is visible from its first frame. */
+function easeOut(t: number) {
+  return 1 - (1 - t) ** 2
 }
 
 export class BackgroundEngine {
@@ -164,7 +170,10 @@ export class BackgroundEngine {
   setReducedMotion(reducedMotion: boolean) {
     if (this.reducedMotion === reducedMotion) return
     this.reducedMotion = reducedMotion
-    const target = this.pending?.scene ?? this.layers.at(-1)?.scene
+    // The scene being shown: the one building, else the layer fading in or
+    // shown (after a quick "back" it need not be the top layer).
+    const target =
+      this.pending?.scene ?? this.layers.findLast((layer) => layer.fadeTo !== 0)?.scene
     // Settle any fade now: drop outgoing layers, show the incoming one fully.
     const now = performance.now()
     for (const layer of [...this.layers]) {
@@ -360,8 +369,12 @@ export class BackgroundEngine {
     let outgoing = 0
     const done: Layer[] = []
     for (const layer of this.layers) {
-      const t = layer.fadeMs > 0 ? Math.min(1, (now - layer.fadeStart) / layer.fadeMs) : 1
-      layer.opacity = layer.fadeFrom + (layer.fadeTo - layer.fadeFrom) * easeInOut(t)
+      // A rAF timestamp can be earlier than a fade started in the same frame,
+      // so clamp below too.
+      const t =
+        layer.fadeMs > 0 ? Math.min(1, Math.max(0, (now - layer.fadeStart) / layer.fadeMs)) : 1
+      const ease = layer.fadeTo === 0 ? easeOut(t) : easeInOut(t)
+      layer.opacity = layer.fadeFrom + (layer.fadeTo - layer.fadeFrom) * ease
       if (t < 1) running = true
       else if (layer.fadeTo === 0) done.push(layer)
       if (layer.fadeTo === 0) outgoing += layer.opacity

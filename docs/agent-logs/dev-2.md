@@ -218,3 +218,28 @@
 
 **Follow-ups**
 - None.
+
+## S18 — About skill tags use tone prop (2026-10-04)
+**Branch:** story/S18-about-tag-tone · **Status:** done
+
+**What I did**
+- About skill tags now use `<Tag tone="bg">` instead of `<Tag className="bg-bg">`.
+- Grepped `src/pages`: no page passes `bg-*` classes to `Card`, `Tag` or `TagButton`. About's skills Section is the only `tone="surface"` Section, and its Tags now use `tone="bg"`.
+- Skill tags now stand out from the surface band in both themes (checked with computed colors).
+
+**How I did it**
+- Swapped the className for dev-1's S14 `tone` prop, so `Tag` sets `bg-bg` itself and avoids the Tailwind order clash with its own `bg-surface`.
+- The only remaining `bg-*` classes in pages are on a plain `<img>` (Home avatar) and a plain `<div>` (Contact box), not on ui components.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Ran `vite preview` and checked with headless Chromium (playwright-core in a scratch folder, local chromium_headless_shell-1208) on `/about` at 375px and 1280px. `theme` was set through localStorage:
+  - light: tag `rgb(255, 255, 255)` vs band `rgb(241, 245, 249)`
+  - dark: tag `rgb(11, 17, 32)` vs band `rgb(22, 32, 50)`
+  - Tag class list has only `bg-bg` (no `bg-surface`). No horizontal overflow at either width.
+
+**Files**
+- Changed: `src/pages/About.tsx`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- None.

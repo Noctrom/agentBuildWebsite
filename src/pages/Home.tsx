@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Button, Card, Section, type CardAction } from '../components/ui'
+import { Button, Card, Container, Section, type CardAction } from '../components/ui'
 import { featuredProjects, homePage, profile, sharedLabels, type Project } from '../content'
 
 /** The home page previews at most this many featured projects. */
@@ -18,9 +18,10 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero: custom layout (text beside photo), so not a Section. */}
-      <section aria-labelledby={heroHeadingId} className="px-gutter py-section">
-        <div className="mx-auto flex max-w-content flex-col-reverse items-center gap-10 md:flex-row md:justify-between">
+      {/* Hero: custom layout (text beside photo), so not a Section, but it uses
+          the shared Container so its edges match the header and sections. */}
+      <section aria-labelledby={heroHeadingId} className="py-section">
+        <Container className="flex flex-col-reverse items-center gap-10 md:flex-row md:justify-between">
           <div className="text-center md:text-left">
             <h1
               id={heroHeadingId}
@@ -46,7 +47,7 @@ export default function Home() {
             height={400}
             className="size-40 shrink-0 rounded-full border border-border bg-surface object-cover sm:size-56 md:size-64"
           />
-        </div>
+        </Container>
       </section>
 
       {featured.length > 0 && (

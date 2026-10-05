@@ -28,8 +28,13 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S18 | About skill tags use tone prop| dev-2  | S14        | done   |
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | done   |
 | S20 | Workflow diagrams              | dev-1  | S4         | done   |
-| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | todo   |
-| S22 | Behind the Scenes nav link     | dev-1  | S21        | todo   |
+| S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | in progress |
+| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | todo   |
+| S23 | Space palette, always dark     | dev-1  | PR #2      | in progress |
+| S24 | Animated space background      | dev-1  | S23        | todo   |
+| S25 | Space-styled components        | dev-1  | S23, S24   | todo   |
+| S26 | Scenes: solar system, black hole | dev-2 | S21, S24  | todo   |
+| S27 | Remaining page scenes          | dev-2  | S26        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -242,3 +247,89 @@ Chris wants a dedicated tab explaining how the site was created: the methodology
 Split from inbox D2: `navItems` lives in `src/components/layout/` (dev-1). Runs after S21 so the link never points at a missing page.
 - [ ] "Behind the Scenes" entry links to `/behind-the-scenes` in the desktop nav and mobile menu, with the active-page highlight working
 - [ ] Header still fits without overflow at 375px, 768px and 1280px (check the breakpoint where the menu collapses; adjust it if the extra item crowds the bar)
+
+## Sprint 2 — Space theme
+
+Order: dev-1 S23 → S22 → S24 → S25; dev-2 S21, then S26 → S27 once S24 is merged (in parallel with S25). Nothing new merges into `leader` until Chris merges PR #2, so that PR stays reviewable; branches can be built meanwhile.
+
+### S23 — Space palette & typography (always dark)
+Triaged from story inbox D3 (story-writer, 2026-10-04). Sequencing: built on a branch now; merged only after PR #2 lands. Removes the header toggle, so S22 (nav link) runs after it.
+
+*As a visitor, I want the whole site to look like deep space so that it feels distinctive and memorable.*
+
+Chris chose a space theme for the whole site (galaxies, black holes, nebulas, planets, suns, solar systems) and decided the site is **always dark**: the light theme and the theme toggle from S2 go away. This story sets the foundation; S25 restyles components, S24/S26/S27 add the animated backgrounds. Existing pages, including the S21 Behind the Scenes page and S20 diagrams, should pick up the new look through the tokens without page changes.
+
+- [ ] Light theme removed: no light tokens, no `ThemeToggle`/`useTheme`, no theme script in `index.html`, no toggle in the header; `color-scheme: dark`
+- [ ] New space palette in the tokens: near-black space background, translucent "glass" surface, starlight text, plus nebula accent (violet/blue range) and a warm sun accent (orange/gold range) for highlights
+- [ ] All text/background pairs meet WCAG AA, measured against the solid background and the translucent surface; contrast notes in `index.css` updated
+- [ ] Typography stays one consistent font family across headings and body (Chris's call: no separate display font); the space feel comes from color, spacing and the background, not the typeface
+- [ ] Browser UI matches (e.g. `theme-color` meta is dark)
+- [ ] Every existing page still renders correctly at 375px and desktop; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S24 — Animated space background
+Triaged from story inbox D5 (story-writer, 2026-10-04). Ownership: this story creates `src/scenes/` (scene files + route → scene map). From S26 on, dev-2 owns the scene files and the route map; dev-1 owns the engine and the `Layout` wiring. The scene interface is the contract between them.
+
+*As a visitor, I want a living space background behind the site so that it feels immersive without getting in the way of the content.*
+
+Chris chose **subtle motion** (not a full 3D scene), **drawn in code** (not image files), using real space imagery (e.g. NASA, Hubble, JWST) as visual reference for colors and shapes. This story builds the shared background layer and the base starfield/nebula used on every page; S26 and S27 add a different scene per page on top of it.
+
+- [ ] A background component fixed behind all content on every route, wired into `Layout`, rendering the scene for the current route (this story ships a default scene used everywhere)
+- [ ] Scenes are self-contained files in their own folder (e.g. `src/scenes/`) with a documented, typed scene interface and a route → scene map in that folder, so another dev can add or change scenes without touching the engine, `Layout` or `ui/` (this is what lets S26/S27 go to dev-2)
+- [ ] Default scene: layered starfield with gentle twinkling, slowly drifting nebula clouds, and a slight parallax between layers on scroll
+- [ ] Drawn in code (canvas/WebGL/SVG/CSS); no large image assets; no heavy 3D libraries without leader approval
+- [ ] Stays dim behind content so text over it meets WCAG AA at every frame
+- [ ] "Reduce motion" on: shows a still frame, no animation
+- [ ] Pauses when the tab is hidden; smooth on a mid-range phone and laptop (no visible jank while scrolling); doesn't delay the page content appearing
+- [ ] If the animation can't run, a static space gradient shows instead and the site still works
+- [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S25 — Space-styled components & layout
+Triaged from story inbox D4 (story-writer, 2026-10-04). Runs after S24 (both touch `layout/`), alongside dev-2's S26/S27.
+
+*As a visitor, I want the buttons, cards and navigation to feel like part of the space scene so that the site looks designed as one piece, not a template on a dark background.*
+
+Chris wants the rest of the design to match the background. Content sits on frosted, see-through panels so the background shows through but text stays readable.
+
+- [ ] Header and footer are translucent over the background and stay readable while it moves behind them
+- [ ] `Card`, `Section` (tones from S14), `Tag` and `Button` use frosted glass panels (translucent fill + blur + faint border); the existing tone variants remain visibly distinct from each other
+- [ ] Hover/focus states use a subtle glow in the accent colors; keyboard focus is clearly visible
+- [ ] Optional small space details (e.g. orbit-line or star accents on hover/dividers), kept subtle
+- [ ] All motion here is disabled when the OS "reduce motion" setting is on
+- [ ] Works at 375px and desktop; text meets WCAG AA over the panels; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S26 — Showpiece scenes: solar system & black hole
+Triaged from story inbox D6 (story-writer, 2026-10-04). dev-2 works only in `src/scenes/` (scene files + route map), per the S24 ownership note. Needs S21 merged for the Behind the Scenes route.
+
+*As a visitor, I want each page to show a different part of space so that moving around the site feels like travelling.*
+
+Chris wants a different scene per page. These two are the most prominent, so they come first. dev-2 only adds scene files and route mappings in `src/scenes/`.
+
+- [ ] **Home — solar system:** a sun with planets moving slowly on visible orbits, placed so it frames the hero rather than sitting behind its text
+- [ ] **Behind the Scenes — black hole:** a black hole with a glowing accretion disk and faint light-bending around it, kept dim behind the page text and diagrams
+- [ ] Each page shows its scene when visited (including on direct links and refresh); moving between pages changes the scene smoothly (crossfade, skipped with reduce motion)
+- [ ] Same rules as S24: subtle motion, reduce motion = still frame, readable content, smooth on mid-range devices, 375px and desktop
+- [ ] `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S27 — Remaining page scenes
+Triaged from story inbox D7 (story-writer, 2026-10-04). dev-2 works only in `src/scenes/`, per the S24 ownership note.
+
+*As a visitor, I want every page to have its own corner of space so that the theme feels complete.*
+
+dev-2 works only in `src/scenes/`.
+
+- [ ] **About — a sun:** close view of a star with slow surface shimmer and soft flares (warm accent)
+- [ ] **Projects — planets:** a few distinct planets (e.g. ringed, gas giant, rocky) drifting at different depths
+- [ ] **Resume — nebula:** a richer, more colorful nebula than the default
+- [ ] **Contact — distant galaxy:** a quiet starfield with a slowly rotating spiral galaxy
+- [ ] **404 — lost in space:** an empty, sparse starfield (or drifting debris)
+- [ ] Same rules as S24/S26; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.

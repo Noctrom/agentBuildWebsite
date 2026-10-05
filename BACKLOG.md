@@ -25,7 +25,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | done   |
 | S16 | Home hero uses shared Container| dev-2  | S13, S15   | done   |
 | S17 | Live reload on WSL             | dev-1  | S1         | done   |
-| S18 | About skill tags use tone prop| dev-2  | S14        | in progress |
+| S18 | About skill tags use tone prop| dev-2  | S14        | done   |
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
@@ -148,8 +148,8 @@ Found 2026-10-04: the repo lives on the Windows drive (`/mnt/c`) and is run from
 ### S18 — About skill tags use tone prop
 *As a visitor, I want the About page skill tags to be visible against their section.*
 Found in S14 review: About's skill tags sit in a `tone="surface"` Section and pass `className="bg-bg"`, which can't override `Tag`'s built-in background, so they blend into the band in both themes.
-- [ ] `src/pages/About.tsx`: `<Tag className="bg-bg">` → `<Tag tone="bg">`; no page passes `bg-*` classes to `Card` or `Tag`
-- [ ] Skill tags are visibly distinct from the band in light and dark themes
+- [x] `src/pages/About.tsx`: `<Tag className="bg-bg">` → `<Tag tone="bg">`; no page passes `bg-*` classes to `Card` or `Tag`
+- [x] Skill tags are visibly distinct from the band in light and dark themes
 
 ### S19 — 404 page & per-page metadata
 *As a visitor who follows a bad link, I want a helpful page; as Chris, I want each page to have its own title and description.*

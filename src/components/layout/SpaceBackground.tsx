@@ -44,10 +44,11 @@ function afterPaint(callback: () => void): () => void {
 
 /**
  * Animated space background (S24), fixed behind all content. Renders the
- * scene mapped to the current route in `src/scenes/routes.ts` and crossfades
- * on navigation. Starts after the page has painted, so it never delays
- * content. Shows a still frame with "reduce motion" on, pauses in hidden
- * tabs, and falls back to a static gradient if the canvas can't run.
+ * scene mapped to the current route in `src/scenes/routes.ts`; on navigation
+ * the old scene fades out at once and the new one fades in when ready (S33).
+ * Starts after the page has painted, so it never delays content. Shows a
+ * still frame with "reduce motion" on, pauses in hidden tabs, and falls back
+ * to a static gradient if the canvas can't run.
  */
 export default function SpaceBackground() {
   const containerRef = useRef<HTMLDivElement>(null)

@@ -12,60 +12,69 @@
  *
  * Palette:
  *   bg       near-black deep space
- *   surface  translucent "glass" (pale nebula blue at 12% alpha). Over the
- *            solid bg it composites to #15172c; nested twice, to #232645.
+ *   surface  translucent "glass": a dark nebula blue at 35% alpha (S32; was
+ *            a pale blue at 12%). Over the solid bg it composites to the same
+ *            #15172c as before; nested twice, to #20223f. Being dark and more
+ *            opaque, it dims whatever bright scene pixel sits behind a panel
+ *            instead of adding light on top of it (see "Space background").
  *   fg       starlight (cool white)
- *   muted    dim starlight (lavender grey)
+ *   muted    dim starlight (lavender grey), a touch brighter since S32
  *   accent   nebula violet-blue: links, primary actions, focus ring
  *   sun      warm gold/orange: highlights (use sparingly)
  *   border   translucent nebula line (decorative, not text)
  *
  * WCAG contrast, all AA (>= 4.5:1 for normal text). Measured against the
- * solid bg #05060f / surface over bg #15172c / surface nested twice #232645:
- *   fg            16.87 / 14.72 / 12.22
- *   muted          8.65 /  7.55 /  6.27
- *   accent         8.73 /  7.62 /  6.32
- *   accent-hover  12.28 / 10.72 /  8.90
- *   sun           12.18 / 10.63 /  8.83
- *   sun-hover     14.49 / 12.65 / 10.50
+ * solid bg #05060f / surface over bg #15172c / surface nested twice #20223f:
+ *   fg            16.87 / 14.70 / 12.85
+ *   muted          9.15 /  7.98 /  6.98
+ *   accent         8.73 /  7.61 /  6.65
+ *   accent-hover  12.28 / 10.71 /  9.36
+ *   sun           12.18 / 10.62 /  9.28
+ *   sun-hover     14.49 / 12.63 / 11.04
  *   accent-fg on accent 8.73, on accent-hover 12.28
  *   sun-fg on sun 12.18, on sun-hover 14.49
+ * fg vs muted 1.84:1, so muted still reads clearly as secondary.
  * If you change a color or the surface alpha, recompute these (composite the
  * surface over bg: c = a * surface + (1 - a) * bg per channel).
  *
- * Space background (S24): the scene canvas is shown at opacity 0.1
- * (BACKGROUND_MAX_OPACITY in components/layout/backgroundEngine.ts), so its
- * brightest possible pixel (pure white) composites to rgb(30 31 39). Worst
- * case over that pixel, same columns (bare / surface / surface twice):
- *   fg            13.70 / 11.30 /  9.29
- *   muted          7.03 /  5.79 /  4.76
- *   accent         7.09 /  5.85 /  4.81
- *   sun            9.90 /  8.16 /  6.71
- * At opacity 0.12, muted on surface-twice drops to 4.49, so 0.1 is the cap.
+ * Space background (S24, raised in S32): the scene canvas is shown at opacity
+ * 0.2 (BACKGROUND_MAX_OPACITY in components/layout/backgroundEngine.ts), so
+ * its brightest possible pixel (pure white) composites to rgb(55 56 63).
+ * Worst case over that pixel, same columns (bare / surface / surface twice):
+ *   fg             9.76 /  9.67 /  9.59
+ *   muted          5.30 /  5.25 /  5.20
+ *   accent         5.05 /  5.00 /  4.96
+ *   accent-hover   7.11 /  7.04 /  6.98
+ *   sun            7.05 /  6.98 /  6.93
+ *   sun-hover      8.39 /  8.31 /  8.24
+ * The tightest pairs are accent on a surface nested twice (4.96) and accent
+ * on the bare background (5.05). At opacity 0.22 bare accent drops to 4.7 and
+ * keeps falling, so 0.2 is the cap with these tokens. Before S32 the cap was
+ * 0.1, set by the old pale 12% surface: at 0.2 it put muted on a surface
+ * nested twice at 3.53.
  * The static fallback gradient (.space-fallback) stays below the same bound.
  *
- * Frosted glass (S25): the surface alpha is unchanged, so the columns above
- * still hold for every surface panel. Backdrop blur only averages the
- * background, so it can never be brighter than the brightest pixel above (no
- * saturate/brightness filters are used, on purpose). New translucent fills,
+ * Frosted glass (S25): backdrop blur only averages the background, so it can
+ * never be brighter than the brightest pixel above (no saturate/brightness
+ * filters are used, on purpose). The other translucent fills,
  * bare bg / worst-case background pixel:
  *   bg-glass (bg at 80%, tone="bg" inside a surface band)
- *     fg 16.51 / 16.05, muted 8.47 / 8.23, accent 8.54 / 8.31,
- *     sun 11.92 / 11.59
+ *     fg 16.50 / 15.80, muted 8.96 / 8.58, accent 8.54 / 8.18,
+ *     sun 11.92 / 11.41
  *   header (bg at 70%)
- *     fg 16.87 / 16.11, muted 8.65 / 8.26
- *     nav pill (surface on header): muted 7.56 / 7.05, accent 7.62 / 7.11
- * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.42, was
- * 1.15 with the old solid bg; the faint border keeps panels outlined.
+ *     fg 16.87 / 15.18, muted 9.15 / 8.24
+ *     nav pill (surface on header): muted 7.98 / 7.18, accent 7.61 / 6.84
+ * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.63; the
+ * faint border keeps panels outlined.
  * Glow shadows are drawn outside elements, never under their text.
  */
 
 :root {
   color-scheme: dark;
   --theme-bg: #05060f; /* page background: deep space */
-  --theme-surface: rgb(139 147 255 / 0.12); /* glass: cards, raised areas */
+  --theme-surface: rgb(51 55 98 / 0.35); /* glass: cards, raised areas */
   --theme-fg: #e8eaf6; /* body text: starlight */
-  --theme-muted: #a3a8c8; /* secondary text */
+  --theme-muted: #a8adcc; /* secondary text */
   --theme-accent: #a5a0ff; /* nebula: links, primary actions */
   --theme-accent-hover: #c7c4ff;
   --theme-accent-fg: #05060f; /* text on accent backgrounds */
@@ -152,15 +161,16 @@
 @layer components {
   /*
    * Static space gradient shown by <SpaceBackground> when the animated canvas
-   * can't run (S24). Every stop is far dimmer than white at 10% over bg, so
-   * the contrast budget above holds.
+   * can't run (S24). Stop alphas were doubled with the canvas opacity in S32;
+   * every stop is still far dimmer than white at 20% over bg, so the contrast
+   * budget above holds.
    */
   .space-fallback {
     background-color: var(--color-bg);
     background-image:
-      radial-gradient(ellipse 60% 45% at 18% 22%, rgb(124 92 255 / 0.1), transparent 70%),
-      radial-gradient(ellipse 55% 40% at 82% 68%, rgb(64 96 230 / 0.09), transparent 70%),
-      radial-gradient(ellipse 40% 30% at 60% 15%, rgb(190 72 190 / 0.06), transparent 70%);
+      radial-gradient(ellipse 60% 45% at 18% 22%, rgb(124 92 255 / 0.2), transparent 70%),
+      radial-gradient(ellipse 55% 40% at 82% 68%, rgb(64 96 230 / 0.18), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 60% 15%, rgb(190 72 190 / 0.12), transparent 70%);
   }
 }
 

@@ -38,7 +38,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | done   |
 | S29 | Scene engine follow-ups        | dev-1  | S27        | done   |
 | S30 | Space-themed favicon & OG image | dev-2 | S23       | done   |
-| S31 | Nebula & sun build incrementally | dev-2 | S29      | in progress |
+| S31 | Nebula & sun build incrementally | dev-2 | S29      | done   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -369,7 +369,7 @@ Found in S28 review: `public/og-image.png` still uses the pre-S23 palette (sky b
 ### S31 — Nebula & sun scenes build incrementally
 *As a visitor on a phone, I want moving to Resume or About to stay smooth instead of freezing for a moment.*
 Found in S29: at 375px with 4x CPU throttle, the first visit to /resume freezes the page for 217–300 ms (nebula `create` ~185 ms) and /about for 217–267 ms (sun `create` 80–100 ms). S29 added an optional generator `create` to the scene contract (see "Heavy setup" in `src/scenes/types.ts` and dev-1's S29 log entry).
-- [ ] `nebulaScene` and `sunScene` use the generator `create`, yielding often enough that no main-thread task exceeds ~50 ms at 375px / 4x throttle (measure Home → Resume and Home → About)
-- [ ] Caches (e.g. nebula `cloudCache`) are only written after a bake completes, so a cancelled build leaves no half-written state; `resize` stays synchronous via `runToEnd`
-- [ ] Navigating away or back mid-build, toggling reduced motion mid-build, and direct loads all end on the correct scene with no console errors
-- [ ] Other scenes unchanged; `npm run build` and `npm run lint` pass
+- [x] `nebulaScene` and `sunScene` use the generator `create`, yielding often enough that no main-thread task exceeds ~50 ms at 375px / 4x throttle (measure Home → Resume and Home → About)
+- [x] Caches (e.g. nebula `cloudCache`) are only written after a bake completes, so a cancelled build leaves no half-written state; `resize` stays synchronous via `runToEnd`
+- [x] Navigating away or back mid-build, toggling reduced motion mid-build, and direct loads all end on the correct scene with no console errors
+- [x] Other scenes unchanged; `npm run build` and `npm run lint` pass

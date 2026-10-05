@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Button, Card, Container, Section, type CardAction } from '../components/ui'
+import { Button, Card, Container, PageMeta, Section, type CardAction } from '../components/ui'
 import { featuredProjects, homePage, profile, sharedLabels, type Project } from '../content'
 
 /** The home page previews at most this many featured projects. */
@@ -18,6 +18,7 @@ export default function Home() {
 
   return (
     <>
+      <PageMeta {...homePage.meta} />
       {/* Hero: custom layout (text beside photo), so not a Section, but it uses
           the shared Container so its edges match the header and sections. */}
       <section aria-labelledby={heroHeadingId} className="py-section">

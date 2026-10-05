@@ -1,7 +1,11 @@
 // PLACEHOLDER: UI copy for the projects page (/projects). The projects and
 // tags come from projects.ts; the card action labels from `sharedLabels`.
 
+import type { PageMetaCopy } from '../types'
+
 export interface ProjectsPageCopy {
+  /** Document title and meta description for `PageMeta`. */
+  meta: PageMetaCopy
   /** Page heading (the page's h1). */
   title: string
   intro: string
@@ -14,6 +18,11 @@ export interface ProjectsPageCopy {
 }
 
 export const projectsPage: ProjectsPageCopy = {
+  meta: {
+    title: 'Projects',
+    description:
+      'Placeholder projects description: lorem ipsum selection of projects by Jane Placeholder, filterable by technology.',
+  },
   title: 'Projects',
   intro:
     'Lorem ipsum dolor sit amet, a placeholder selection of things I have built. Filter by technology below.',

@@ -1,4 +1,4 @@
-import { Button, Card, Section } from '../components/ui'
+import { Button, Card, PageMeta, Section } from '../components/ui'
 import {
   education,
   experience,
@@ -24,6 +24,7 @@ function DateRange({ start, end }: { start: YearMonth; end: YearMonth | null }) 
 export default function Resume() {
   return (
     <>
+      <PageMeta {...resumePage.meta} />
       <Section title={resumePage.title} headingLevel={1} intro={resumePage.intro}>
         <Button href={profile.resumeUrl} download>
           {resumePage.downloadLabel}

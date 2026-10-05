@@ -1,9 +1,10 @@
-import { Section, Tag } from '../components/ui'
+import { PageMeta, Section, Tag } from '../components/ui'
 import { aboutPage, experience, formatYearMonth, profile, sharedLabels, skills } from '../content'
 
 export default function About() {
   return (
     <>
+      <PageMeta {...aboutPage.meta} />
       <Section title={aboutPage.title} headingLevel={1}>
         <div className="max-w-prose space-y-4 text-lg text-fg">
           {profile.bio.map((paragraph) => (

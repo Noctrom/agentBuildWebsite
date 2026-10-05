@@ -6,6 +6,9 @@
  * - Field names: `title` = the page's h1, `intro` = text under it,
  *   `<section>Title` / `<section>Intro` for h2 sections, `<thing>Label` for
  *   button, link and accessible-name text.
+ * - Every page has `meta` (`PageMetaCopy`: tab title + meta description) and
+ *   renders it with one `<PageMeta {...<page>Page.meta} />`. Home uses
+ *   `HomePageMetaCopy` (no title), so its tab shows just `profile.name`.
  * - Data (profile, projects, experience, ...) stays in its own file under
  *   src/content/; labels used by more than one page go in labels.ts.
  */
@@ -14,3 +17,4 @@ export { aboutPage, type AboutPageCopy } from './about'
 export { projectsPage, type ProjectsPageCopy } from './projects'
 export { resumePage, type ResumePageCopy } from './resume'
 export { contactPage, type ContactPageCopy } from './contact'
+export { notFoundPage, type NotFoundPageCopy } from './notFound'

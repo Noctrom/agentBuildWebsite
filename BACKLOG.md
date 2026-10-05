@@ -29,7 +29,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S19 | 404 page & per-page metadata   | dev-2  | S11, S18   | done   |
 | S20 | Workflow diagrams              | dev-1  | S4         | done   |
 | S21 | Behind the Scenes page         | dev-2  | S15, S19, S20 | done   |
-| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | in progress |
+| S22 | Behind the Scenes nav link     | dev-1  | S21, S23   | done   |
 | S23 | Space palette, always dark     | dev-1  | PR #2      | done   |
 | S24 | Animated space background      | dev-1  | S23        | in progress |
 | S25 | Space-styled components        | dev-1  | S23, S24   | todo   |
@@ -246,8 +246,8 @@ Chris wants a dedicated tab explaining how the site was created: the methodology
 ### S22 — Behind the Scenes nav link
 *As a visitor, I want to find the Behind the Scenes page from the main navigation.*
 Split from inbox D2: `navItems` lives in `src/components/layout/` (dev-1). Runs after S21 so the link never points at a missing page.
-- [ ] "Behind the Scenes" entry links to `/behind-the-scenes` in the desktop nav and mobile menu, with the active-page highlight working
-- [ ] Header still fits without overflow at 375px, 768px and 1280px (check the breakpoint where the menu collapses; adjust it if the extra item crowds the bar)
+- [x] "Behind the Scenes" entry links to `/behind-the-scenes` in the desktop nav and mobile menu, with the active-page highlight working
+- [x] Header still fits without overflow at 375px, 768px and 1280px (check the breakpoint where the menu collapses; adjust it if the extra item crowds the bar)
 
 ## Sprint 2 — Space theme
 

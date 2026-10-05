@@ -23,6 +23,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S13 | Align header with page content | dev-1  | S3         | done   |
 | S14 | Card & Tag background tones    | dev-1  | S4         | todo   |
 | S15 | Consistent page copy in content| dev-2  | S6–S10     | in progress |
+| S16 | Home hero uses shared Container| dev-2  | S13, S15   | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -125,3 +126,8 @@ Found in S6–S10 review: page copy lives in different shapes (`home` typed in `
 - [ ] Shared labels (e.g. project "Code" / "Live demo") defined once
 - [ ] No visible text changes; build and lint pass
 
+### S16 — Home hero uses shared Container
+*As a developer, I want every page to use the same container so alignment can't drift again.*
+Found in S13 review: the Home hero builds its own container (`px-gutter` on the `<section>`, `mx-auto max-w-content` inside) instead of using `Container` from `components/ui`.
+- [ ] Home hero uses `<Container>`; no page uses its own `px-gutter` / `max-w-content` classes
+- [ ] Hero edges still match header and sections at 375px, 768px and 1280px

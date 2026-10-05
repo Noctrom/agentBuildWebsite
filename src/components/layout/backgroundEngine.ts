@@ -1,10 +1,15 @@
-import type { Scene, SceneBudget, SceneInstance, SceneSize } from '../../scenes/types'
+import { isSceneBuild } from '../../scenes/build'
+import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '../../scenes/types'
 
 /**
  * Imperative engine behind <SpaceBackground> (S24). Owns one <canvas> per
  * active scene inside `container`, the requestAnimationFrame loop, resizing,
  * crossfades, reduced motion and pausing while the tab is hidden. Scenes only
  * draw; see `src/scenes/types.ts` for the contract.
+ *
+ * Scenes with heavy setup can build incrementally (S29): their `create` is a
+ * generator, which the engine steps in time-boxed tasks while the current
+ * scene keeps animating, then crossfades once the new instance is ready.
  */
 
 /**
@@ -29,6 +34,12 @@ const CROSSFADE_MS = 1200
 const INTRO_MS = 1500
 /** Largest time step passed to scenes (e.g. after a long frame). */
 const MAX_DT = 0.1
+/**
+ * Main-thread time per task for incremental scene builds. Short enough that
+ * a 60 fps frame still fits the task, the animation tick and the browser's
+ * own work on a slow phone.
+ */
+const BUILD_SLICE_MS = 6
 
 const budget: SceneBudget = { maxOpacity: BACKGROUND_MAX_OPACITY }
 
@@ -46,6 +57,18 @@ interface Layer {
   opacity: number
 }
 
+/** An incremental scene build in progress (S29). */
+interface PendingBuild {
+  scene: Scene
+  build: SceneBuild
+  /** Viewport size the build started with; the instance is resized if it changed. */
+  size: SceneSize
+  /** Replace the current layers without a crossfade (reduce motion changed). */
+  instant: boolean
+  /** setTimeout id of the next slice (0 while none is queued). */
+  timer: number
+}
+
 export interface BackgroundEngineOptions {
   reducedMotion: boolean
   /** Called once if canvas is unsupported or a scene throws; the engine stops. */
@@ -61,6 +84,7 @@ export class BackgroundEngine {
   private readonly onFail: () => void
   private reducedMotion: boolean
   private layers: Layer[] = []
+  private pending: PendingBuild | null = null
   private size: SceneSize = { width: 0, height: 0, dpr: 1 }
   private frameId = 0
   private lastNow = 0
@@ -79,46 +103,41 @@ export class BackgroundEngine {
     document.addEventListener('visibilitychange', this.handleVisibility)
   }
 
-  /** Show `scene`, crossfading from the current one unless reduced motion is on. */
+  /**
+   * Show `scene`, crossfading from the current one unless reduced motion is
+   * on. A generator `create` is built over several tasks first; the current
+   * scene stays on screen until it is ready.
+   */
   setScene(scene: Scene) {
     if (this.failed || this.destroyed) return
+    if (this.pending?.scene.id === scene.id) return
     const current = this.layers.at(-1)
-    if (current && current.scene.id === scene.id) return
-
-    const layer = this.createLayer(scene)
-    if (!layer) return
-    const now = performance.now()
-    const animate = !this.reducedMotion
-    for (const old of this.layers) {
-      this.startFade(old, 0, animate ? CROSSFADE_MS : 0, now)
+    if (current && current.scene.id === scene.id) {
+      // Back on the shown scene before the next one finished building.
+      this.cancelPending()
+      return
     }
-    this.startFade(layer, 1, animate ? (current ? CROSSFADE_MS : INTRO_MS) : 0, now)
-    this.layers.push(layer)
-    this.container.appendChild(layer.canvas)
-    this.refresh()
+    this.beginScene(scene, false)
   }
 
   setReducedMotion(reducedMotion: boolean) {
     if (this.reducedMotion === reducedMotion) return
     this.reducedMotion = reducedMotion
-    // Finish any fade immediately and rebuild scenes with the new flag.
-    for (const layer of this.layers) {
+    const target = this.pending?.scene ?? this.layers.at(-1)?.scene
+    // Settle any fade now: drop outgoing layers, show the incoming one fully.
+    const now = performance.now()
+    for (const layer of [...this.layers]) {
       if (layer.fadeTo === 0) this.removeLayer(layer)
-    }
-    const scenes = this.layers.map((l) => l.scene)
-    for (const layer of [...this.layers]) this.removeLayer(layer)
-    for (const scene of scenes) {
-      const layer = this.createLayer(scene)
-      if (!layer) return
-      this.startFade(layer, 1, 0, performance.now())
-      this.layers.push(layer)
-      this.container.appendChild(layer.canvas)
+      else this.startFade(layer, 1, 0, now)
     }
     this.refresh()
+    // Rebuild with the new flag; the old layer stays until the new one is ready.
+    if (target) this.beginScene(target, true)
   }
 
   destroy() {
     this.destroyed = true
+    this.cancelPending()
     this.stop()
     this.resizeObserver?.disconnect()
     document.removeEventListener('visibilitychange', this.handleVisibility)
@@ -138,30 +157,126 @@ export class BackgroundEngine {
     this.size = { width, height, dpr: Math.round(dpr * 100) / 100 }
   }
 
-  private createLayer(scene: Scene): Layer | null {
+  /** Create `scene`: show it now, or start an incremental build. */
+  private beginScene(scene: Scene, instant: boolean) {
+    this.cancelPending()
+    let result: SceneInstance | SceneBuild
     try {
-      const canvas = document.createElement('canvas')
-      canvas.setAttribute('aria-hidden', 'true')
-      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0'
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('Canvas 2D is not available')
-      this.sizeCanvas(canvas, ctx)
-      const instance = scene.create({ ...this.size, reducedMotion: this.reducedMotion, budget })
-      return {
-        scene,
-        instance,
-        canvas,
-        ctx,
-        time: 0,
-        fadeFrom: 0,
-        fadeTo: 0,
-        fadeStart: 0,
-        fadeMs: 0,
-        opacity: 0,
+      result = scene.create({ ...this.size, reducedMotion: this.reducedMotion, budget })
+    } catch (error) {
+      this.fail(error)
+      return
+    }
+    if (!isSceneBuild(result)) {
+      this.showScene(scene, result, instant)
+      return
+    }
+    // A generator's body has not run yet; the first slice runs in a later
+    // task, so the new page paints before any scene work.
+    this.pending = { scene, build: result, size: this.size, instant, timer: 0 }
+    this.schedulePump()
+  }
+
+  private schedulePump() {
+    if (this.pending && !this.pending.timer) this.pending.timer = window.setTimeout(this.pump, 0)
+  }
+
+  /** Run build slices for up to BUILD_SLICE_MS (to the end in a hidden tab). */
+  private readonly pump = () => {
+    const pending = this.pending
+    if (!pending || this.failed || this.destroyed) return
+    pending.timer = 0
+    const deadline = performance.now() + BUILD_SLICE_MS
+    let instance: SceneInstance | null = null
+    try {
+      for (;;) {
+        const step = pending.build.next()
+        if (step.done) {
+          instance = step.value
+          break
+        }
+        if (!document.hidden && performance.now() >= deadline) break
       }
     } catch (error) {
       this.fail(error)
-      return null
+      return
+    }
+    if (!instance) {
+      this.schedulePump()
+      return
+    }
+    this.pending = null
+    const { width, height, dpr } = this.size
+    if (width !== pending.size.width || height !== pending.size.height || dpr !== pending.size.dpr) {
+      try {
+        instance.resize?.(this.size)
+      } catch (error) {
+        this.fail(error)
+        return
+      }
+    }
+    this.showScene(pending.scene, instance, pending.instant)
+  }
+
+  /** Abandon an incremental build, letting its `finally` blocks run. */
+  private cancelPending() {
+    const pending = this.pending
+    if (!pending) return
+    this.pending = null
+    window.clearTimeout(pending.timer)
+    try {
+      pending.build.return(undefined as never)
+    } catch {
+      // A scene failing to clean up must not break the page.
+    }
+  }
+
+  /** Add a layer for a ready instance and fade it in (or swap it in at once). */
+  private showScene(scene: Scene, instance: SceneInstance, instant: boolean) {
+    let layer: Layer
+    try {
+      layer = this.createLayer(scene, instance)
+    } catch (error) {
+      try {
+        instance.dispose?.()
+      } catch {
+        // Already failing; ignore cleanup errors.
+      }
+      this.fail(error)
+      return
+    }
+    const now = performance.now()
+    const current = this.layers.at(-1)
+    const animate = !this.reducedMotion && !instant
+    if (instant) {
+      for (const old of [...this.layers]) this.removeLayer(old)
+    } else {
+      for (const old of this.layers) this.startFade(old, 0, animate ? CROSSFADE_MS : 0, now)
+    }
+    this.startFade(layer, 1, animate ? (current ? CROSSFADE_MS : INTRO_MS) : 0, now)
+    this.layers.push(layer)
+    this.container.appendChild(layer.canvas)
+    this.refresh()
+  }
+
+  private createLayer(scene: Scene, instance: SceneInstance): Layer {
+    const canvas = document.createElement('canvas')
+    canvas.setAttribute('aria-hidden', 'true')
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0'
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas 2D is not available')
+    this.sizeCanvas(canvas, ctx)
+    return {
+      scene,
+      instance,
+      canvas,
+      ctx,
+      time: 0,
+      fadeFrom: 0,
+      fadeTo: 0,
+      fadeStart: 0,
+      fadeMs: 0,
+      opacity: 0,
     }
   }
 
@@ -292,6 +407,7 @@ export class BackgroundEngine {
     if (this.failed) return
     this.failed = true
     console.error('Space background disabled:', error)
+    this.cancelPending()
     this.stop()
     for (const layer of [...this.layers]) this.removeLayer(layer)
     this.onFail()

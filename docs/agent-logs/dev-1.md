@@ -338,3 +338,57 @@
 
 **Follow-ups**
 - None. (This entry may conflict with S24's dev-1 log entry on merge. Keep both.)
+
+## S24 — Animated space background (2026-10-04)
+**Branch:** story/S24-space-background · **Status:** done
+
+**What I did**
+- Background on every route: `<SpaceBackground>` sits inside `Layout`. It is fixed behind all content and renders the scene mapped to the current route. The default starfield is used everywhere for now.
+- Scene folder `src/scenes/`, owned by dev-2 from S26 on:
+  - `types.ts`: the documented, typed scene contract (`Scene`, `SceneInstance`, `SceneSetup`, `SceneFrame`, `SceneSize`, `SceneBudget`).
+  - `routes.ts`: the route → scene map plus `sceneForPath`.
+  - `starfield.ts`: the default scene, also reusable as a base layer through `createStarfield(setup, options)`.
+  - `random.ts`: a seeded random generator.
+  - The engine itself lives in `components/layout/`.
+- Default scene: three star layers (far, mid, near) with twinkling on the mid and near layers, two slowly drifting nebula cloud layers, and parallax on scroll with a different factor per layer. Colors follow Hubble/JWST nebula imagery.
+- Drawn in code with Canvas 2D. No images, no new dependencies.
+- Contrast: the engine shows the canvas at opacity 0.1. Even a pure white pixel then composites to rgb(30 31 39), so every text token stays at AA at every frame. The worst case is muted text on a surface nested twice, at 4.76.
+- Reduce motion: one still frame drawn at time 0, with no parallax and no crossfade. It is redrawn on resize, and it reacts if the OS setting changes while the page is open.
+- The loop pauses while the tab is hidden. The engine starts only after first paint plus idle, so it never delays content.
+- Fallback: if Canvas 2D is unavailable or a scene throws, the engine stops and a static `.space-fallback` gradient shows. The site keeps working.
+- Crossfade between scenes on navigation is built into the engine for S26: 1.2 s with easing, it handles interruptions, and it is skipped with reduce motion. It only runs when the scene id changes.
+
+**How I did it**
+- Split into an imperative engine (`backgroundEngine.ts`: rAF loop, one canvas per active scene, fades, ResizeObserver, visibilitychange, failure handling) and a thin React wrapper (`SpaceBackground.tsx`). The wrapper uses `useLocation` → `sceneForPath`, `useSyncExternalStore` for `prefers-reduced-motion`, and starts the engine lazily. The engine renders outside React, so nothing re-renders per frame.
+- Contract: `create(setup)` returns `{ draw, resize?, dispose? }`. Each frame, the engine clears the canvas and sets a CSS-pixel transform, then calls `draw` with ctx, size, dpr, time, dt, scrollY, reducedMotion and budget. Scenes draw at full brightness and the engine applies the dimming. So dev-2 cannot break contrast, and the crossfade is just two canvases with opacities summing to 1 × budget.
+- Brightness budget: computed with a WCAG script (white at opacity o over bg, then surface once or twice, against each text token). At 0.12, muted text on a twice-nested surface drops to 4.49, so I used 0.1. The numbers are in the `index.css` header.
+- Layout: removed `bg-bg` from the wrapper and added `relative isolate`. The background is `fixed -z-10` inside that stacking context, so it paints above the body's solid bg and below content. Height is `h-lvh`, so the mobile URL bar showing and hiding doesn't resize the canvas while scrolling.
+- Performance:
+  - The far stars are baked into one bitmap.
+  - The nebulae are baked at 1/4 resolution and drifted with `drawImage`.
+  - Only the mid and near stars are drawn per star.
+  - Fill rate was the bottleneck. At DPR 1.5 the 375px view ran at about 36 fps under 4x CPU throttle, so I capped DPR at 1 and canvas backing size at 1.1 MP. The content is dim and soft, so the loss in sharpness isn't visible.
+- First nebula pass was round, uniform blobs and drifted off-screen at 375. I replaced it with filament chains of blobs along a wandering, center-steered path, plus a few `destination-out` dust holes for texture.
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`, at 375/768/1280, on `/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes` and a 404 route, with and without `reducedMotion: 'reduce'`. That is 42 runs. Every run had engine state `running`, one canvas, opacity 0.1, no horizontal overflow and no console errors. Animated runs change between screenshots 700 ms apart; reduced-motion runs are pixel-identical.
+- Contrast: with page content hidden, the brightest background pixel across all 42 runs was rgb(30 30 39). Muted text over it measures 7.10:1 (bare bg).
+- Hidden tab: 30 rAF calls per 500 ms while visible, 0 while hidden, and it resumes on visible.
+- Fallback, with `getContext` forced to null: state `fallback`, gradient shown, page renders, no page errors.
+- Crossfade, with a throwaway second scene on `/about` that I reverted and never committed:
+  - Opacities went 0.099/0.0005 → 0.074/0.026 → 0.017/0.083 → a single layer at 0.1 after about 1.2 s.
+  - Back-navigation mid-fade recovered cleanly.
+  - Navigating between routes with the same scene did not fade.
+  - With reduce motion, the swap was instant.
+- Frame time while auto-scrolling at 375px, DPR 3 emulated: 4x CPU throttle gave 60 fps (avg 16.7 ms, 1 frame over 33 ms in 5 s); no-background baseline 16.6 ms. 1920 and 1280 unthrottled gave 60 fps. Engine JS is about 1 ms per frame at 4x. Headless Chromium uses software raster, so real GPU-backed devices should be faster.
+- Resize from 375 to 1280 redraws correctly, both animated and as a still frame. Screenshots checked at all widths, including the fallback.
+
+**Files**
+- Added: `src/scenes/types.ts`, `src/scenes/routes.ts`, `src/scenes/starfield.ts`, `src/scenes/random.ts`, `src/components/layout/SpaceBackground.tsx`, `src/components/layout/backgroundEngine.ts`
+- Changed: `src/components/layout/Layout.tsx`, `src/styles/index.css`, `docs/agent-logs/dev-1.md`
+
+**Follow-ups**
+- dev-2 (S26/S27): add scene files in `src/scenes/` and map routes in `routes.ts`. Read the header of `types.ts`, and see `starfield.ts` / `createStarfield` for reusing the base starfield. Scenes must look complete at `time = 0` (the reduced-motion still frame).
+- S25: the `Header` still paints solid `bg-bg`, so the background is hidden behind it. S25's translucent header will reveal it. `bg-bg` tone elements (Card image area, BranchDiagram badges, `tone="bg"`) stay opaque as before.
+- Leader: the 0.1 opacity cap makes the background deliberately subtle, because the muted-on-double-surface pair limits it. If Chris wants it brighter, the options are raising `BACKGROUND_MAX_OPACITY` together with a lighter `muted` token, or ruling out double-nested surfaces.

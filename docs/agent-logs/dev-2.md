@@ -410,3 +410,54 @@
 - Leader/Chris: at the 0.1 cap all scenes are very faint (the known open brightness question). The full-opacity screenshots show the intended drawing.
 - The first visit to `/resume` blocks the main thread for about 160 ms at 4x throttle (about 40 ms real on a mid-range phone) while the nebula bakes. If that shows up as a stutter at the start of the crossfade on real phones, the bake could be split across frames.
 - At 375px every scene sits partly behind the single content column, because there are no margins to put it in. Placement keeps the big objects in corners and edges.
+
+## S28 — Pages fitted to the space theme (2026-10-04)
+**Branch:** story/S28-page-pass · **Status:** done
+
+**What I did**
+- Home hero leaves room for the solar system. The photo used to sit on the right, on top of the sun and inner planets, at 768 and up. Now the photo is a small avatar above the name, and photo and text share one left column (`md:max-w-md lg:max-w-xl`). The right side of the hero stays empty, so the sun, the orbits and the planets frame the text. On mobile the photo still sits on top (now `size-40`) and fills the orbit area, with the text below the sweep.
+- Every page was checked over its scene at 375/768/1280. Changes made:
+  - `public/photo-placeholder.svg` was still the light-theme slate portrait (`#cbd5e1`). I recolored it to the space palette: a `#15172c` field, a `#2f3361` silhouette and the label in muted `#a3a8c8` (7.55:1).
+  - I found no other light-theme leftovers in page or content code (searched for `dark:`, white/black/gray/slate classes, `bg-bg` and `border-bg`). The About timeline dot's `border-bg` ring is intentional: it cuts the line and reads fine.
+- Contact: the hand-built panel now uses `glassClass.surface` plus `glass-edge`, with the same border and radius as `Card`. Its computed fill, 12px blur and radius match a Card exactly. It is also `w-fit max-w-full`, so it hugs its content (437px at desktop instead of 65ch). That keeps it clear of the galaxy at 768 and 1280. On mobile it is full width, as before.
+- Anything needing a scene, component or token change is under Follow-ups. None of it was built in a page.
+
+**How I did it**
+- I measured before changing anything. A script recomputes the solar system's layout (same formula as `layoutFor` in `solarSystem.ts`), samples every orbit path and reports which hero boxes (heading, title, pitch, buttons, photo) each orbit and the sun cross. I ran it at 375, 390, 414, 768, 1024, 1280, 1440 and 1920.
+  - Before: the photo covered 29–41% of the Mercury to Mars orbits from 768 to 1440, and the sun itself at 768 and 1024.
+  - After: the photo covers nothing from 768 up. From 1024 up, hero text only touches the faint outermost (Neptune) orbit line, at 0–3%. At 768 the text still crosses the outer three orbit lines at 2–7%, because the 5xl name alone is 434px wide.
+- I chose the stacked avatar over shrinking the side photo. Any photo on the right lands inside the inner orbits, because the system is anchored to the top-right of the viewport.
+- In the hero, the image comes first in the DOM, so reading order matches visual order. The `h1` still labels the section.
+- To make Contact frosted, I used `glassClass` and `glass-edge` rather than `Card`. Card would turn the small "Email" label into a heading, and it would render the buttons as small card actions with sr-only suffixes. Using the recipe keeps the existing design.
+- Contrast scan (test script only). For every text element in view, at scroll steps of half a viewport, the script:
+  - samples the scene canvas under the text box
+  - composites it at a forced opacity over `#05060f`, then adds every translucent ancestor fill (blur is ignored, so the result is conservative)
+  - computes the contrast with the text color, using the 95th-percentile brightest pixel so single stars don't count
+
+**Verification**
+- `npm run build` and `npm run lint` pass.
+- Headless Chromium (playwright-core) against `vite preview`:
+  - 7 routes (`/`, `/about`, `/projects`, `/resume`, `/contact`, `/behind-the-scenes`, `/nope`) at 375/768/1280, with and without `reducedMotion: 'reduce'`, so 42 runs. Every run had one canvas at opacity 0.1, no horizontal overflow and no console errors.
+  - Looked at screenshots at the real 0.1, plus diagnostic ones with the canvas forced to 0.3 and 1.0 (an `!important` style in the test only, nothing committed). At 0.3 I also took up to four scrolled views per page.
+- Contrast at 0.1: no failures on any route or width. The lowest was 5.22 (a tag on Projects at 768).
+- Contrast at 0.3 (all failures are `text-muted`):
+  - About at 375: the skills intro in the surface band over the sun, 3.41. The sun is fixed top-right, so text passes over it while scrolling.
+  - Projects at 375/768/1280: card descriptions, tags and the footer over the gas giant and the ringed planet, as low as 3.47.
+  - Behind the Scenes at 768: the "Who can change it" diagram label over the black-hole disk, 3.6. The stack intro there scores 4.44.
+  - Home, Resume, Contact and 404 pass at 0.3. The lowest is 4.7 (Home tags at 768).
+
+**Files**
+- Changed: `src/pages/Home.tsx`, `src/pages/Contact.tsx`, `public/photo-placeholder.svg`, `docs/agent-logs/dev-2.md`
+
+**Follow-ups**
+- Leader/Chris, if the background goes to about 0.3: muted text fails AA in the places listed under Verification. Fixing it needs one of:
+  - a scene change, placing those objects further from the content column (my scenes, a separate story)
+  - a dimmer cap per scene in the engine (dev-1)
+  - a brighter `muted` token (dev-1)
+  The page layout alone can't avoid it, because the canvas is fixed and every block of text passes under the corner objects while scrolling on mobile.
+- Text that sits right over a bright object at 0.3 but still passes AA:
+  - Projects at 768: the ringed planet behind the end of the intro
+  - Behind the Scenes at 768 and 1280: the black-hole disk behind the last line of the intro
+  - About at 375: the sun behind the first lines of the bio (fg text, which passes)
+  - Resume at 375: nebula clouds behind the intro
+- `public/og-image.png` still uses the pre-S23 palette (sky-blue accent on slate). It isn't on any page, but it could be regenerated in the space palette. `favicon.svg` is still the Vite logo. Both are placeholders.

@@ -124,7 +124,7 @@ export default function AutoPauseNotice({ open, onClose }: AutoPauseNoticeProps)
         className={
           open
             ? `glass-edge pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border border-border p-4 shadow-lg ${glassClass.bg}`
-            : 'sr-only'
+            : 'sr-only left-0' // left-0: the flex end would put the 1px box past the right edge (horizontal overflow)
         }
       >
         <div className="flex flex-1 flex-col items-start gap-3">

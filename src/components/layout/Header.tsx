@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 import { profile } from '../../content'
 import Container from '../ui/Container'
-import ThemeToggle from '../ui/ThemeToggle'
 import { navItems } from './navItems'
 
 const MENU_ID = 'primary-nav-menu'
@@ -14,7 +13,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
       : 'text-muted hover:bg-surface hover:text-fg'
   }`
 
-/** Site header: name, primary nav (hamburger under md), theme toggle. */
+/** Site header: name, primary nav (hamburger under md). */
 export default function Header() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
@@ -78,8 +77,6 @@ export default function Header() {
             ))}
           </ul>
         </nav>
-
-        <ThemeToggle />
       </Container>
     </header>
   )

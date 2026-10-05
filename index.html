@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Always dark (S23). Keep theme-color in sync with --theme-bg in
+         src/styles/index.css. -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#05060f" />
     <!-- Site-wide metadata defaults. PLACEHOLDER: replace the text with real
          info (keep the name in sync with profile.name in src/content/profile.ts).
          Tags with data-default-meta are swapped out by PageMeta
@@ -24,22 +28,6 @@
     />
     <meta property="og:image" content="/og-image.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <!-- Set the theme before first paint to avoid a flash. Keep the storage
-         key in sync with src/components/ui/useTheme.ts. -->
-    <script>
-      (function () {
-        var theme
-        try {
-          theme = localStorage.getItem('theme')
-        } catch (e) {}
-        if (theme !== 'light' && theme !== 'dark') {
-          theme = window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light'
-        }
-        document.documentElement.dataset.theme = theme
-      })()
-    </script>
   </head>
   <body>
     <div id="root"></div>

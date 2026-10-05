@@ -1,30 +1,56 @@
 import { makeCanvas, makeSoftDot, spread, type Rgb } from './canvas'
+import { createDiskStars, type DiskStars, type StarSeed } from './galaxyStars'
 import { between, createRandom } from './random'
 import { createStarfield } from './starfield'
 import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
 
 /**
- * Contact scene (S27): a quiet starfield with a distant spiral galaxy that
- * turns very slowly. Two arms of blue-white stars with pink star-forming
- * knots and dark dust lanes wind out of a warm core. The galaxy is tilted
- * and sits right of the contact text on desktop, below it on mobile. A small
- * companion galaxy and two faint background smudges add depth.
+ * Contact scene (S27, swirling since V0.39): a quiet starfield with a spiral
+ * galaxy. Two arms of blue-white stars with pink star-forming knots and dark
+ * dust lanes wind out of a warm core. The galaxy is tilted and sits right of
+ * the contact text on desktop, below it on mobile. A small companion galaxy
+ * and two faint background smudges add depth.
  *
- * Cost per frame: the starfield, one transformed draw of the baked face-on
- * galaxy texture, and three tiny sprites. The texture (thousands of star
- * dots) is baked on create/resize.
+ * Motion (V0.39): the spiral pattern (arm glow, knots, dust) turns rigidly
+ * once every `PATTERN_PERIOD` seconds, while the stars orbit on their own,
+ * faster toward the core. The arms are a density wave that the stars stream
+ * through, so they never wind up; see `galaxyStars.ts`.
+ *
+ * Layers, back to front: starfield, smudges, the baked glow texture
+ * (`makeGlow`, drawn in `drawGlow`), then the live stars (`createDiskStars`).
+ * For V0.40, core breathing fits in `drawGlow` (e.g. a core sprite with a
+ * time-based alpha) and star twinkle in `galaxyStars.ts` (a per-star factor
+ * on the light in `splat`).
+ *
+ * Cost per frame: the starfield, three tiny sprites, one transformed draw of
+ * the glow texture (as in S27), a third of the ~4 600 stars splatted into a
+ * pixel buffer and one draw of that buffer.
  */
 
 /** Tilt of the galaxy disk (vertical squash) and rotation of its plane. */
 const TILT = 0.48
 const PLANE_ANGLE = -0.42
-/** Radians per second: about nine minutes per turn. */
-const SPIN = 0.012
+/** Rotation of the galaxy inside its plane at time 0 (the S27 still frame). */
+const START_ANGLE = 1.3
+/** Seconds per turn of the arm pattern; outer stars move with it. */
+const PATTERN_PERIOD = 90
+const PATTERN_SPIN = (Math.PI * 2) / PATTERN_PERIOD
+/**
+ * Rotation curve softening: orbit speed is PATTERN_SPIN * (1 + S) / (r + S),
+ * so a star at the edge (r = 1) keeps pace with the arms, one at r = 0.15
+ * turns ~4x faster and the inner bulge ~6x (about 15 s per turn).
+ */
+const SOFTENING = 0.15
 const PARALLAX = 0.025
 const MAX_PARALLAX = 30
 const ARMS = 2
 /** Arm winding: the arm reaches the edge after this many radians. */
 const ARM_TURN = Math.PI * 3
+/** Log spiral of the arms: radius ARM_R0 * e^(ARM_B * theta), reaching 0.95 at ARM_TURN. */
+const ARM_R0 = 0.09
+const ARM_B = Math.log(0.95 / ARM_R0) / ARM_TURN
+/** Live stars per arm. */
+const ARM_STARS = 1500
 
 interface Layout {
   cx: number
@@ -32,22 +58,36 @@ interface Layout {
   r: number
 }
 
+/**
+ * Where the galaxy sits. The whole tilted disk (radius 1.05r) sweeps through
+ * every orientation as it turns, so its outline, not just the time-0 frame,
+ * has to stay clear of the text. Phones: below the contact panel and above
+ * the footer text (0.75 instead of S27's 0.76 so the arm tips clear the
+ * footer at 375x812). Tablet and up: right of the panel.
+ */
 function layoutFor({ width, height }: SceneSize): Layout {
   if (width < 768) {
-    return { cx: width * 0.6, cy: height * 0.76, r: Math.max(110, width * 0.44) }
+    return { cx: width * 0.6, cy: height * 0.75, r: Math.max(110, width * 0.44) }
   }
   return { cx: width * 0.76, cy: height * 0.46, r: Math.max(150, Math.min(width * 0.2, height * 0.36)) }
 }
 
 /** Arm radius (as a fraction of the galaxy radius) at winding angle theta. */
 function armRadius(theta: number) {
-  const r0 = 0.09
-  const b = Math.log(0.95 / r0) / ARM_TURN
-  return r0 * Math.exp(b * theta)
+  return ARM_R0 * Math.exp(ARM_B * theta)
 }
 
-/** Face-on galaxy texture, radius r, centered in a 2r square. */
-function makeGalaxy(r: number, random: () => number): HTMLCanvasElement {
+/** Winding angle at which the arm centre line reaches `radius`. */
+function armTheta(radius: number) {
+  return Math.log(radius / ARM_R0) / ARM_B
+}
+
+/**
+ * Face-on glow texture, radius r, centered in a 2.5r square: disk glow, warm
+ * core, soft arm glow, pink knots and dust lanes. Everything here turns
+ * rigidly with the arm pattern; the stars are drawn live (`starSeeds`).
+ */
+function makeGlow(r: number, random: () => number): HTMLCanvasElement {
   const half = r * 1.25
   const canvas = makeCanvas(half * 2, half * 2)
   const ctx = canvas.getContext('2d')
@@ -80,15 +120,6 @@ function makeGalaxy(r: number, random: () => number): HTMLCanvasElement {
       ctx.globalAlpha = 0.3
       ctx.drawImage(armGlow, x - s, y - s, s * 2, s * 2)
     }
-    // Stars along the arm, denser toward the inside.
-    for (let i = 0; i < 1500; i++) {
-      const theta = Math.pow(random(), 0.85) * ARM_TURN
-      const [x, y] = point(theta, arm, 0.04 + 0.06 * armRadius(theta))
-      ctx.globalAlpha = between(random, 0.35, 0.9)
-      ctx.fillStyle = random() < 0.75 ? 'rgb(205 220 255)' : 'rgb(255 245 230)'
-      const s = random() < 0.12 ? 1.6 : 1
-      ctx.fillRect(x, y, s, s)
-    }
     // Pink star-forming knots.
     for (let i = 0; i < 22; i++) {
       const theta = between(random, 0.25, 0.9) * ARM_TURN
@@ -98,22 +129,7 @@ function makeGalaxy(r: number, random: () => number): HTMLCanvasElement {
       ctx.drawImage(knot, x - s, y - s, s * 2, s * 2)
     }
   }
-  // Bulge and inter-arm disk stars.
-  for (let i = 0; i < 700; i++) {
-    const rr = Math.abs(spread(random)) * r * 0.16
-    const a = random() * Math.PI * 2
-    ctx.globalAlpha = between(random, 0.3, 0.8)
-    ctx.fillStyle = 'rgb(255 228 190)'
-    ctx.fillRect(Math.cos(a) * rr, Math.sin(a) * rr, 1, 1)
-  }
-  for (let i = 0; i < 900; i++) {
-    const rr = Math.sqrt(random()) * r * 0.85
-    const a = random() * Math.PI * 2
-    ctx.globalAlpha = between(random, 0.15, 0.45)
-    ctx.fillStyle = 'rgb(210 215 245)'
-    ctx.fillRect(Math.cos(a) * rr, Math.sin(a) * rr, 1, 1)
-  }
-  // Dust lanes on the inner edge of each arm.
+  // Dust lanes along each arm.
   ctx.globalCompositeOperation = 'destination-out'
   const dust = makeSoftDot([0, 0, 0], 32)
   for (let arm = 0; arm < ARMS; arm++) {
@@ -134,6 +150,67 @@ function makeGalaxy(r: number, random: () => number): HTMLCanvasElement {
   ctx.fillStyle = edge
   ctx.fillRect(-half, -half, half * 2, half * 2)
   return canvas
+}
+
+/** The glow texture's edge fade (1 inside 0.85r, 0 at 1.25r), for live stars. */
+function edgeFade(radius: number) {
+  return Math.min(1, Math.max(0, (1.25 - radius) / 0.4))
+}
+
+/**
+ * Star seeds with the same counts, colors and spread as the S27 baked stars:
+ * 1 500 per arm, 700 bulge and 900 inter-arm disk stars. Arm stars get a
+ * window around their arm instead of a radial jitter, see `galaxyStars.ts`.
+ */
+function starSeeds(random: () => number): StarSeed[] {
+  const seeds: StarSeed[] = []
+  for (let arm = 0; arm < ARMS; arm++) {
+    for (let i = 0; i < ARM_STARS; i++) {
+      // Denser toward the inside, as before.
+      const theta = Math.pow(random(), 0.85) * ARM_TURN
+      const center = armRadius(theta)
+      // S27 jittered arm stars radially by +-jitter. Express that spread as an
+      // angle along the arm (dr = ARM_B * r * dtheta), matched to the bell's
+      // spread, capped at half the gap between arms.
+      const jitter = 0.04 + 0.06 * center
+      const radius = Math.max(0.02, center + spread(random) * jitter * 0.25)
+      const width = Math.min(Math.PI / ARMS, (0.88 * jitter) / (ARM_B * Math.max(radius, ARM_R0)))
+      seeds.push({
+        radius,
+        base: armTheta(Math.max(radius, ARM_R0)) + (arm * Math.PI * 2) / ARMS,
+        delta: between(random, -width, width),
+        width,
+        alpha: between(random, 0.5, 1) * edgeFade(radius),
+        color: random() < 0.75 ? 0 : 1,
+        size: random() < 0.12 ? 1.5 : 1,
+      })
+    }
+  }
+  // Bulge.
+  for (let i = 0; i < 700; i++) {
+    seeds.push({
+      radius: Math.abs(spread(random)) * 0.16,
+      base: random() * Math.PI * 2,
+      delta: 0,
+      width: 0,
+      alpha: between(random, 0.3, 0.8),
+      color: 2,
+      size: 1,
+    })
+  }
+  // Inter-arm disk.
+  for (let i = 0; i < 900; i++) {
+    seeds.push({
+      radius: Math.sqrt(random()) * 0.85,
+      base: random() * Math.PI * 2,
+      delta: 0,
+      width: 0,
+      alpha: between(random, 0.15, 0.45),
+      color: 3,
+      size: 1,
+    })
+  }
+  return seeds
 }
 
 /** Small elliptical smudge for faint background galaxies. */
@@ -162,11 +239,17 @@ function createGalaxy(setup: SceneSetup) {
   let layout = layoutFor(setup)
   let texture: HTMLCanvasElement | null = null
   let smudges: Smudge[] = []
+  // Seeds are in galaxy units (radius 0..1), so a resize doesn't rebuild them.
+  const diskStars: DiskStars = createDiskStars(starSeeds(createRandom(2731)), {
+    patternSpin: PATTERN_SPIN,
+    outerSpin: PATTERN_SPIN,
+    softening: SOFTENING,
+  })
 
   function build(size: SceneSize) {
     layout = layoutFor(size)
     const random = createRandom(2730)
-    texture = makeGalaxy(layout.r, random)
+    texture = makeGlow(layout.r, random)
     const { width, height } = size
     const { cx, cy, r } = layout
     const warm = makeSmudge([255, 225, 190])
@@ -182,6 +265,18 @@ function createGalaxy(setup: SceneSetup) {
 
   build(setup)
 
+  /** The glow texture, turning rigidly with the arm pattern. */
+  function drawGlow(ctx: CanvasRenderingContext2D, x: number, y: number, time: number) {
+    if (!texture) return
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(PLANE_ANGLE)
+    ctx.scale(1, TILT)
+    ctx.rotate(START_ANGLE - time * PATTERN_SPIN)
+    ctx.drawImage(texture, -texture.width / 2, -texture.height / 2)
+    ctx.restore()
+  }
+
   function draw(frame: SceneFrame) {
     stars.draw(frame)
     if (!texture) return
@@ -195,14 +290,14 @@ function createGalaxy(setup: SceneSetup) {
       ctx.drawImage(s.sprite, -s.w, -s.h, s.w * 2, s.h * 2)
       ctx.restore()
     }
-    const { cx, cy } = layout
-    ctx.save()
-    ctx.translate(cx, cy - shift)
-    ctx.rotate(PLANE_ANGLE)
-    ctx.scale(1, TILT)
-    ctx.rotate(1.3 - time * SPIN)
-    ctx.drawImage(texture, -texture.width / 2, -texture.height / 2)
-    ctx.restore()
+    const { cx, cy, r } = layout
+    drawGlow(ctx, cx, cy - shift, time)
+    diskStars.draw(
+      ctx,
+      { cx, cy: cy - shift, r, tilt: TILT, planeAngle: PLANE_ANGLE, startAngle: START_ANGLE },
+      time,
+      frame.reducedMotion || frame.dt === 0,
+    )
   }
 
   return {
@@ -213,6 +308,7 @@ function createGalaxy(setup: SceneSetup) {
     },
     dispose() {
       stars.dispose?.()
+      diskStars.dispose()
       texture = null
       smudges = []
     },

@@ -39,6 +39,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S29 | Scene engine follow-ups        | dev-1  | S27        | done   |
 | S30 | Space-themed favicon & OG image | dev-2 | S23       | done   |
 | S31 | Nebula & sun build incrementally | dev-2 | S29      | done   |
+| S32 | Brighter space background      | dev-1  | —          | in progress |
+| S33 | Snappier scene changes         | dev-1  | S32        | todo   |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
 
@@ -373,3 +375,33 @@ Found in S29: at 375px with 4x CPU throttle, the first visit to /resume freezes 
 - [x] Caches (e.g. nebula `cloudCache`) are only written after a bake completes, so a cancelled build leaves no half-written state; `resize` stays synchronous via `runToEnd`
 - [x] Navigating away or back mid-build, toggling reduced motion mid-build, and direct loads all end on the correct scene with no console errors
 - [x] Other scenes unchanged; `npm run build` and `npm run lint` pass
+
+### S32 — Brighter space background
+Triaged from story inbox D9 (story-writer, 2026-10-05). Answers the open brightness question (S24/S28): Chris wants a modest step up. Use S28's 0.3 contrast scan (dev-2 log) as input: About (sun), Projects (planets) and Behind the Scenes (black hole) are the tight spots.
+
+*As a visitor, I want the space background to be a bit brighter so that the scenes are actually visible and the theme comes through.*
+
+Chris looked at the live site and finds the background too dim. Today every scene is capped at 10% opacity (`BACKGROUND_MAX_OPACITY = 0.1` in `backgroundEngine.ts`), chosen so all text stays WCAG AA even over pure white. Chris wants it "a little brighter": a clear but modest step up, not a redesign.
+
+- [ ] Scenes are visibly brighter on every page (roughly 1.5–2× today's brightness is the target; the dev picks the exact value and states it in the log)
+- [ ] All text still meets WCAG AA over the brightest possible frame, including muted text on nested surfaces; if needed, panels/surfaces get a little more opaque or text tokens adjust to make room, rather than keeping the background dim
+- [ ] The contrast notes in `backgroundEngine.ts`, `src/scenes/types.ts` and `index.css` are updated to match the new value
+- [ ] No scene becomes distracting behind text (Home hero, Behind the Scenes diagrams, Projects cards checked)
+- [ ] Works at 375px and desktop; `npm run build` and `npm run lint` pass
+
+**Open questions:** None.
+
+### S33 — Snappier scene changes between pages
+Triaged from story inbox D10 (story-writer, 2026-10-05). Runs after S32 (both edit `backgroundEngine.ts`). Keeps S29's incremental builds; only the fade timing/order changes.
+
+*As a visitor, I want the background to change as soon as I switch pages so that navigation feels quick and the old page's scene doesn't hang around.*
+
+Chris finds page switches sluggish: the previous page's scene lingers into the new page. Two causes in `backgroundEngine.ts`: the crossfade is 1200ms, and the old scene stays fully visible until the new scene has finished building incrementally (S29/S31), which adds more delay before the fade even starts. This replaces the "crossfade smoothly" behavior from S26.
+
+- [ ] On navigation, the old scene starts fading out immediately (not after the new scene is ready) and is gone within ~250ms
+- [ ] The new scene fades in quickly (~250ms) as soon as it's ready; while it builds, only the plain space background shows (no old scene, no flash of a bright or empty white frame)
+- [ ] Quickly clicking through several pages never shows a stale scene and never stacks multiple scenes; only the latest page's scene ends up visible
+- [ ] Reduce motion: scene swaps instantly, as today
+- [ ] Still smooth on a mid-range phone (no jank introduced); `npm run build` and `npm run lint` pass
+
+**Open questions:** None.

@@ -274,3 +274,6 @@
 **Follow-ups**
 - Leader/S12: on Vercel the SPA rewrite serves unknown URLs with HTTP 200, so the 404 page is a "soft 404". If that matters for SEO, a later story could add `<meta name="robots" content="noindex">` on NotFound. That would need a prop on `PageMeta` (dev-1) or a separate tag.
 - The `og:image` URL in `index.html` is relative (`/og-image.png`). Some link-preview crawlers need an absolute URL, so it should be made absolute once the production domain is known (dev-1/S12).
+
+**Fixes after review**
+- `NotFound.tsx`: removed my extra `<div className="mt-8">` around the home Button. `Section` already wraps its children in a `mt-8` div, so the gap was doubled to 64px. Now the gap between the intro and the button is 32px, the same as on other pages (checked in headless Chromium at 375px and 1280px). The metadata check script still passes, and build and lint pass.

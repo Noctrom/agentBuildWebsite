@@ -7,9 +7,7 @@ export default function NotFound() {
     <>
       <PageMeta {...notFoundPage.meta} />
       <Section title={notFoundPage.title} headingLevel={1} intro={notFoundPage.intro}>
-        <div className="mt-8">
-          <Button to="/">{notFoundPage.homeLabel}</Button>
-        </div>
+        <Button to="/">{notFoundPage.homeLabel}</Button>
       </Section>
     </>
   )

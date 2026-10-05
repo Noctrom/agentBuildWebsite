@@ -19,11 +19,23 @@ export default function Home() {
   return (
     <>
       <PageMeta {...homePage.meta} />
-      {/* Hero: custom layout (text beside photo), so not a Section, but it uses
-          the shared Container so its edges match the header and sections. */}
+      {/* Hero: custom layout, so not a Section, but it uses the shared
+          Container so its edges match the header and sections.
+          Space theme (S28): the Home scene is a solar system anchored in the
+          top-right corner, with orbits sweeping down and left. From md up,
+          photo and text share one narrow left column, so the right of the
+          hero stays free for the sun and planets to frame the text. On
+          mobile the photo fills the orbit area above the centered text. */}
       <section aria-labelledby={heroHeadingId} className="py-section">
-        <Container className="flex flex-col-reverse items-center gap-10 md:flex-row md:justify-between">
-          <div className="text-center md:text-left">
+        <Container>
+          <div className="flex flex-col items-center text-center md:max-w-md md:items-start md:text-left lg:max-w-xl">
+            <img
+              src={profile.photo}
+              alt={profile.photoAlt}
+              width={400}
+              height={400}
+              className="mb-10 size-40 shrink-0 rounded-full border border-border bg-surface object-cover md:mb-6 md:size-28"
+            />
             <h1
               id={heroHeadingId}
               className="text-4xl font-bold tracking-tight text-fg sm:text-5xl"
@@ -31,9 +43,7 @@ export default function Home() {
               {profile.name}
             </h1>
             <p className="mt-3 text-xl font-medium text-accent sm:text-2xl">{profile.title}</p>
-            <p className="mx-auto mt-4 max-w-prose text-lg text-muted md:mx-0">
-              {profile.pitch}
-            </p>
+            <p className="mt-4 max-w-prose text-lg text-muted">{profile.pitch}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
               <Button to="/projects">{homePage.viewProjectsLabel}</Button>
               <Button href={profile.resumeUrl} download variant="secondary">
@@ -41,13 +51,6 @@ export default function Home() {
               </Button>
             </div>
           </div>
-          <img
-            src={profile.photo}
-            alt={profile.photoAlt}
-            width={400}
-            height={400}
-            className="size-40 shrink-0 rounded-full border border-border bg-surface object-cover sm:size-56 md:size-64"
-          />
         </Container>
       </section>
 

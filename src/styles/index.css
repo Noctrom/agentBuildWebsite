@@ -61,11 +61,17 @@
  *   bg-glass (bg at 80%, tone="bg" inside a surface band)
  *     fg 16.50 / 15.80, muted 8.96 / 8.58, accent 8.54 / 8.18,
  *     sun 11.92 / 11.41
- *   header (bg at 80% since V0.35; was 70%). From lg the same glass is
- *   the left nav rail (V0.38) and the "nav pill" is the button bubble; page
- *   content never scrolls under the rail, only the canvas. Measured scan
- *   (V0.38, all routes at 1024/1280/1920): brightest pixel in a rail label
- *   box rgb(23 24 45): fg 14.55, muted 7.90, accent 7.53.
+ *   header (bg at 80% since V0.35; was 70%). Top bar only (below lg) since
+ *   V0.47. From lg the nav rail has no glass (V0.47): its labels sit
+ *   straight on the canvas, so the bare column above applies, and the
+ *   "nav pill" is the button bubble (bg-surface). Page content never
+ *   scrolls under the rail, only the canvas; an expanded hover/focus button
+ *   may overlap the page edge, but always on its own bubble. Measured scan
+ *   (V0.47, all routes at 1024/1280, text hidden, one bubble hovered, top /
+ *   middle / bottom scroll, 3 frames): brightest pixel in a label's text
+ *   rows rgb(54 57 105): fg 9.01, muted 4.89, accent 4.66 (focus ring,
+ *   needs 3:1). The bubble's glass-edge rim (1px, top border row, never
+ *   under glyphs) reaches rgb(112 110 164).
  *     fg 16.87 / 15.82, muted 9.15 / 8.59, accent 8.73 / 8.19
  *     nav pill (surface on header): muted 7.98 / 7.45, accent 7.61 / 7.11
  *   The header is sticky (V0.35), so page content scrolls under it too, not

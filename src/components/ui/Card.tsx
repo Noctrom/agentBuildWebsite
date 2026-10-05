@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { LinkProps } from 'react-router'
 import Button, { type ButtonVariant } from './Button'
 import { Tag } from './Tag'
+import { surfaceToneClass, type SurfaceTone } from './tone'
 
 /**
  * A link rendered as a small button in the card footer. Use `to` for internal
@@ -34,6 +35,12 @@ export type CardProps = {
   footer?: ReactNode
   /** Heading element for the title. Defaults to 3 (cards usually sit under a section h2). */
   headingLevel?: 2 | 3 | 4
+  /**
+   * Card background. Defaults to `surface`; use `bg` inside a
+   * `<Section tone="surface">` so the card stands out from the band.
+   * Don't pass `bg-*` via `className` (it can't reliably override this).
+   */
+  tone?: SurfaceTone
   className?: string
 }
 
@@ -50,6 +57,7 @@ export default function Card({
   actions,
   footer,
   headingLevel = 3,
+  tone = 'surface',
   className = '',
 }: CardProps) {
   const Heading = `h${headingLevel}` as const
@@ -57,7 +65,7 @@ export default function Card({
 
   return (
     <article
-      className={`flex h-full flex-col overflow-hidden rounded-lg border border-border bg-surface ${className}`.trim()}
+      className={`flex h-full flex-col overflow-hidden rounded-lg border border-border ${surfaceToneClass[tone]} ${className}`.trim()}
     >
       {image && (
         <img

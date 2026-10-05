@@ -20,5 +20,7 @@ export type { SectionProps, HeadingLevel } from './Section'
 export { Tag, TagButton } from './Tag'
 export type { TagProps, TagButtonProps } from './Tag'
 
+export type { SurfaceTone } from './tone'
+
 export { default as ThemeToggle } from './ThemeToggle'
 export type { ThemeToggleProps } from './ThemeToggle'

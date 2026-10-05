@@ -37,7 +37,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | S27 | Remaining page scenes          | dev-2  | S26        | done   |
 | S28 | Pages fitted to space theme    | dev-2  | S25, S26   | done   |
 | S29 | Scene engine follow-ups        | dev-1  | S27        | done   |
-| S30 | Space-themed favicon & OG image | dev-2 | S23       | in progress |
+| S30 | Space-themed favicon & OG image | dev-2 | S23       | done   |
 | S31 | Nebula & sun build incrementally | dev-2 | S29      | in progress |
 
 **Parallelism:** S1 blocks everyone. Then dev-1 runs S2 → S3 → S4 while dev-2 does S5. Pages (S6–S10) start once S3 and S4 are merged.
@@ -362,9 +362,9 @@ Found in S27 review.
 ### S30 — Space-themed favicon & OG image
 *As a visitor sharing or bookmarking the site, I want its icon and preview image to match the space theme.*
 Found in S28 review: `public/og-image.png` still uses the pre-S23 palette (sky blue on slate) and `public/favicon.svg` is still the Vite logo.
-- [ ] `public/favicon.svg` replaced with a simple space-palette icon (clearly placeholder, e.g. a planet or star mark), legible at 16px and 32px
-- [ ] `public/og-image.png` regenerated at 1200×630 in the S23 palette, still clearly marked placeholder; no npm dependencies added
-- [ ] `index.html` links unchanged and both files served with the right content type from `vite preview`
+- [x] `public/favicon.svg` replaced with a simple space-palette icon (clearly placeholder, e.g. a planet or star mark), legible at 16px and 32px
+- [x] `public/og-image.png` regenerated at 1200×630 in the S23 palette, still clearly marked placeholder; no npm dependencies added
+- [x] `index.html` links unchanged and both files served with the right content type from `vite preview`
 
 ### S31 — Nebula & sun scenes build incrementally
 *As a visitor on a phone, I want moving to Resume or About to stay smooth instead of freezing for a moment.*

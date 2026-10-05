@@ -24,3 +24,6 @@ export type { SurfaceTone } from './tone'
 
 export { default as ThemeToggle } from './ThemeToggle'
 export type { ThemeToggleProps } from './ThemeToggle'
+
+export { default as PageMeta } from './PageMeta'
+export type { PageMetaProps } from './PageMeta'

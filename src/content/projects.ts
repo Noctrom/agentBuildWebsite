@@ -1,63 +1,31 @@
 import type { Project } from './types'
 
-// PLACEHOLDER: replace with real projects. Tags overlap on purpose so the
-// projects page filter has something to do.
+// Chris's real projects (wording approved 2026-10-05, V0.53). None has a repo
+// or demo link yet; add `repoUrl` / `demoUrl` once one is public.
 export const projects: Project[] = [
   {
-    id: 'project-alpha',
-    title: 'Project Alpha',
+    id: 'ecommerce-sales-analysis',
+    title: 'E-Commerce Sales Analysis',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. A placeholder web app that does placeholder things.',
-    tags: ['React', 'TypeScript', 'Tailwind CSS'],
-    repoUrl: 'https://github.com/example/project-alpha',
-    demoUrl: 'https://alpha.example.com',
+      'In progress. A normalized relational database (customers, orders, order items, products) built from a public Kaggle dataset, with SQL using joins, CTEs and window functions to find top products by monthly revenue, the repeat-customer rate, and products with declining demand. Includes cleaning duplicates, missing values and inconsistent formats.',
+    tags: ['SQL', 'MySQL', 'Data Cleaning'],
     featured: true,
   },
   {
-    id: 'project-beta',
-    title: 'Project Beta',
+    id: 'social-media-app',
+    title: 'Social Media App',
     description:
-      'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. A placeholder API service.',
-    tags: ['Node.js', 'TypeScript', 'PostgreSQL'],
-    repoUrl: 'https://github.com/example/project-beta',
+      'A social media app built by a team of six in sprints. I managed account data (usernames, passwords, likes, comments, dislikes) in a NoSQL database and wrote unit tests for compatibility and reliability, with version control on GitHub.',
+    tags: ['NoSQL', 'Unit Testing', 'Git', 'Agile'],
     featured: true,
   },
   {
-    id: 'project-gamma',
-    title: 'Project Gamma',
+    id: 'this-website',
+    title: 'This Website',
     description:
-      'Ut enim ad minim veniam, quis nostrud exercitation ullamco. A placeholder data pipeline.',
-    tags: ['Python', 'PostgreSQL', 'Docker'],
-    repoUrl: 'https://github.com/example/project-gamma',
-    demoUrl: 'https://gamma.example.com',
+      "The site you're on: a React and TypeScript personal website with an animated space theme, built by a team of AI coding agents I direct (a leader, two developers and a story writer) using user stories, code review and a branch-per-story Git workflow. The Behind the Scenes page shows how it works.",
+    tags: ['React', 'TypeScript', 'Tailwind CSS', 'Vite', 'AI Agents'],
     featured: true,
-  },
-  {
-    id: 'project-delta',
-    title: 'Project Delta',
-    description:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse. A placeholder command-line tool.',
-    tags: ['Python', 'CLI'],
-    repoUrl: 'https://github.com/example/project-delta',
-    featured: false,
-  },
-  {
-    id: 'project-epsilon',
-    title: 'Project Epsilon',
-    description:
-      'Excepteur sint occaecat cupidatat non proident. A placeholder dashboard with charts.',
-    tags: ['React', 'TypeScript', 'Node.js'],
-    demoUrl: 'https://epsilon.example.com',
-    featured: false,
-  },
-  {
-    id: 'project-zeta',
-    title: 'Project Zeta',
-    description:
-      'Nulla gravida orci a odio, nullam varius turpis. A placeholder containerised microservice.',
-    tags: ['Go', 'Docker'],
-    repoUrl: 'https://github.com/example/project-zeta',
-    featured: false,
   },
 ]
 

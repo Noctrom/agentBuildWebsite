@@ -21,7 +21,7 @@ export interface HomePageCopy {
 export const homePage: HomePageCopy = {
   meta: {
     description:
-      'Placeholder home description: lorem ipsum dolor sit amet, Jane Placeholder builds placeholder things for the web.',
+      'Computer science student at the University of Minnesota Duluth, looking for a software internship to put my skills to work on real-world projects.',
   },
   viewProjectsLabel: 'View Projects',
   downloadResumeLabel: 'Download Resume',

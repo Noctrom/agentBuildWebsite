@@ -57,6 +57,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.47](docs/backlog/v0/v0.25-v0.49.md#v047--slim-see-through-nav-rail-with-short-labels) | Slim, see-through nav rail with short labels | dev-1 | V0.49 | done |
 | [V0.48](docs/backlog/v0/v0.25-v0.49.md#v048--phone-top-bar-shows-the-space-background) | Phone top bar shows the space background | dev-1 | V0.47 | done |
 | [V0.49](docs/backlog/v0/v0.25-v0.49.md#v049--animation-switch-also-controls-ui-motion) | Animation switch also controls UI motion | dev-1 | V0.42 | done |
+| [V0.50](docs/backlog/v0/v0.50-v0.74.md#v050--see-through-footer-with-the-animation-switch-on-the-right) | See-through footer with the Animation switch on the right | dev-1 | — | in progress |
 
 ## Old ids
 

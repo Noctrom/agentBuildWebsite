@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import Button from '../ui/Button'
 import { glassClass } from '../ui/tone'
+import { hideableClass } from './contentVisibility'
 import { setMotionChoice } from './motionPreference'
 
 /** Message text approved by Chris (V0.42). */
@@ -11,6 +12,8 @@ const AUTO_CLOSE_MS = 10_000
 interface AutoPauseNoticeProps {
   open: boolean
   onClose: () => void
+  /** Hidden and inert while the page content is hidden (V0.57). */
+  contentHidden: boolean
 }
 
 /**
@@ -34,7 +37,7 @@ interface AutoPauseNoticeProps {
  * `scroll-padding-bottom` (index.css), so focused elements are scrolled
  * clear of it.
  */
-export default function AutoPauseNotice({ open, onClose }: AutoPauseNoticeProps) {
+export default function AutoPauseNotice({ open, onClose, contentHidden }: AutoPauseNoticeProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const [hovered, setHovered] = useState(false)
@@ -108,9 +111,10 @@ export default function AutoPauseNotice({ open, onClose }: AutoPauseNoticeProps)
   return (
     <div
       ref={wrapperRef}
+      inert={contentHidden}
       className={`pointer-events-none sticky bottom-0 z-30 flex justify-end print:hidden ${
         open ? 'px-gutter pt-2 pb-4' : ''
-      }`}
+      } ${hideableClass(contentHidden)}`}
     >
       <div
         ref={cardRef}

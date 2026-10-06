@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router'
 import Container from '../ui/Container'
 import { glowClass } from '../ui/tone'
 import { useBackgroundMirror, useMirrorFallback } from './backgroundMirror'
+import { hideableClass } from './contentVisibility'
 import { navItems, type NavItem } from './navItems'
 
 const MENU_ID = 'primary-nav-menu'
@@ -87,6 +88,11 @@ const fullLabelClass = (collapsible: boolean) =>
 const shortLabelClass =
   'hidden px-4 py-2 group-hover:opacity-0 group-focus-visible:opacity-0 lg:block motion-safe:transition-opacity motion-safe:duration-150 motion-safe:ease-out'
 
+interface HeaderProps {
+  /** Hidden and inert while the page content is hidden (V0.57). */
+  contentHidden: boolean
+}
+
 /**
  * Site navigation (V0.38: vertical rail; V0.47: slim, see-through rail).
  * There is no site name in it; the Home button leads home and the name lives
@@ -127,8 +133,12 @@ const shortLabelClass =
  * to. It scrolls on its own if it is taller than the viewport. Because it
  * covers the page, it closes when focus or a click goes outside the header,
  * so a focused element is never hidden under the open menu.
+ *
+ * V0.57: while the footer's hide-content button has the page content
+ * hidden, the whole header (rail or top bar, and the menu) is hidden and
+ * inert (contentVisibility.ts).
  */
-export default function Header() {
+export default function Header({ contentHidden }: HeaderProps) {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -237,7 +247,8 @@ export default function Header() {
     <header
       ref={headerRef}
       onBlur={onBlur}
-      className="sticky top-0 z-40 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col lg:justify-center-safe"
+      inert={contentHidden}
+      className={`sticky top-0 z-40 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col lg:justify-center-safe ${hideableClass(contentHidden)}`}
     >
       <Backdrop ref={backdropRef} />
       <div ref={barRef} className="lg:hidden">

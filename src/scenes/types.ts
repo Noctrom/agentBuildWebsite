@@ -4,7 +4,7 @@
  * A scene is a self-contained Canvas 2D drawing: a starfield, a solar system,
  * a black hole... The background engine (`components/layout/SpaceBackground`)
  * owns the canvas, the animation loop, resizing, fades between scenes,
- * "reduce motion", pausing in hidden tabs and the static fallback. A scene only
+ * "reduce motion" (the footer Animation switch, else the OS setting), pausing in hidden tabs and the static fallback. A scene only
  * draws. You can add or change scenes without touching the engine, `Layout` or
  * `ui/`:
  *
@@ -122,7 +122,11 @@ export interface SceneBudget {
 
 /** Passed to `Scene.create`. */
 export interface SceneSetup extends SceneSize {
-  /** OS "reduce motion" is on: `draw` is called once per resize with time 0. */
+  /**
+   * Animation is off: the visitor's footer choice (V0.41), else the automatic
+   * low-power pause (V0.42), else the OS "reduce motion" setting. `draw` is
+   * then called once per resize with time 0.
+   */
   reducedMotion: boolean
   budget: SceneBudget
 }

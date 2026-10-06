@@ -102,8 +102,9 @@ const shortLabelClass =
  *   same vertical buttons, with full labels, as an overlay below the bar.
  *
  * `--rail-width` (V0.47): the rail's real rendered width in px from lg, 0px
- * below lg. Set by a ResizeObserver on <header>, so it follows route changes
- * (the current page's button changes width) and breakpoint changes. Layout
+ * below lg. Set by a ResizeObserver on <header>, so it follows breakpoint
+ * changes, and in a layout effect on every route change (the current page's
+ * button changes width), so it is current before any passive effect. Layout
  * pads the page by it (`lg:pl-(--rail-width)`), so content never sits under
  * the rail; scenes can use it to center in the area beside the rail.
  *
@@ -201,23 +202,29 @@ export default function Header() {
   // Publish the rail's width (V0.47). Below lg the header is the sticky top
   // bar, not a rail, so 0. Rounded up to whole px: a fractional padding left a
   // 1px horizontal overflow. Runs before paint, so the padding is right on the
-  // first frame and on every route change.
+  // first frame. The ResizeObserver follows breakpoint and font changes.
   useLayoutEffect(() => {
     const header = headerRef.current
     if (!header) return
-    const root = document.documentElement
-    const publish = () => {
-      const isRail = getComputedStyle(header).position === 'fixed'
-      root.style.setProperty('--rail-width', isRail ? `${Math.ceil(header.getBoundingClientRect().width)}px` : '0px')
-    }
+    const publish = () => publishRailWidth(header)
     publish()
     const observer = new ResizeObserver(publish)
     observer.observe(header)
     return () => {
       observer.disconnect()
-      root.style.removeProperty('--rail-width')
+      document.documentElement.style.removeProperty('--rail-width')
     }
   }, [])
+
+  // On a route change the current page's button changes, and with it the
+  // rail's width (V0.56). The ResizeObserver only reports that after layout,
+  // which is after passive effects: a scene drawing its one still frame
+  // (animation off) in a passive effect read the old width and never redrew.
+  // Layout effects run before any passive effect, so publish here too. The
+  // observer then finds the value unchanged and doesn't write it again.
+  useLayoutEffect(() => {
+    if (headerRef.current) publishRailWidth(headerRef.current)
+  }, [pathname])
 
   // Focus moving out of the header (Tab past the last link, the skip link)
   // closes the menu. A null relatedTarget (window blur) leaves it open.
@@ -265,6 +272,18 @@ export default function Header() {
       </nav>
     </header>
   )
+}
+
+/**
+ * Write the rail's rendered width to `--rail-width` on <html> (V0.47): whole
+ * px, rounded up, from lg (where the header is the fixed rail), else 0px.
+ * Skips the write when the value hasn't changed.
+ */
+function publishRailWidth(header: HTMLElement) {
+  const root = document.documentElement
+  const isRail = getComputedStyle(header).position === 'fixed'
+  const value = isRail ? `${Math.ceil(header.getBoundingClientRect().width)}px` : '0px'
+  if (root.style.getPropertyValue('--rail-width') !== value) root.style.setProperty('--rail-width', value)
 }
 
 /**

@@ -65,7 +65,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.55](docs/backlog/v0/v0.50-v0.74.md#v055--shared-band-component-for-grouped-sections) | Shared band component for grouped sections | dev-1 | V0.46 | done |
 | [V0.56](docs/backlog/v0/v0.50-v0.74.md#v056--rail-width-ready-before-scenes-draw) | Rail width ready before scenes draw | dev-1 | V0.43 | done |
 | [V0.57](docs/backlog/v0/v0.50-v0.74.md#v057--button-to-hide-the-page-content-and-show-only-the-space-background) | Button to hide the page content and show only the space background | dev-1 | V0.56 | done |
-| [V0.58](docs/backlog/v0/v0.50-v0.74.md#v058--contact-galaxy-clears-the-taller-phone-footer) | Contact galaxy clears the taller phone footer | dev-2 | V0.57, V0.45 | in progress |
+| [V0.58](docs/backlog/v0/v0.50-v0.74.md#v058--contact-galaxy-clears-the-taller-phone-footer) | Contact galaxy clears the taller phone footer | dev-2 | V0.57, V0.45 | done |
 
 ## Old ids
 

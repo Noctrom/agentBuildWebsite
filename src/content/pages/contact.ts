@@ -22,7 +22,7 @@ export const contactPage: ContactPageCopy = {
   meta: {
     title: 'Contact',
     description:
-      'Placeholder contact description: lorem ipsum ways to reach Jane Placeholder by email, GitHub or LinkedIn.',
+      'Placeholder contact description: lorem ipsum ways to reach Christopher Waldriff by email, GitHub or LinkedIn.',
   },
   title: 'Contact',
   emailLabel: 'Email',

@@ -26,8 +26,8 @@ export const surfaceToneClass: Record<SurfaceTone, string> = {
 }
 
 /**
- * Full frosted glass: translucent fill plus backdrop blur. Used by the header,
- * footer, `Section tone="surface"` bands, cards and secondary buttons.
+ * Full frosted glass: translucent fill plus backdrop blur. Used by the
+ * auto-pause toast, `Section tone="surface"` bands, cards and secondary buttons.
  *
  * Blur is deliberately not on tags or diagram boxes. Each blurred element
  * re-filters its backdrop on every frame of the animated background; with blur

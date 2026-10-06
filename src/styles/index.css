@@ -81,6 +81,13 @@
  *   in the menu labels rgb(55 55 63): fg 9.85, muted 5.34, accent 5.09.
  *   (Before V0.48 the bar was bg at 80% plus blur, which page content
  *   scrolled under; the --theme-bg-header token is gone with it.)
+ *   footer (no glass since V0.50): no fill, blur or top border, so its
+ *   text sits straight on the canvas and the bare column applies.
+ *   Measured scan (V0.50, all routes at 375/768/1280, footer text, switch
+ *   track border and knob hidden, scrolled to the bottom, 5 frames):
+ *   brightest pixel in the text rows rgb(45 43 46): fg 11.71, muted 6.36,
+ *   accent 6.06; in the switch track box rgb(42 33 35): muted (off-state
+ *   border/knob, needs 3:1) 7.10, accent (on-state track) 6.77.
  * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.63; the
  * faint border keeps panels outlined.
  * Glow shadows are drawn outside elements, never under their text.

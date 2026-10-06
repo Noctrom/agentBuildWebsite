@@ -88,6 +88,14 @@
  *   brightest pixel in the text rows rgb(45 43 46): fg 11.71, muted 6.36,
  *   accent 6.06; in the switch track box rgb(42 33 35): muted (off-state
  *   border/knob, needs 3:1) 7.10, accent (on-state track) 6.77.
+ *   Hide-content eye button (V0.57; icon needs 3:1, focus ring 3:1).
+ *   Measured scan (all routes at 375/768/1280, icon and tooltip hidden,
+ *   scrolled to the bottom, content shown and hidden, 5 frames): brightest
+ *   pixel in the button box rgb(42 37 39): muted (icon) 6.83, accent
+ *   (hover icon, focus ring) 6.52. While content is hidden the button can be
+ *   anywhere on screen, but even the theoretical worst pixel above keeps
+ *   muted 5.30 / accent 5.05. Its tooltip has its own bg-glass fill: fg
+ *   15.80 at worst.
  * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.63; the
  * faint border keeps panels outlined.
  * Glow shadows are drawn outside elements, never under their text.

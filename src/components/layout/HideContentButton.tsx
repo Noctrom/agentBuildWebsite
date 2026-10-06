@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface HideContentButtonProps {
   /** True while the page content is hidden. */
   hidden: boolean
@@ -12,8 +14,9 @@ interface HideContentButtonProps {
  * - Name: "Hide content" while content shows (open eye), "Show content"
  *   while hidden (crossed-out eye). `aria-pressed` adds the state, so screen
  *   readers announce it as a toggle that is pressed while content is hidden.
- * - Tooltip: the same words in a small glass label above the button on hover
- *   and keyboard focus. It is decorative (`aria-hidden`); the accessible name
+ * - Tooltip: the same words in a small glass label on hover and keyboard
+ *   focus: beside the button when stacked (below sm, so it never covers the
+ *   links above), above it from sm. Esc dismisses it. It is decorative (`aria-hidden`); the accessible name
  *   comes from `aria-label`. Its fade follows the V0.49 motion rule.
  * - `relative z-50` keeps it above the full-screen "click to show" layer that
  *   Layout adds while content is hidden.
@@ -22,6 +25,8 @@ interface HideContentButtonProps {
  */
 export default function HideContentButton({ hidden, onToggle }: HideContentButtonProps) {
   const label = hidden ? 'Show content' : 'Hide content'
+  // Esc dismisses the tooltip (WCAG 1.4.13) until the pointer or focus leaves.
+  const [tipDismissed, setTipDismissed] = useState(false)
 
   return (
     <button
@@ -29,12 +34,19 @@ export default function HideContentButton({ hidden, onToggle }: HideContentButto
       aria-pressed={hidden}
       aria-label={label}
       onClick={onToggle}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setTipDismissed(true)
+      }}
+      onBlur={() => setTipDismissed(false)}
+      onPointerLeave={() => setTipDismissed(false)}
       className="group relative z-50 inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors duration-200 hover:text-accent focus-visible:shadow-glow-focus"
     >
       {hidden ? <EyeOffIcon /> : <EyeIcon />}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-md border border-border bg-bg-glass px-2 py-1 text-xs whitespace-nowrap text-fg opacity-0 motion-safe:transition-opacity motion-safe:duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        className={`pointer-events-none absolute top-1/2 left-full ml-2 -translate-y-1/2 rounded-md border border-border bg-bg-glass px-2 py-1 text-xs whitespace-nowrap text-fg opacity-0 motion-safe:transition-opacity motion-safe:duration-150 sm:top-auto sm:bottom-full sm:left-1/2 sm:mb-2 sm:ml-0 sm:-translate-x-1/2 sm:translate-y-0 ${
+          tipDismissed ? '' : 'group-hover:opacity-100 group-focus-visible:opacity-100'
+        }`}
       >
         {label}
       </span>

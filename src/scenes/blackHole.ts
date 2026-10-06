@@ -311,8 +311,9 @@ class OuterDisk {
 }
 
 /**
- * Most memory the inner band's frame cache may use, in bytes. Up to about
- * 1600px-wide viewports it fits (1280x800: ~7 MB); on larger screens the band
+ * Most memory the inner band's frame cache may use, in bytes. It fits while
+ * the hole's visible area is under about 1000px on its shorter side (375x812:
+ * ~1.8 MB, 1280x800: ~7.8 MB, 1440x900: ~10 MB). On larger screens the band
  * is rendered live instead, one small rotated draw per frame.
  */
 const INNER_CACHE_BYTES = 12e6

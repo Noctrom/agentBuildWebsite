@@ -27,9 +27,9 @@ import { makeCanvas, type Rgb } from './canvas'
  * browser never has to rasterize into it on the main thread.
  *
  * Twinkle (V0.40): some stars get a slow brightness wave with their own
- * period and phase (`StarSeed.twinkle`). It only ever dims a star (the
- * factor runs between 1 - depth and 1), so no frame is brighter than the
- * V0.39 galaxy, and the random phases keep the stars out of step.
+ * period and phase (`StarSeed.twinkle`). The factor swings between
+ * 1 - depth and 1 + depth around 1, so on average the galaxy is exactly as
+ * bright as in V0.39, and the random phases keep the stars out of step.
  */
 
 /** Star colors, indexed by `StarSeed.color`. */
@@ -64,11 +64,11 @@ export interface StarSeed {
 }
 
 /**
- * A slow brightness wave: the light is scaled by
- * 1 - depth * (0.5 + 0.5 * sin(phase + time * 2 pi / period)).
+ * A slow brightness wave around the steady light: the light is scaled by
+ * 1 + depth * sin(phase + time * 2 pi / period), which averages to 1.
  */
 export interface Twinkle {
-  /** 0..1: how far the star dims at the bottom of the wave. */
+  /** 0..1: how far the light swings up and down. */
   depth: number
   /** Seconds per wave. */
   period: number
@@ -254,7 +254,7 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
       let angle: number
       let a = light[i]
       const depth = twDepth[i]
-      if (depth > 0) a *= 1 - depth * (0.5 + 0.5 * tableSin(twPhase[i] + twRate[i] * time))
+      if (depth > 0) a *= 1 + depth * tableSin(twPhase[i] + twRate[i] * time)
       const w = width[i]
       if (w > 0) {
         // Offset from the arm, wrapped into [-w, w).

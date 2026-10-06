@@ -16,20 +16,22 @@ import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
  * faster toward the core. The arms are a density wave that the stars stream
  * through, so they never wind up; see `galaxyStars.ts`.
  *
- * Shimmer (V0.40): the warm core breathes, a soft core sprite on top of the
- * baked core that brightens and fades back over `CORE_PERIOD` seconds (at
- * its faintest the core is exactly the baked one, so it never disappears).
- * Some arm stars and some pink knots twinkle, each on its own slow wave with
- * a random phase, so they never pulse together. Twinkles only dim, never
- * brighten past the V0.39 galaxy. With reduced motion the engine draws time
- * 0: the core at its baseline and the stars fixed.
+ * Shimmer (V0.40): the warm core breathes: a soft warm halo around the
+ * baked core brightens and fades back over `CORE_PERIOD` seconds (at its
+ * faintest the core is exactly the baked one, so it never disappears). The
+ * halo is wider than the white centre, which is already at full brightness
+ * and would hide the breath. Some arm stars and some pink knots twinkle,
+ * each on its own slow wave around its V0.39 brightness with a random
+ * phase, so they never pulse together and the galaxy is as bright on
+ * average as before. With reduced motion the engine draws time 0 only, so
+ * nothing changes.
  *
  * Layers, back to front: starfield, smudges, the baked glow texture
  * (`makeGlow`, drawn in `drawGlow`) with the breathing core and the live
  * knots on top, then the live stars (`createDiskStars`).
  *
  * Cost per frame: the starfield, three tiny sprites, one transformed draw of
- * the glow texture (as in S27), the core sprite and `ARMS * LIVE_KNOTS`
+ * the glow texture (as in S27), the core halo sprite and 16 live
  * small knot sprites, a third of the ~4 600 stars splatted into a
  * pixel buffer and one draw of that buffer.
  */
@@ -63,10 +65,10 @@ const KNOTS = 22
 const LIVE_KNOT_EVERY = 3
 /** Seconds per core breath (the story asks for 4-8). */
 const CORE_PERIOD = 6
-/** Peak opacity of the breathing core sprite, added on top of the baked core. */
-const CORE_PEAK = 0.3
-/** Radius of the core sprite, in galaxy radii. */
-const CORE_SIZE = 0.16
+/** Peak opacity of the breathing halo, added on top of the baked core. */
+const CORE_PEAK = 0.35
+/** Radius of the breathing halo, in galaxy radii. */
+const CORE_SIZE = 0.32
 /** Share of arm and inter-arm disk stars that twinkle. */
 const ARM_TWINKLE_SHARE = 0.35
 const DISK_TWINKLE_SHARE = 0.2
@@ -218,13 +220,13 @@ function edgeFade(radius: number) {
  */
 function knotTwinkle(index: number): Twinkle {
   const random = createRandom(27330 + index)
-  return { depth: between(random, 0.45, 0.7), period: between(random, 3, 6), phase: random() * Math.PI * 2 }
+  return { depth: between(random, 0.4, 0.6), period: between(random, 3, 6), phase: random() * Math.PI * 2 }
 }
 
 /** A star twinkle from `random`, or none (steady) for 1 - `share` of the stars. */
 function starTwinkle(random: () => number, share: number): Twinkle | undefined {
   if (random() >= share) return undefined
-  return { depth: between(random, 0.5, 0.85), period: between(random, 1.6, 4), phase: random() * Math.PI * 2 }
+  return { depth: between(random, 0.4, 0.7), period: between(random, 1.6, 4), phase: random() * Math.PI * 2 }
 }
 
 /**
@@ -314,7 +316,7 @@ function createGalaxy(setup: SceneSetup) {
   let texture: HTMLCanvasElement | null = null
   let smudges: Smudge[] = []
   let liveKnots: LiveKnot[] = []
-  const coreSprite = makeSoftDot([255, 228, 190], 64)
+  const coreSprite = makeSoftDot([255, 214, 165], 64)
   const knotSprite = makeSoftDot([255, 120, 175], 32, 0.15)
   // Seeds are in galaxy units (radius 0..1), so a resize doesn't rebuild them.
   const diskStars: DiskStars = createDiskStars(starSeeds(createRandom(2731)), {
@@ -365,8 +367,14 @@ function createGalaxy(setup: SceneSetup) {
     }
     for (const k of liveKnots) {
       const { depth, period, phase } = k.twinkle
-      ctx.globalAlpha = k.alpha * (1 - depth * (0.5 + 0.5 * Math.sin(phase + (time * Math.PI * 2) / period)))
-      ctx.drawImage(knotSprite, k.x - k.s, k.y - k.s, k.s * 2, k.s * 2)
+      // Around the baked brightness; above 1 the rest goes in a second
+      // additive draw (globalAlpha can't exceed 1).
+      let light = k.alpha * (1 + depth * Math.sin(phase + (time * Math.PI * 2) / period))
+      while (light > 0.004) {
+        ctx.globalAlpha = Math.min(1, light)
+        ctx.drawImage(knotSprite, k.x - k.s, k.y - k.s, k.s * 2, k.s * 2)
+        light -= 1
+      }
     }
     ctx.restore()
   }

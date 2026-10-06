@@ -24,7 +24,7 @@ export interface Profile {
   contactCta: string
   location: string
   links: ProfileLinks
-  /** Path to the photo under public/, e.g. "/photo-placeholder.svg". */
+  /** Path to the photo under public/, e.g. "/christopher-waldriff.jpg". */
   photo: string
   /** Alt text for the photo. */
   photoAlt: string

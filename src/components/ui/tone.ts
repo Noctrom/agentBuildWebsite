@@ -42,6 +42,14 @@ export const glassClass: Record<SurfaceTone, string> = {
 }
 
 /**
+ * The full-width frosted band (V0.55): glass fill plus blur, a 1px border top
+ * and bottom, and the `glass-edge` highlight. The one recipe shared by
+ * `Section tone="surface"` (a band around one section) and `SectionBand` (a
+ * band around several), so the two always look the same.
+ */
+export const bandClass = `glass-edge border-y border-border ${glassClass.surface}`
+
+/**
  * Hover/focus glow for interactive elements: a soft accent halo on hover and a
  * stronger one on keyboard focus (on top of the global focus outline).
  * Transitions snap when motion is reduced: the Animation switch, else the OS

@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import Container from './Container'
-import { glassClass } from './tone'
+import { bandClass } from './tone'
 
 export type HeadingLevel = 1 | 2 | 3 | 4
 
@@ -51,7 +51,7 @@ export default function Section({
       id={id}
       aria-labelledby={headingId}
       className={`scroll-mt-4 py-section ${
-        tone === 'surface' ? `glass-edge border-y border-border ${glassClass.surface}` : ''
+        tone === 'surface' ? bandClass : ''
       } ${className}`.trim()}
     >
       <Container>

@@ -60,7 +60,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.50](docs/backlog/v0/v0.50-v0.74.md#v050--see-through-footer-with-the-animation-switch-on-the-right) | See-through footer with the Animation switch on the right | dev-1 | — | done |
 | [V0.51](docs/backlog/v0/v0.50-v0.74.md#v051--real-profile-name-title-links-bio) | Real profile: name, title, links, bio | dev-2 | — | in progress |
 | [V0.52](docs/backlog/v0/v0.50-v0.74.md#v052--real-education-and-work-history) | Real education and work history | dev-2 | — | done |
-| [V0.53](docs/backlog/v0/v0.50-v0.74.md#v053--real-projects-and-skills) | Real projects and skills | dev-2 | — | in progress |
+| [V0.53](docs/backlog/v0/v0.50-v0.74.md#v053--real-projects-and-skills) | Real projects and skills | dev-2 | — | done |
 | [V0.54](docs/backlog/v0/v0.50-v0.74.md#v054--real-photo-and-resume-pdf) | Real photo and resume PDF | dev-2 | V0.51 | todo |
 
 ## Old ids

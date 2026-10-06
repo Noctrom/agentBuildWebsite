@@ -62,7 +62,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.52](docs/backlog/v0/v0.50-v0.74.md#v052--real-education-and-work-history) | Real education and work history | dev-2 | — | done |
 | [V0.53](docs/backlog/v0/v0.50-v0.74.md#v053--real-projects-and-skills) | Real projects and skills | dev-2 | — | done |
 | [V0.54](docs/backlog/v0/v0.50-v0.74.md#v054--real-photo-and-resume-pdf) | Real photo and resume PDF | dev-2 | V0.51 | done |
-| [V0.55](docs/backlog/v0/v0.50-v0.74.md#v055--shared-band-component-for-grouped-sections) | Shared band component for grouped sections | dev-1 | V0.46 | in progress |
+| [V0.55](docs/backlog/v0/v0.50-v0.74.md#v055--shared-band-component-for-grouped-sections) | Shared band component for grouped sections | dev-1 | V0.46 | done |
 
 ## Old ids
 

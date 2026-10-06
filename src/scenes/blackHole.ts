@@ -41,10 +41,27 @@ const DISK_FPS = 12
 const PARALLAX = 0.03
 
 /**
- * Height of the (sticky) site header: the shadow and photon ring stay below
- * it, also after the parallax lift.
+ * The page's visible area (V0.43). Below lg the sticky top bar (V0.35/V0.48)
+ * covers the top 64px; from lg there is no top bar, and the nav rail (V0.47)
+ * covers the left `--rail-width` px instead.
  */
-const HEADER_BAND = 65
+const HEADER_BAND = 64
+const LG = 1024
+/** Shadow radius as a share of the visible area's shorter side. */
+const SIZE = 0.08
+const MIN_R = 24
+
+/**
+ * The rail's width as published by the Header on <html> (V0.47). It is an
+ * inline style, so reading it never forces a style or layout pass. It differs
+ * per page (187px when Behind the Scenes is current, 98px on Home) and is 0
+ * below lg.
+ */
+function readRailWidth(): number {
+  if (typeof document === 'undefined') return 0
+  const value = parseFloat(document.documentElement.style.getPropertyValue('--rail-width'))
+  return Number.isFinite(value) && value > 0 ? value : 0
+}
 
 interface Layout {
   cx: number
@@ -55,23 +72,28 @@ interface Layout {
   lift: number
 }
 
-function layoutFor({ width, height }: SceneSize): Layout {
-  if (width < 768) {
-    // Phones: top right above the centered column. The lift is small so the
-    // shadow never slides under the sticky header.
-    const r = Math.max(24, width * 0.08)
-    const lift = 8
-    return { cx: width * 0.78, cy: Math.max(height * 0.13, HEADER_BAND + lift + r * 1.1), r, lift }
+/**
+ * V0.43: the hole sits in the middle of the visible area at every width,
+ * behind the text (Chris's choice; it replaces V0.36's corner spots).
+ * Readability comes from the engine's brightness budget, not from position.
+ */
+function layoutFor({ width, height }: SceneSize, railWidth: number): Layout {
+  const rail = width >= LG ? Math.min(railWidth, width / 2) : 0
+  const top = width >= LG ? 0 : HEADER_BAND
+  const areaWidth = width - rail
+  const areaHeight = Math.max(1, height - top)
+  // The disk (DISK_OUTER r each side) always fits inside the area's width.
+  const r = Math.min(
+    Math.max(MIN_R, Math.min(areaWidth, areaHeight) * SIZE),
+    (areaWidth * 0.48) / DISK_OUTER,
+  )
+  return {
+    cx: rail + areaWidth / 2,
+    cy: top + areaHeight / 2,
+    r,
+    // Gentle scroll parallax; from the middle it never reaches the top bar.
+    lift: width >= LG ? 40 : 16,
   }
-  if (width < 1024) {
-    // Tablets (V0.36): the prose and diagrams span almost the full width, so
-    // the hole sits high in the top-right corner, beside the page title and
-    // above the end of the intro, instead of behind the text.
-    const r = Math.max(36, Math.min(width, height) * 0.06)
-    const lift = 16
-    return { cx: width - r * 1.75, cy: HEADER_BAND + lift + r * 1.5, r, lift }
-  }
-  return { cx: width * 0.8, cy: height * 0.3, r: Math.max(40, Math.min(width, height) * 0.075), lift: 40 }
 }
 
 function makeCanvas(width: number, height: number): HTMLCanvasElement {
@@ -270,7 +292,8 @@ function createBlackHole(setup: SceneSetup) {
   })
 
   let size: SceneSize = setup
-  let layout = layoutFor(size)
+  let railWidth = readRailWidth()
+  let layout = layoutFor(size, railWidth)
   let texture: HTMLCanvasElement | null = null
   let backdrop: HTMLCanvasElement | null = null
   let lensedDisk: HTMLCanvasElement | null = null
@@ -282,7 +305,7 @@ function createBlackHole(setup: SceneSetup) {
   let diskStep = -1
 
   function build() {
-    layout = layoutFor(size)
+    layout = layoutFor(size, railWidth)
     const { r } = layout
     texture = makeDiskTexture(r)
     backdrop = makeBackdrop(r)
@@ -335,7 +358,22 @@ function createBlackHole(setup: SceneSetup) {
     if (sprite) ctx.drawImage(sprite, x - sprite.width / 2, y - sprite.height / 2)
   }
 
+  /**
+   * The rail can change width after the scene is created (the Header measures
+   * it just after a route change), so follow it. The sprites are only rebuilt
+   * when the hole's size changes.
+   */
+  function followRail() {
+    const next = readRailWidth()
+    if (next === railWidth) return
+    railWidth = next
+    const nextLayout = layoutFor(size, railWidth)
+    if (nextLayout.r === layout.r) layout = nextLayout
+    else build()
+  }
+
   function draw(frame: SceneFrame) {
+    followRail()
     stars.draw(frame)
     const { ctx, time, scrollY } = frame
     const { cx, r } = layout
@@ -365,6 +403,7 @@ function createBlackHole(setup: SceneSetup) {
     draw,
     resize(next: SceneSize) {
       size = next
+      railWidth = readRailWidth()
       stars.resize?.(next)
       build()
     },

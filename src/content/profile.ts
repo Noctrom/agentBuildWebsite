@@ -1,7 +1,6 @@
 import type { Profile } from './types'
 
 // Real profile, wording approved by Chris (V0.51).
-// PLACEHOLDER: the photo below is still the placeholder until V0.54.
 export const profile: Profile = {
   name: 'Christopher Waldriff',
   title: 'Computer Science Student at University of Minnesota Duluth',
@@ -20,7 +19,7 @@ export const profile: Profile = {
     github: 'https://github.com/Noctrom',
     linkedin: 'https://www.linkedin.com/in/christopher-waldriff-401b20400/',
   },
-  photo: '/photo-placeholder.svg',
-  photoAlt: 'Placeholder portrait',
+  photo: '/christopher-waldriff.jpg',
+  photoAlt: 'Portrait of Christopher Waldriff',
   resumeUrl: '/resume.pdf',
 }

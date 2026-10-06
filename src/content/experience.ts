@@ -1,39 +1,34 @@
 import type { Experience } from './types'
 
-// PLACEHOLDER: replace with real work history, most recent first.
+// Work history, most recent first. Wording approved by Chris (V0.52).
 export const experience: Experience[] = [
   {
-    id: 'jane-doe-corp',
-    role: 'Senior Placeholder Engineer',
-    company: 'Jane Doe Corp',
-    location: 'Remote',
-    start: '2023-03',
+    id: 'four-seasons-renovators',
+    role: 'Lead Construction Laborer',
+    company: 'Four Seasons Renovators',
+    location: 'Duluth, MN',
+    start: '2024-05',
     end: null,
     summary:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Led placeholder initiatives across the placeholder platform.',
+      'Lead a renovation crew, from planning with homeowners to finishing projects on schedule.',
     highlights: [
-      'Lorem ipsum dolor sit amet, placeholder achievement one.',
-      'Consectetur adipiscing elit, placeholder achievement two.',
+      'Lead a team to complete projects on time.',
+      'Manage projects and team collaboration.',
+      'Make sure the crew has the tools, supplies and equipment it needs.',
+      'Work with homeowners to take inventory and plan construction.',
     ],
   },
   {
-    id: 'acme-widgets',
-    role: 'Placeholder Developer',
-    company: 'Acme Widgets Inc.',
-    location: 'Placeholder City',
-    start: '2020-06',
-    end: '2023-02',
-    summary:
-      'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Built placeholder features for placeholder customers.',
-    highlights: ['Ut enim ad minim veniam, placeholder achievement.'],
-  },
-  {
-    id: 'example-startup',
-    role: 'Junior Placeholder Intern',
-    company: 'Example Startup LLC',
-    start: '2019-05',
-    end: '2020-05',
-    summary:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore. Learned placeholder skills.',
+    id: 'grandmas-restaurant',
+    role: 'Line Cook',
+    company: "Grandma's Restaurant",
+    location: 'Duluth, MN',
+    start: '2023-07',
+    end: '2024-05',
+    summary: "Worked the line at one of Duluth's busiest restaurants.",
+    highlights: [
+      'Managed multiple orders during peak hours.',
+      'Adapted quickly to new recipes and techniques.',
+    ],
   },
 ]

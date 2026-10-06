@@ -626,8 +626,12 @@ const PLANET_SIZE = 0.25
 const PLANET_PERIOD = 30
 const PLANET_SPIN = (Math.PI * 2) / PLANET_PERIOD
 const PLANET_START = 2.3
-/** Lighting steps per orbit (one sprite each, baked the first time it is shown). */
-const PLANET_PHASES = 72
+/**
+ * Lighting steps per orbit (10 degrees each). Each is a sprite baked the
+ * first time it is shown (see `Planet`), so a bake happens at most every
+ * 0.83 s during the first orbit and never after.
+ */
+const PLANET_PHASES = 36
 /** Band colours, darkest to palest (Neptune/Jupiter-like shades of blue). */
 const PLANET_COLORS: readonly Rgb[] = [
   [18, 38, 104],
@@ -650,86 +654,108 @@ function planetColor(t: number): Rgb {
 }
 
 /**
- * Bake the planet lit from the hole while at orbit angle `angle`, pixel by
- * pixel: a sphere whose axis is the disk's axis (so its bands lie parallel to
- * the disk and bow slightly, as we see it a little from above), banded in
- * blues by latitude with a slight wave, darker toward the limb, brighter on
- * the side facing the hole. It is small (about 16-40 px across), so it is
- * cheap to bake.
+ * The planet: a sphere whose axis is the disk's axis (so its bands lie
+ * parallel to the disk and bow slightly, as we see it a little from above),
+ * banded in blues by latitude with a slight wave, darker toward the limb and
+ * brighter on the side facing the hole.
+ *
+ * The bands and limb are worked out once per size (`base`, one pass with the
+ * trigonometry). A lighting step only multiplies them by the light, which is
+ * cheap; its sprite is made the first time it is shown.
  */
-function bakePlanet(radius: number, angle: number): HTMLCanvasElement {
-  const size = Math.ceil(radius * 2 + 2)
-  const canvas = makeCanvas(size, size)
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return canvas
-  const img = ctx.createImageData(size, size)
-  const data = img.data
-  const c = size / 2
-  const pc = Math.cos(PLANE_ANGLE)
-  const ps = Math.sin(PLANE_ANGLE)
-  // Disk plane frame: x right, y down, z toward the viewer. The disk is the
-  // plane spanned by (1, 0, 0) and (0, tilt, depth); its axis (0, -depth, tilt) points up.
-  const tilt = DISK_TILT
-  const depth = Math.sqrt(1 - tilt * tilt)
-  // Unit vector from the planet toward the hole.
-  const lx = -Math.cos(angle)
-  const ly = -Math.sin(angle) * tilt
-  const lz = -Math.sin(angle) * depth
-  for (let j = 0; j < size; j++) {
-    for (let i = 0; i < size; i++) {
-      const dx = i + 0.5 - c
-      const dy = j + 0.5 - c
-      const cover = Math.min(1, radius - Math.sqrt(dx * dx + dy * dy) + 0.5)
-      if (cover <= 0) continue
-      // Into the disk plane frame (undo the plane's tilt on screen).
-      let u = (dx * pc + dy * ps) / radius
-      let v = (-dx * ps + dy * pc) / radius
-      const q = u * u + v * v
-      if (q > 1) {
-        const k = 1 / Math.sqrt(q)
-        u *= k
-        v *= k
-      }
-      const w = Math.sqrt(Math.max(0, 1 - u * u - v * v))
-      // Latitude (its sine) against the disk axis, with a slight wave along the longitude.
-      const lat = -v * depth + w * tilt
-      const lon = Math.atan2(u, v * tilt + w * depth)
-      const l = lat + 0.03 * Math.sin(lon * 5 + lat * 9)
-      const band =
-        0.55 +
-        0.25 * Math.sin(l * 11 + 0.4) +
-        0.14 * Math.sin(l * 23 + 2.1) +
-        0.07 * Math.sin(l * 41 + 0.7) -
-        0.35 * l ** 4
-      const [cr, cg, cb] = planetColor(band)
-      const diffuse = Math.max(0, u * lx + v * ly + w * lz)
-      const shade = (PLANET_AMBIENT + PLANET_DIFFUSE * diffuse) * (0.6 + 0.4 * w)
-      const o = (j * size + i) * 4
-      data[o] = Math.min(255, cr * shade)
-      data[o + 1] = Math.min(255, cg * shade)
-      data[o + 2] = Math.min(255, cb * shade)
-      data[o + 3] = cover * 255
-    }
-  }
-  ctx.putImageData(img, 0, 0)
-  return canvas
-}
-
-/** The planet's sprites, one per lighting step, each baked the first time it is shown. */
 class Planet {
   /** Radius in CSS px. */
   readonly radius: number
+  private readonly size: number
+  /** Per pixel: band colour x limb darkening (RGB), coverage (0-255), and the surface normal. */
+  private readonly base: Float32Array
+  private readonly normals: Float32Array
   private readonly phases: (HTMLCanvasElement | null)[] = new Array(PLANET_PHASES).fill(null)
+  private image: ImageData | null = null
 
   constructor(r: number) {
-    this.radius = Math.max(4, r * PLANET_SIZE)
+    const radius = (this.radius = Math.max(4, r * PLANET_SIZE))
+    // Even, so the sprite's centre is on a pixel corner.
+    const size = (this.size = 2 * Math.ceil(radius + 1))
+    this.base = new Float32Array(size * size * 4)
+    this.normals = new Float32Array(size * size * 3)
+    const c = size / 2
+    const pc = Math.cos(PLANE_ANGLE)
+    const ps = Math.sin(PLANE_ANGLE)
+    // Disk plane frame: x right, y down, z toward the viewer. The disk is the
+    // plane spanned by (1, 0, 0) and (0, tilt, depth); its axis (0, -depth, tilt) points up.
+    const tilt = DISK_TILT
+    const depth = Math.sqrt(1 - tilt * tilt)
+    for (let j = 0; j < size; j++) {
+      for (let i = 0; i < size; i++) {
+        const dx = i + 0.5 - c
+        const dy = j + 0.5 - c
+        const cover = Math.min(1, radius - Math.sqrt(dx * dx + dy * dy) + 0.5)
+        if (cover <= 0) continue
+        // Into the disk plane frame (undo the plane's tilt on screen).
+        let u = (dx * pc + dy * ps) / radius
+        let v = (-dx * ps + dy * pc) / radius
+        const q = u * u + v * v
+        if (q > 1) {
+          const k = 1 / Math.sqrt(q)
+          u *= k
+          v *= k
+        }
+        const w = Math.sqrt(Math.max(0, 1 - u * u - v * v))
+        // Latitude (its sine) against the disk axis, with a slight wave along the longitude.
+        const lat = -v * depth + w * tilt
+        const lon = Math.atan2(u, v * tilt + w * depth)
+        const l = lat + 0.03 * Math.sin(lon * 5 + lat * 9)
+        const band =
+          0.55 +
+          0.25 * Math.sin(l * 11 + 0.4) +
+          0.14 * Math.sin(l * 23 + 2.1) +
+          0.07 * Math.sin(l * 41 + 0.7) -
+          0.35 * l ** 4
+        const [cr, cg, cb] = planetColor(band)
+        const limb = 0.6 + 0.4 * w
+        const p = j * size + i
+        this.base[p * 4] = cr * limb
+        this.base[p * 4 + 1] = cg * limb
+        this.base[p * 4 + 2] = cb * limb
+        this.base[p * 4 + 3] = cover * 255
+        this.normals[p * 3] = u
+        this.normals[p * 3 + 1] = v
+        this.normals[p * 3 + 2] = w
+      }
+    }
   }
 
   /** The sprite lit for orbit angle `angle`. */
-  at(angle: number): HTMLCanvasElement {
+  at(angle: number): HTMLCanvasElement | null {
     const step = Math.round((angle / (Math.PI * 2)) * PLANET_PHASES)
     const k = ((step % PLANET_PHASES) + PLANET_PHASES) % PLANET_PHASES
-    return (this.phases[k] ??= bakePlanet(this.radius, (k / PLANET_PHASES) * Math.PI * 2))
+    return (this.phases[k] ??= this.bake((k / PLANET_PHASES) * Math.PI * 2))
+  }
+
+  /** Light the planet from the hole while it is at orbit angle `angle`. */
+  private bake(angle: number): HTMLCanvasElement | null {
+    const { size, base, normals } = this
+    const canvas = makeCanvas(size, size)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    const image = (this.image ??= ctx.createImageData(size, size))
+    const data = image.data
+    // Unit vector from the planet toward the hole, in the disk plane frame.
+    const depth = Math.sqrt(1 - DISK_TILT * DISK_TILT)
+    const lx = -Math.cos(angle)
+    const ly = -Math.sin(angle) * DISK_TILT
+    const lz = -Math.sin(angle) * depth
+    for (let p = 0; p < size * size; p++) {
+      const facing = normals[p * 3] * lx + normals[p * 3 + 1] * ly + normals[p * 3 + 2] * lz
+      const shade = PLANET_AMBIENT + PLANET_DIFFUSE * Math.max(0, facing)
+      data[p * 4] = base[p * 4] * shade
+      data[p * 4 + 1] = base[p * 4 + 1] * shade
+      data[p * 4 + 2] = base[p * 4 + 2] * shade
+      data[p * 4 + 3] = base[p * 4 + 3]
+    }
+    ctx.putImageData(image, 0, 0)
+    return canvas
   }
 }
 
@@ -746,30 +772,35 @@ const STREAM_END = 2.0
 const STREAM_SWEEP = 1.4
 const STREAM_POINTS = 16
 /**
- * The stream is a ribbon that tapers from STREAM_WIDTH x the planet's radius
- * (half-width) where it leaves the planet to nothing where it joins the disk,
- * filled twice: a faint wide sheath and a narrower, brighter core.
+ * The stream is a ribbon filled twice with flat colour (a gradient fill cost
+ * about 0.1 ms a frame at 375px on a slow phone):
+ * - a faint sheath, its half-width tapering from STREAM_WIDTH x the planet's
+ *   radius at the planet to nothing where it joins the disk;
+ * - a brighter core, STREAM_CORE as wide, over the first STREAM_CORE_LENGTH
+ *   of the stream only, tapering to nothing there.
+ * Together they fade the stream out as it nears the disk.
  */
 const STREAM_WIDTH = 0.55
+const STREAM_SHEATH = 'rgb(120 175 255)'
 const STREAM_SHEATH_ALPHA = 0.3
 const STREAM_CORE = 0.4
+const STREAM_CORE_LENGTH = 0.6
+const STREAM_CORE_COLOR = 'rgb(160 205 255)'
 const STREAM_CORE_ALPHA = 0.45
-/** The stream's two fills: width scale and opacity. */
-const STREAM_LAYERS: readonly (readonly [number, number])[] = [
-  [1, STREAM_SHEATH_ALPHA],
-  [STREAM_CORE, STREAM_CORE_ALPHA],
-]
+/** Last point of the core. */
+const STREAM_CORE_END = Math.round(STREAM_CORE_LENGTH * (STREAM_POINTS - 1))
 
 class PlanetStream {
-  /** Centre line, and the ribbon's left and right edges, in screen px. */
+  /** Centre line and its unit normals, in screen px. */
   private readonly xs = new Float64Array(STREAM_POINTS)
   private readonly ys = new Float64Array(STREAM_POINTS)
   private readonly nx = new Float64Array(STREAM_POINTS)
   private readonly ny = new Float64Array(STREAM_POINTS)
-  private readonly half = new Float64Array(STREAM_POINTS)
-  /** Whether each segment (point i to i + 1) is drawn with the far side. */
+  /** Half-widths of the sheath and the core at each point. */
+  private readonly sheath = new Float64Array(STREAM_POINTS)
+  private readonly core = new Float64Array(STREAM_POINTS)
+  /** Whether each segment (point i to i + 1) is drawn with the far side (1) or the near side (0). */
   private readonly far = new Uint8Array(STREAM_POINTS)
-  private fade: CanvasGradient | null = null
 
   /**
    * Place the stream for a planet at orbit angle `angle`, centred at (px, py)
@@ -777,16 +808,7 @@ class PlanetStream {
    * planet's disk on screen are drawn in the planet's own pass, before it, so
    * the planet always covers them: the stream never covers the planet.
    */
-  update(
-    ctx: CanvasRenderingContext2D,
-    cx: number,
-    cy: number,
-    r: number,
-    angle: number,
-    px: number,
-    py: number,
-    planetRadius: number,
-  ) {
+  update(cx: number, cy: number, r: number, angle: number, px: number, py: number, planetRadius: number) {
     const cos = Math.cos(PLANE_ANGLE)
     const sin = Math.sin(PLANE_ANGLE)
     const planetFar = Math.sin(angle) < 0
@@ -804,12 +826,13 @@ class PlanetStream {
       const inside = Math.hypot(sx - px, sy - py) < planetRadius
       this.xs[i] = sx
       this.ys[i] = sy
-      this.half[i] = planetRadius * STREAM_WIDTH * (1 - s) ** 0.8
+      const half = planetRadius * STREAM_WIDTH
+      this.sheath[i] = half * (1 - s) ** 0.8
+      this.core[i] = half * STREAM_CORE * Math.max(0, 1 - s / STREAM_CORE_LENGTH) ** 0.8
       if (i > 0) this.far[i - 1] = Number(inside || prevInside ? planetFar : sa + prevSin < 0)
       prevSin = sa
       prevInside = inside
     }
-    // Unit normals of the centre line, for the ribbon's edges.
     for (let i = 0; i < STREAM_POINTS; i++) {
       const a = Math.max(0, i - 1)
       const b = Math.min(STREAM_POINTS - 1, i + 1)
@@ -819,48 +842,48 @@ class PlanetStream {
       this.nx[i] = -ty / len
       this.ny[i] = tx / len
     }
-    // One small gradient a frame: bright where it leaves the planet, gone where it joins the disk.
-    const last = STREAM_POINTS - 1
-    const fade = ctx.createLinearGradient(px, py, this.xs[last], this.ys[last])
-    fade.addColorStop(0, 'rgb(150 200 255 / 1)')
-    fade.addColorStop(0.4, 'rgb(120 175 255 / 0.55)')
-    fade.addColorStop(1, 'rgb(100 150 255 / 0)')
-    this.fade = fade
   }
 
-  /** Add the ribbon for points i0..i1, `scale` x its full width, to the current path. */
-  private ribbon(ctx: CanvasRenderingContext2D, i0: number, i1: number, scale: number) {
-    ctx.moveTo(this.xs[i0] + this.nx[i0] * this.half[i0] * scale, this.ys[i0] + this.ny[i0] * this.half[i0] * scale)
-    for (let i = i0 + 1; i <= i1; i++) {
-      ctx.lineTo(this.xs[i] + this.nx[i] * this.half[i] * scale, this.ys[i] + this.ny[i] * this.half[i] * scale)
-    }
-    for (let i = i1; i >= i0; i--) {
-      ctx.lineTo(this.xs[i] - this.nx[i] * this.half[i] * scale, this.ys[i] - this.ny[i] * this.half[i] * scale)
-    }
+  /** Add the ribbon for points i0..i1 with half-widths `half` to the current path. */
+  private ribbon(ctx: CanvasRenderingContext2D, i0: number, i1: number, half: Float64Array) {
+    const { xs, ys, nx, ny } = this
+    ctx.moveTo(xs[i0] + nx[i0] * half[i0], ys[i0] + ny[i0] * half[i0])
+    for (let i = i0 + 1; i <= i1; i++) ctx.lineTo(xs[i] + nx[i] * half[i], ys[i] + ny[i] * half[i])
+    for (let i = i1; i >= i0; i--) ctx.lineTo(xs[i] - nx[i] * half[i], ys[i] - ny[i] * half[i])
     ctx.closePath()
   }
 
-  /** Fill the stream's segments that belong to the far (behind the hole) or near pass. */
-  draw(ctx: CanvasRenderingContext2D, far: boolean) {
-    if (!this.fade) return
-    const side = Number(far)
-    for (const [scale, alpha] of STREAM_LAYERS) {
-      ctx.beginPath()
-      let runs = 0
-      for (let i = 0; i < STREAM_POINTS - 1; i++) {
-        if (this.far[i] !== side) continue
-        let j = i
-        while (j + 1 < STREAM_POINTS - 1 && this.far[j + 1] === side) j++
-        this.ribbon(ctx, i, j + 1, scale)
-        runs++
-        i = j
-      }
-      if (!runs) return
-      ctx.globalAlpha = alpha
-      ctx.fillStyle = this.fade
-      ctx.fill()
+  /** Fill the part of one layer (up to point `end`) that belongs to this pass. */
+  private fillLayer(
+    ctx: CanvasRenderingContext2D,
+    side: number,
+    end: number,
+    half: Float64Array,
+    color: string,
+    alpha: number,
+  ) {
+    ctx.beginPath()
+    let runs = 0
+    for (let i = 0; i < end; i++) {
+      if (this.far[i] !== side) continue
+      let j = i
+      while (j + 1 < end && this.far[j + 1] === side) j++
+      this.ribbon(ctx, i, j + 1, half)
+      runs++
+      i = j
     }
+    if (!runs) return
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = color
+    ctx.fill()
     ctx.globalAlpha = 1
+  }
+
+  /** Fill the stream's parts on the far (behind the hole) or near side. */
+  draw(ctx: CanvasRenderingContext2D, far: boolean) {
+    const side = Number(far)
+    this.fillLayer(ctx, side, STREAM_POINTS - 1, this.sheath, STREAM_SHEATH, STREAM_SHEATH_ALPHA)
+    this.fillLayer(ctx, side, STREAM_CORE_END, this.core, STREAM_CORE_COLOR, STREAM_CORE_ALPHA)
   }
 }
 
@@ -1031,9 +1054,11 @@ function createBlackHole(setup: SceneSetup) {
     const py = PLANET_ORBIT * r * Math.sin(planetAngle) * DISK_TILT
     const planetX = cx + px * planeCos - py * planeSin
     const planetY = cy + px * planeSin + py * planeCos
-    if (planet) stream.update(ctx, cx, cy, r, planetAngle, planetX, planetY, planet.radius)
-    stream.draw(ctx, true)
-    if (planetFar) drawCentered(ctx, planet?.at(planetAngle) ?? null, planetX, planetY)
+    if (planet) {
+      stream.update(cx, cy, r, planetAngle, planetX, planetY, planet.radius)
+      stream.draw(ctx, true)
+      if (planetFar) drawCentered(ctx, planet.at(planetAngle), planetX, planetY)
+    }
 
     // Lensed far side (shimmering, with the hot spots' glints running over it).
     ctx.globalAlpha = lensShimmer(time)
@@ -1058,8 +1083,10 @@ function createBlackHole(setup: SceneSetup) {
 
     drawDiskHalf(ctx, cx, cy, 'near', time)
     drawSpots(ctx, cx, cy, r, time, false)
-    stream.draw(ctx, false)
-    if (!planetFar) drawCentered(ctx, planet?.at(planetAngle) ?? null, planetX, planetY)
+    if (planet) {
+      stream.draw(ctx, false)
+      if (!planetFar) drawCentered(ctx, planet.at(planetAngle), planetX, planetY)
+    }
   }
 
   return {

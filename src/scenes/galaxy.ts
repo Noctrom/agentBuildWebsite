@@ -81,12 +81,20 @@ interface Layout {
 
 /**
  * Phones: the free band between the contact panel's text and the footer
- * text, measured on /contact (V0.39, with the V0.41 footer). The panel's
- * buttons end ~495 px from the top of the page; the footer text starts
- * ~130 px above the bottom of a short page. Each keeps an ~8 px gap.
+ * text, measured on /contact at 375x812 (V0.58). The galaxy is fixed to the
+ * viewport, so each edge is taken at the scroll position where that text is
+ * closest to it:
+ * - top: the panel's last button row ends 549 px from the top of the page
+ *   (scroll 0). Since V0.51 the real email wraps and the buttons take two
+ *   rows; it was ~495 in V0.39.
+ * - bottom: the stacked footer's text (the copyright line) starts 178 px
+ *   above the bottom of the page (V0.57 added the eye button row; it was
+ *   130). Phone pages are at least as tall as the viewport, so scrolled to
+ *   the end that is 178 px above the bottom of the viewport.
+ * Each keeps an 8 px gap.
  */
-const PHONE_BAND_TOP = 503
-const PHONE_BAND_BOTTOM = 138
+const PHONE_BAND_TOP = 557
+const PHONE_BAND_BOTTOM = 186
 /** Half the height the turning disk sweeps on screen, in galaxy radii (measured). */
 const SWEEP_HALF_HEIGHT = 0.64
 
@@ -95,8 +103,9 @@ const SWEEP_HALF_HEIGHT = 0.64
  * orientation as it turns, so its outline, not just the time-0 frame, has to
  * stay clear of the text.
  * - Phones: centred in the band between the panel and the footer text, sized
- *   to fit it (at most S27's 0.44 * width). Very short phones (e.g. 375x667)
- *   have no room for it; the galaxy then overlaps the panel at 100 px radius.
+ *   to fit it (at most S27's 0.44 * width, at least 100 px). If even 100 px
+ *   doesn't fit (375x812 and shorter since V0.58), it sits on the band's
+ *   bottom edge, clear of the footer text, and overlaps the panel.
  * - Tablet and up: right of the panel. Since V0.38 the desktop nav is a left
  *   rail, which moves the content right but not as far as the galaxy.
  */
@@ -105,7 +114,10 @@ function layoutFor({ width, height }: SceneSize): Layout {
     const top = PHONE_BAND_TOP
     const bottom = height - PHONE_BAND_BOTTOM
     const r = Math.max(100, Math.min(width * 0.44, (bottom - top) / 2 / SWEEP_HALF_HEIGHT))
-    return { cx: width * 0.6, cy: (top + bottom) / 2, r }
+    // When the band is too short for the smallest galaxy, keep the footer
+    // gap and let it reach up behind the frosted panel instead.
+    const cy = Math.min((top + bottom) / 2, bottom - r * SWEEP_HALF_HEIGHT)
+    return { cx: width * 0.6, cy, r }
   }
   return { cx: width * 0.76, cy: height * 0.46, r: Math.max(150, Math.min(width * 0.2, height * 0.36)) }
 }

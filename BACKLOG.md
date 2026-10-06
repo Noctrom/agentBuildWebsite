@@ -50,8 +50,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.40](docs/backlog/v0/v0.25-v0.49.md#v040--contact-galaxy-core-breathes-and-stars-twinkle) | Contact galaxy core breathes and stars twinkle | dev-2 | V0.39 | done |
 | [V0.41](docs/backlog/v0/v0.25-v0.49.md#v041--animation-onoff-control-in-the-footer) | Animation on/off control in the footer | dev-1 | V0.38 | done |
 | [V0.42](docs/backlog/v0/v0.25-v0.49.md#v042--auto-pause-animation-on-low-powered-devices) | Auto-pause animation on low-powered devices | dev-1 | V0.41 | done |
-| [V0.43](docs/backlog/v0/v0.25-v0.49.md#v043--behind-the-scenes-black-hole-moves-to-the-center) | Behind the Scenes black hole moves to the center | dev-2 | V0.46, V0.47 | in progress |
-| [V0.44](docs/backlog/v0/v0.25-v0.49.md#v044--behind-the-scenes-black-hole-comes-alive) | Behind the Scenes black hole comes alive | dev-2 | V0.43 | todo |
+| [V0.43](docs/backlog/v0/v0.25-v0.49.md#v043--behind-the-scenes-black-hole-moves-to-the-center) | Behind the Scenes black hole moves to the center | dev-2 | V0.46, V0.47 | done |
+| [V0.44](docs/backlog/v0/v0.25-v0.49.md#v044--behind-the-scenes-black-hole-comes-alive) | Behind the Scenes black hole comes alive | dev-2 | V0.43 | in progress |
 | [V0.45](docs/backlog/v0/v0.25-v0.49.md#v045--blue-gas-giant-orbits-the-black-hole) | Blue gas giant orbits the black hole | dev-2 | V0.44 | todo |
 | [V0.46](docs/backlog/v0/v0.25-v0.49.md#v046--behind-the-scenes-one-band-tighter-even-spacing) | Behind the Scenes: one band, tighter even spacing | dev-2 | — | done |
 | [V0.47](docs/backlog/v0/v0.25-v0.49.md#v047--slim-see-through-nav-rail-with-short-labels) | Slim, see-through nav rail with short labels | dev-1 | V0.49 | done |
@@ -63,6 +63,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.53](docs/backlog/v0/v0.50-v0.74.md#v053--real-projects-and-skills) | Real projects and skills | dev-2 | — | done |
 | [V0.54](docs/backlog/v0/v0.50-v0.74.md#v054--real-photo-and-resume-pdf) | Real photo and resume PDF | dev-2 | V0.51 | done |
 | [V0.55](docs/backlog/v0/v0.50-v0.74.md#v055--shared-band-component-for-grouped-sections) | Shared band component for grouped sections | dev-1 | V0.46 | done |
+| [V0.56](docs/backlog/v0/v0.50-v0.74.md#v056--rail-width-ready-before-scenes-draw) | Rail width ready before scenes draw | dev-1 | V0.43 | in progress |
 
 ## Old ids
 

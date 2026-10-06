@@ -47,7 +47,7 @@ export type CardProps = {
 /**
  * Content card: optional image, title, description, tags and footer actions.
  * Rendered as an `<article>`. Each action's accessible name includes the card
- * title (e.g. "Code: Project Alpha"), so repeated labels stay unambiguous.
+ * title (e.g. "Code: This Website"), so repeated labels stay unambiguous.
  */
 export default function Card({
   title,

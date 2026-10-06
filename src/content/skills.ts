@@ -1,9 +1,8 @@
 import type { SkillGroup } from './types'
 
-// PLACEHOLDER: replace with real skills.
+// Chris's real skills (approved 2026-10-05, V0.53).
 export const skills: SkillGroup[] = [
-  { category: 'Languages', skills: ['TypeScript', 'Python', 'Go', 'SQL'] },
-  { category: 'Frontend', skills: ['React', 'Tailwind CSS', 'Vite'] },
-  { category: 'Backend', skills: ['Node.js', 'PostgreSQL', 'REST APIs'] },
-  { category: 'Tools', skills: ['Git', 'Docker', 'Lorem Ipsum CI'] },
+  { category: 'Languages', skills: ['Python', 'Java', 'SQL'] },
+  { category: 'Data & Vision', skills: ['MySQL', 'OpenCV'] },
+  { category: 'Tools', skills: ['Docker', 'Git', 'Linux'] },
 ]

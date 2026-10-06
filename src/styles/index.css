@@ -61,9 +61,26 @@
  *   bg-glass (bg at 80%, tone="bg" inside a surface band)
  *     fg 16.50 / 15.80, muted 8.96 / 8.58, accent 8.54 / 8.18,
  *     sun 11.92 / 11.41
- *   header (bg at 70%)
- *     fg 16.87 / 15.18, muted 9.15 / 8.24
- *     nav pill (surface on header): muted 7.98 / 7.18, accent 7.61 / 6.84
+ *   nav (no glass since V0.47 / V0.48). From lg the nav rail has no
+ *   fill: its labels sit straight on the canvas, so the bare column above
+ *   applies, and the "nav pill" is the button bubble (bg-surface). Page
+ *   content never scrolls under the rail, only the canvas; an expanded
+ *   hover/focus button may overlap the page edge, but always on its own
+ *   bubble. Measured scan (V0.47, all routes at 1024/1280, text hidden, one
+ *   bubble hovered, top / middle / bottom scroll, 3 frames): brightest pixel
+ *   in a label's text rows rgb(54 57 105): fg 9.01, muted 4.89, accent 4.66
+ *   (focus ring, needs 3:1). The bubble's glass-edge rim (1px, top border
+ *   row, never under glyphs) reaches rgb(112 110 164).
+ *   Below lg (V0.48) the sticky top bar and the open menu show a copy of
+ *   the background (an opaque canvas mirroring the scene canvas over the
+ *   solid bg, see layout/backgroundMirror.ts), so page content is never
+ *   under their text: only the canvas is, exactly as on the bare page, and
+ *   the bare column applies. Measured scan (V0.48, all routes at 375/768,
+ *   icon and label text hidden, top / middle / bottom scroll, 3 frames):
+ *   brightest pixel in the hamburger icon area rgb(55 51 49), fg 10.43;
+ *   in the menu labels rgb(55 55 63): fg 9.85, muted 5.34, accent 5.09.
+ *   (Before V0.48 the bar was bg at 80% plus blur, which page content
+ *   scrolled under; the --theme-bg-header token is gone with it.)
  * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.63; the
  * faint border keeps panels outlined.
  * Glow shadows are drawn outside elements, never under their text.
@@ -85,8 +102,6 @@
   --theme-ring: #a5a0ff; /* focus outline */
   /* S25 glass: deep tint for tone="bg" panels (translucent, see note above) */
   --theme-bg-glass: rgb(5 6 15 / 0.8);
-  /* S25 glass: header tint (bg at 70%) */
-  --theme-bg-header: rgb(5 6 15 / 0.7);
 }
 
 @theme inline {
@@ -104,7 +119,6 @@
   --color-border: var(--theme-border);
   --color-ring: var(--theme-ring);
   --color-bg-glass: var(--theme-bg-glass);
-  --color-bg-header: var(--theme-bg-header);
 }
 
 @theme {
@@ -139,7 +153,28 @@
 }
 
 @layer base {
+  /*
+   * Sticky header (V0.35): anchors, the skip link target and elements
+   * scrolled into view on focus stop below the header, not under it.
+   * --header-height is the top bar's measured height, set by Header.tsx;
+   * 4rem is its height under lg, used until the first measurement.
+   * From lg there is no top bar (V0.38: the nav is a left rail), so 0.
+   * --notice-height (V0.42) is the auto-pause toast's height while it is
+   * open, set by AutoPauseNotice.tsx, so focused elements stop above it.
+   */
+  /*
+   * --rail-width (V0.47) is the left nav rail's measured width from lg (0px
+   * below lg), set inline on <html> by Header.tsx before first paint and on
+   * every route change; Layout pads the page by it. 0px is only the value
+   * before that script runs.
+   */
   html {
+    --rail-width: 0px;
+    scroll-padding-top: var(--header-height, 4rem);
+    scroll-padding-bottom: var(--notice-height, 0px);
+    @variant lg {
+      scroll-padding-top: 0;
+    }
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
@@ -195,14 +230,57 @@
 }
 
 /*
- * Reduced motion (S25): hover/focus transitions snap instead of fading, and
- * any CSS animation finishes at once. The canvas background handles reduced
- * motion itself (still frame, see SpaceBackground).
+ * Reduced motion (S25; follows the Animation switch since V0.49): hover/focus
+ * transitions snap instead of fading, and any CSS animation finishes at once.
+ *
+ * The effective setting is the footer "Animation" switch (saved on / off /
+ * auto-paused, layout/motionPreference.ts), else the OS setting. It is
+ * mirrored to `data-motion="reduce" | "full"` on <html>: set before first
+ * paint by the inline script in index.html, then kept live by
+ * syncMotionAttribute() (switch, other tabs, OS change, auto-pause). This
+ * rule and the `motion-safe:` / `motion-reduce:` variants key on that
+ * attribute, so the visitor's choice overrides the OS both ways. Only if
+ * the attribute is missing (the inline script never ran) do they fall back
+ * to the OS media query. The canvas background reads the same store itself.
  */
+@custom-variant motion-safe {
+  &:where([data-motion='full'], [data-motion='full'] *) {
+    @slot;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:root:not([data-motion]), :root:not([data-motion]) *) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant motion-reduce {
+  &:where([data-motion='reduce'], [data-motion='reduce'] *) {
+    @slot;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:where(:root:not([data-motion]), :root:not([data-motion]) *) {
+      @slot;
+    }
+  }
+}
+
+[data-motion='reduce'],
+[data-motion='reduce'] *,
+[data-motion='reduce'] *::before,
+[data-motion='reduce'] *::after {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion]),
+  :root:not([data-motion]) *,
+  :root:not([data-motion]) *::before,
+  :root:not([data-motion]) *::after {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
     animation-duration: 0s !important;

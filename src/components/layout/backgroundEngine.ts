@@ -1,5 +1,13 @@
 import { isSceneBuild } from '../../scenes/build'
 import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '../../scenes/types'
+import {
+  clearMirrorSource,
+  hasMirrors,
+  repaintMirrors,
+  setMirrorSource,
+  type MirrorSource,
+} from './backgroundMirror'
+import { FrameRateMonitor } from './frameRateMonitor'
 
 /**
  * Imperative engine behind <SpaceBackground> (S24). Owns one <canvas> per
@@ -16,6 +24,15 @@ import type { Scene, SceneBudget, SceneBuild, SceneInstance, SceneSize } from '.
  * scene that is still fading out fades it back in instead of rebuilding it.
  * With reduce motion on, the old scene stays until the new one is ready and
  * is then swapped instantly.
+ *
+ * Slow devices (V0.42): `watchFrameRate` measures the loop's real frame
+ * cadence, counting only steady frames (no build, no fade, tab visible), and
+ * reports once if the animation runs consistently slow. See
+ * frameRateMonitor.ts.
+ *
+ * Mirrors (V0.48): after every draw the engine repaints the background
+ * mirrors (backgroundMirror.ts), small canvases such as the phone top bar's
+ * backdrop that show a copy of the background at their spot.
  *
  * Contrast budget: the layers' opacities never sum to more than 1 (times
  * BACKGROUND_MAX_OPACITY), so overlapping fades are never brighter than one
@@ -104,7 +121,7 @@ function easeOut(t: number) {
   return 1 - (1 - t) ** 2
 }
 
-export class BackgroundEngine {
+export class BackgroundEngine implements MirrorSource {
   private readonly container: HTMLElement
   private readonly onFail: () => void
   private reducedMotion: boolean
@@ -117,6 +134,8 @@ export class BackgroundEngine {
   private lastNow = 0
   private failed = false
   private destroyed = false
+  /** Slow-frame detection (V0.42); null while not watching. */
+  private monitor: FrameRateMonitor | null = null
   private readonly resizeObserver: ResizeObserver | null
 
   constructor(container: HTMLElement, options: BackgroundEngineOptions) {
@@ -128,6 +147,34 @@ export class BackgroundEngine {
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => this.handleResize())
     this.resizeObserver?.observe(container)
     document.addEventListener('visibilitychange', this.handleVisibility)
+    setMirrorSource(this)
+  }
+
+  /** Backing px per CSS px of the scene canvases (MirrorSource). */
+  get scale() {
+    return this.size.dpr
+  }
+
+  /**
+   * Copy the background as shown now into `ctx.canvas` (MirrorSource, V0.48):
+   * the area whose top-left corner is at (`left`, `top`) in the viewport, at
+   * the same backing scale. Each layer is drawn with the opacity its canvas
+   * is shown at, so over the same solid page color the copy matches the page
+   * pixel for pixel. The container is fixed at the viewport's top-left, so
+   * viewport and container coordinates are the same.
+   */
+  paintCopy(ctx: CanvasRenderingContext2D, left: number, top: number) {
+    const { dpr } = this.size
+    const { width, height } = ctx.canvas
+    const sx = Math.round(left * dpr)
+    const sy = Math.round(top * dpr)
+    for (const layer of this.layers) {
+      const alpha = layer.opacity * BACKGROUND_MAX_OPACITY
+      if (alpha <= 0) continue
+      ctx.globalAlpha = alpha
+      ctx.drawImage(layer.canvas, sx, sy, width, height, 0, 0, width, height)
+    }
+    ctx.globalAlpha = 1
   }
 
   /**
@@ -138,6 +185,8 @@ export class BackgroundEngine {
    */
   setScene(scene: Scene) {
     if (this.failed || this.destroyed) return
+    // A route change: its render, build and fade are not the device's steady pace.
+    this.monitor?.reset()
     if (this.pending?.scene.id === scene.id) return
     if (this.reducedMotion) {
       const current = this.layers.at(-1)
@@ -170,6 +219,7 @@ export class BackgroundEngine {
   setReducedMotion(reducedMotion: boolean) {
     if (this.reducedMotion === reducedMotion) return
     this.reducedMotion = reducedMotion
+    this.monitor?.reset()
     // The scene being shown: the one building, else the layer fading in or
     // shown (after a quick "back" it need not be the top layer).
     const target =
@@ -185,6 +235,23 @@ export class BackgroundEngine {
     if (target) this.beginScene(target, true)
   }
 
+  /**
+   * Start (or with `null`, stop) watching for a consistently slow animation
+   * (V0.42). `onSlow` is called at most once; watching then stops. Only
+   * steady animated frames count, so it never fires while animation is off.
+   */
+  watchFrameRate(onSlow: (() => void) | null) {
+    if (!onSlow) {
+      this.monitor = null
+      return
+    }
+    const monitor = new FrameRateMonitor(() => {
+      if (this.monitor === monitor) this.monitor = null
+      onSlow()
+    })
+    this.monitor = monitor
+  }
+
   destroy() {
     this.destroyed = true
     this.cancelPending()
@@ -192,6 +259,7 @@ export class BackgroundEngine {
     this.resizeObserver?.disconnect()
     document.removeEventListener('visibilitychange', this.handleVisibility)
     for (const layer of [...this.layers]) this.removeLayer(layer)
+    clearMirrorSource(this)
   }
 
   private measure() {
@@ -430,11 +498,16 @@ export class BackgroundEngine {
       for (const layer of this.layers) this.drawLayer(layer, dt)
     } catch (error) {
       this.fail(error)
+      return
     }
+    if (hasMirrors()) repaintMirrors()
   }
 
   private start() {
     if (this.frameId) return
+    // The loop was stopped (hidden tab, reduced motion, no layers): that gap
+    // and the first interval after it are not frame times.
+    this.monitor?.reset()
     this.lastNow = performance.now()
     this.frameId = requestAnimationFrame(this.tick)
   }
@@ -447,11 +520,20 @@ export class BackgroundEngine {
   private readonly tick = (now: number) => {
     this.frameId = 0
     if (this.failed || this.destroyed) return
-    const dt = Math.min(MAX_DT, Math.max(0, (now - this.lastNow) / 1000))
+    const interval = now - this.lastNow
+    const dt = Math.min(MAX_DT, Math.max(0, interval / 1000))
     this.lastNow = now
     for (const layer of this.layers) layer.time += dt
-    this.updateFades(now)
+    const fading = this.updateFades(now)
     this.drawAll(dt)
+    if (this.monitor) {
+      // Steady: on screen, animating, nothing building or fading.
+      if (fading || this.pending || document.hidden || this.layers.length === 0) {
+        this.monitor.reset()
+      } else {
+        this.monitor.frame(now, interval)
+      }
+    }
     if (!this.failed && this.layers.length > 0) {
       this.frameId = requestAnimationFrame(this.tick)
     }
@@ -467,6 +549,8 @@ export class BackgroundEngine {
     this.measure()
     const { width, height, dpr } = this.size
     if (width === prev.width && height === prev.height && dpr === prev.dpr) return
+    // Resizing (e.g. rotating a phone) costs frames that say nothing about the device.
+    this.monitor?.reset()
     try {
       for (const layer of this.layers) {
         this.sizeCanvas(layer.canvas, layer.ctx)
@@ -483,10 +567,12 @@ export class BackgroundEngine {
   private fail(error: unknown) {
     if (this.failed) return
     this.failed = true
+    this.monitor = null
     console.error('Space background disabled:', error)
     this.cancelPending()
     this.stop()
     for (const layer of [...this.layers]) this.removeLayer(layer)
+    clearMirrorSource(this)
     this.onFail()
   }
 }

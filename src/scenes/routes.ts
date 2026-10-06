@@ -9,8 +9,10 @@ import type { Scene } from './types'
 
 /**
  * Route -> scene map for the space background. The engine looks up the
- * current pathname here on every navigation and crossfades when the scene id
- * changes. To give a page its own scene, add an entry: the key is the route
+ * current pathname here on every navigation. When the scene id changes, the
+ * old scene fades out at once and the new one fades in as soon as it is ready
+ * (with reduce motion, the swap is instant once the new scene is ready).
+ * To give a page its own scene, add an entry: the key is the route
  * path exactly as in `App.tsx` (no trailing slash).
  *
  *   import { blackHoleScene } from './blackHole'

@@ -80,7 +80,7 @@ function useTakeOverDefaultMeta() {
  * }
  * ```
  *
- * - Title format: `"<title> · <profile.name>"`, e.g. "About · Jane Placeholder".
+ * - Title format: `"<title> · <profile.name>"`, e.g. "About · Christopher Waldriff".
  * - Home: omit `title`; the document title is just `profile.name`.
  * - Render only one PageMeta per route (React does not dedupe them).
  * - The site-wide defaults (title, description, Open Graph, Twitter card) live

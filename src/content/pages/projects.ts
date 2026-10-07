@@ -21,7 +21,7 @@ export const projectsPage: ProjectsPageCopy = {
   meta: {
     title: 'Projects',
     description:
-      'Placeholder projects description: lorem ipsum selection of projects by Jane Placeholder, filterable by technology.',
+      'Placeholder projects description: lorem ipsum selection of projects by Christopher Waldriff, filterable by technology.',
   },
   title: 'Projects',
   intro:

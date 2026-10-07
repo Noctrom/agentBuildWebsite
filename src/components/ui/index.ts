@@ -17,6 +17,9 @@ export type { ContainerProps } from './Container'
 export { default as Section } from './Section'
 export type { SectionProps, HeadingLevel } from './Section'
 
+export { default as SectionBand } from './SectionBand'
+export type { SectionBandProps } from './SectionBand'
+
 export { Tag, TagButton } from './Tag'
 export type { TagProps, TagButtonProps } from './Tag'
 

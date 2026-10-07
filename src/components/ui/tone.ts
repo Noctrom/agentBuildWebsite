@@ -26,8 +26,8 @@ export const surfaceToneClass: Record<SurfaceTone, string> = {
 }
 
 /**
- * Full frosted glass: translucent fill plus backdrop blur. Used by the header,
- * footer, `Section tone="surface"` bands, cards and secondary buttons.
+ * Full frosted glass: translucent fill plus backdrop blur. Used by the
+ * auto-pause toast, `Section tone="surface"` bands, cards and secondary buttons.
  *
  * Blur is deliberately not on tags or diagram boxes. Each blurred element
  * re-filters its backdrop on every frame of the animated background; with blur
@@ -40,6 +40,14 @@ export const glassClass: Record<SurfaceTone, string> = {
   surface: `${surfaceToneClass.surface} backdrop-blur-glass`,
   bg: `${surfaceToneClass.bg} backdrop-blur-glass`,
 }
+
+/**
+ * The full-width frosted band (V0.55): glass fill plus blur, a 1px border top
+ * and bottom, and the `glass-edge` highlight. The one recipe shared by
+ * `Section tone="surface"` (a band around one section) and `SectionBand` (a
+ * band around several), so the two always look the same.
+ */
+export const bandClass = `glass-edge border-y border-border ${glassClass.surface}`
 
 /**
  * Hover/focus glow for interactive elements: a soft accent halo on hover and a

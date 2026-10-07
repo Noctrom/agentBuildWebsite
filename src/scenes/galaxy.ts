@@ -1,5 +1,5 @@
 import { makeCanvas, makeSoftDot, spread, type Rgb } from './canvas'
-import { createDiskStars, type DiskStars, type StarSeed } from './galaxyStars'
+import { createDiskStars, type DiskStars, type StarSeed, type Twinkle } from './galaxyStars'
 import { between, createRandom } from './random'
 import { createStarfield } from './starfield'
 import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
@@ -16,14 +16,23 @@ import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
  * faster toward the core. The arms are a density wave that the stars stream
  * through, so they never wind up; see `galaxyStars.ts`.
  *
+ * Shimmer (V0.40): the warm core breathes: a soft warm halo around the
+ * baked core brightens and fades back over `CORE_PERIOD` seconds (at its
+ * faintest the core is exactly the baked one, so it never disappears). The
+ * halo is wider than the white centre, which is already at full brightness
+ * and would hide the breath. Some arm stars and some pink knots twinkle,
+ * each on its own slow wave around its V0.39 brightness with a random
+ * phase, so they never pulse together and the galaxy is as bright on
+ * average as before. With reduced motion the engine draws time 0 only, so
+ * nothing changes.
+ *
  * Layers, back to front: starfield, smudges, the baked glow texture
- * (`makeGlow`, drawn in `drawGlow`), then the live stars (`createDiskStars`).
- * For V0.40, core breathing fits in `drawGlow` (e.g. a core sprite with a
- * time-based alpha) and star twinkle in `galaxyStars.ts` (a per-star factor
- * on the light in `splat`).
+ * (`makeGlow`, drawn in `drawGlow`) with the breathing core and the live
+ * knots on top, then the live stars (`createDiskStars`).
  *
  * Cost per frame: the starfield, three tiny sprites, one transformed draw of
- * the glow texture (as in S27), a third of the ~4 600 stars splatted into a
+ * the glow texture (as in S27), the core halo sprite and 16 live
+ * small knot sprites, a third of the ~4 600 stars splatted into a
  * pixel buffer and one draw of that buffer.
  */
 
@@ -51,6 +60,18 @@ const ARM_R0 = 0.09
 const ARM_B = Math.log(0.95 / ARM_R0) / ARM_TURN
 /** Live stars per arm. */
 const ARM_STARS = 1500
+/** Pink knots per arm (as in S27); every `LIVE_KNOT_EVERY`th is drawn live and twinkles. */
+const KNOTS = 22
+const LIVE_KNOT_EVERY = 3
+/** Seconds per core breath (the story asks for 4-8). */
+const CORE_PERIOD = 6
+/** Peak opacity of the breathing halo, added on top of the baked core. */
+const CORE_PEAK = 0.35
+/** Radius of the breathing halo, in galaxy radii. */
+const CORE_SIZE = 0.32
+/** Share of arm and inter-arm disk stars that twinkle. */
+const ARM_TWINKLE_SHARE = 0.35
+const DISK_TWINKLE_SHARE = 0.2
 
 interface Layout {
   cx: number
@@ -60,12 +81,20 @@ interface Layout {
 
 /**
  * Phones: the free band between the contact panel's text and the footer
- * text, measured on /contact (V0.39, with the V0.41 footer). The panel's
- * buttons end ~495 px from the top of the page; the footer text starts
- * ~130 px above the bottom of a short page. Each keeps an ~8 px gap.
+ * text, measured on /contact at 375x812 (V0.58). The galaxy is fixed to the
+ * viewport, so each edge is taken at the scroll position where that text is
+ * closest to it:
+ * - top: the panel's last button row ends 549 px from the top of the page
+ *   (scroll 0). Since V0.51 the real email wraps and the buttons take two
+ *   rows; it was ~495 in V0.39.
+ * - bottom: the stacked footer's text (the copyright line) starts 178 px
+ *   above the bottom of the page (V0.57 added the eye button row; it was
+ *   130). Phone pages are at least as tall as the viewport, so scrolled to
+ *   the end that is 178 px above the bottom of the viewport.
+ * Each keeps an 8 px gap.
  */
-const PHONE_BAND_TOP = 503
-const PHONE_BAND_BOTTOM = 138
+const PHONE_BAND_TOP = 557
+const PHONE_BAND_BOTTOM = 186
 /** Half the height the turning disk sweeps on screen, in galaxy radii (measured). */
 const SWEEP_HALF_HEIGHT = 0.64
 
@@ -74,8 +103,9 @@ const SWEEP_HALF_HEIGHT = 0.64
  * orientation as it turns, so its outline, not just the time-0 frame, has to
  * stay clear of the text.
  * - Phones: centred in the band between the panel and the footer text, sized
- *   to fit it (at most S27's 0.44 * width). Very short phones (e.g. 375x667)
- *   have no room for it; the galaxy then overlaps the panel at 100 px radius.
+ *   to fit it (at most S27's 0.44 * width, at least 100 px). If even 100 px
+ *   doesn't fit (375x812 and shorter since V0.58), it sits on the band's
+ *   bottom edge, clear of the footer text, and overlaps the panel.
  * - Tablet and up: right of the panel. Since V0.38 the desktop nav is a left
  *   rail, which moves the content right but not as far as the galaxy.
  */
@@ -84,7 +114,10 @@ function layoutFor({ width, height }: SceneSize): Layout {
     const top = PHONE_BAND_TOP
     const bottom = height - PHONE_BAND_BOTTOM
     const r = Math.max(100, Math.min(width * 0.44, (bottom - top) / 2 / SWEEP_HALF_HEIGHT))
-    return { cx: width * 0.6, cy: (top + bottom) / 2, r }
+    // When the band is too short for the smallest galaxy, keep the footer
+    // gap and let it reach up behind the frosted panel instead.
+    const cy = Math.min((top + bottom) / 2, bottom - r * SWEEP_HALF_HEIGHT)
+    return { cx: width * 0.6, cy, r }
   }
   return { cx: width * 0.76, cy: height * 0.46, r: Math.max(150, Math.min(width * 0.2, height * 0.36)) }
 }
@@ -99,12 +132,25 @@ function armTheta(radius: number) {
   return Math.log(radius / ARM_R0) / ARM_B
 }
 
+/** A pink knot drawn live so it can twinkle, in texture coordinates (centre 0, 0). */
+interface LiveKnot {
+  x: number
+  y: number
+  /** Half the sprite's side. */
+  s: number
+  alpha: number
+  twinkle: Twinkle
+}
+
 /**
  * Face-on glow texture, radius r, centered in a 2.5r square: disk glow, warm
  * core, soft arm glow, pink knots and dust lanes. Everything here turns
  * rigidly with the arm pattern; the stars are drawn live (`starSeeds`).
+ * Every `LIVE_KNOT_EVERY`th knot is left out of the texture and pushed to
+ * `liveKnots` instead (the random sequence, and so the rest of the texture,
+ * is the same as S27's).
  */
-function makeGlow(r: number, random: () => number): HTMLCanvasElement {
+function makeGlow(r: number, random: () => number, liveKnots: LiveKnot[]): HTMLCanvasElement {
   const half = r * 1.25
   const canvas = makeCanvas(half * 2, half * 2)
   const ctx = canvas.getContext('2d')
@@ -138,11 +184,16 @@ function makeGlow(r: number, random: () => number): HTMLCanvasElement {
       ctx.drawImage(armGlow, x - s, y - s, s * 2, s * 2)
     }
     // Pink star-forming knots.
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < KNOTS; i++) {
       const theta = between(random, 0.25, 0.9) * ARM_TURN
       const [x, y] = point(theta, arm, 0.025)
       const s = between(random, 2.5, 5) * Math.max(1, r / 220)
-      ctx.globalAlpha = between(random, 0.55, 0.95)
+      const alpha = between(random, 0.55, 0.95)
+      if (i % LIVE_KNOT_EVERY === 0) {
+        liveKnots.push({ x, y, s, alpha, twinkle: knotTwinkle(liveKnots.length) })
+        continue
+      }
+      ctx.globalAlpha = alpha
       ctx.drawImage(knot, x - s, y - s, s * 2, s * 2)
     }
   }
@@ -175,11 +226,29 @@ function edgeFade(radius: number) {
 }
 
 /**
+ * Twinkle for live knot number `index`: deeper and slower than the stars'.
+ * From its own seeded random (per index), so it is the same after a resize
+ * and doesn't disturb the texture's random sequence.
+ */
+function knotTwinkle(index: number): Twinkle {
+  const random = createRandom(27330 + index)
+  return { depth: between(random, 0.4, 0.6), period: between(random, 3, 6), phase: random() * Math.PI * 2 }
+}
+
+/** A star twinkle from `random`, or none (steady) for 1 - `share` of the stars. */
+function starTwinkle(random: () => number, share: number): Twinkle | undefined {
+  if (random() >= share) return undefined
+  return { depth: between(random, 0.4, 0.7), period: between(random, 1.6, 4), phase: random() * Math.PI * 2 }
+}
+
+/**
  * Star seeds with the same counts, colors and spread as the S27 baked stars:
  * 1 500 per arm, 700 bulge and 900 inter-arm disk stars. Arm stars get a
  * window around their arm instead of a radial jitter, see `galaxyStars.ts`.
  */
 function starSeeds(random: () => number): StarSeed[] {
+  // Twinkles come from their own sequence so the S27 star layout is unchanged.
+  const twinkleRandom = createRandom(2732)
   const seeds: StarSeed[] = []
   for (let arm = 0; arm < ARMS; arm++) {
     for (let i = 0; i < ARM_STARS; i++) {
@@ -200,6 +269,7 @@ function starSeeds(random: () => number): StarSeed[] {
         alpha: between(random, 0.5, 1) * edgeFade(radius),
         color: random() < 0.75 ? 0 : 1,
         size: random() < 0.12 ? 1.5 : 1,
+        twinkle: starTwinkle(twinkleRandom, ARM_TWINKLE_SHARE),
       })
     }
   }
@@ -225,6 +295,7 @@ function starSeeds(random: () => number): StarSeed[] {
       alpha: between(random, 0.15, 0.45),
       color: 3,
       size: 1,
+      twinkle: starTwinkle(twinkleRandom, DISK_TWINKLE_SHARE),
     })
   }
   return seeds
@@ -256,6 +327,9 @@ function createGalaxy(setup: SceneSetup) {
   let layout = layoutFor(setup)
   let texture: HTMLCanvasElement | null = null
   let smudges: Smudge[] = []
+  let liveKnots: LiveKnot[] = []
+  const coreSprite = makeSoftDot([255, 214, 165], 64)
+  const knotSprite = makeSoftDot([255, 120, 175], 32, 0.15)
   // Seeds are in galaxy units (radius 0..1), so a resize doesn't rebuild them.
   const diskStars: DiskStars = createDiskStars(starSeeds(createRandom(2731)), {
     patternSpin: PATTERN_SPIN,
@@ -266,7 +340,8 @@ function createGalaxy(setup: SceneSetup) {
   function build(size: SceneSize) {
     layout = layoutFor(size)
     const random = createRandom(2730)
-    texture = makeGlow(layout.r, random)
+    liveKnots = []
+    texture = makeGlow(layout.r, random, liveKnots)
     const { width, height } = size
     const { cx, cy, r } = layout
     const warm = makeSmudge([255, 225, 190])
@@ -282,8 +357,11 @@ function createGalaxy(setup: SceneSetup) {
 
   build(setup)
 
-  /** The glow texture, turning rigidly with the arm pattern. */
-  function drawGlow(ctx: CanvasRenderingContext2D, x: number, y: number, time: number) {
+  /**
+   * The glow texture, turning rigidly with the arm pattern, with the
+   * breathing core and the twinkling knots added on top.
+   */
+  function drawGlow(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, time: number) {
     if (!texture) return
     ctx.save()
     ctx.translate(x, y)
@@ -291,6 +369,25 @@ function createGalaxy(setup: SceneSetup) {
     ctx.scale(1, TILT)
     ctx.rotate(START_ANGLE - time * PATTERN_SPIN)
     ctx.drawImage(texture, -texture.width / 2, -texture.height / 2)
+    ctx.globalCompositeOperation = 'lighter'
+    // Core breath: 0 at time 0 (the baked core alone), CORE_PEAK half a period later.
+    const breath = 0.5 - 0.5 * Math.cos((time * Math.PI * 2) / CORE_PERIOD)
+    if (breath > 0.002) {
+      const s = r * CORE_SIZE
+      ctx.globalAlpha = CORE_PEAK * breath
+      ctx.drawImage(coreSprite, -s, -s, s * 2, s * 2)
+    }
+    for (const k of liveKnots) {
+      const { depth, period, phase } = k.twinkle
+      // Around the baked brightness; above 1 the rest goes in a second
+      // additive draw (globalAlpha can't exceed 1).
+      let light = k.alpha * (1 + depth * Math.sin(phase + (time * Math.PI * 2) / period))
+      while (light > 0.004) {
+        ctx.globalAlpha = Math.min(1, light)
+        ctx.drawImage(knotSprite, k.x - k.s, k.y - k.s, k.s * 2, k.s * 2)
+        light -= 1
+      }
+    }
     ctx.restore()
   }
 
@@ -308,7 +405,7 @@ function createGalaxy(setup: SceneSetup) {
       ctx.restore()
     }
     const { cx, cy, r } = layout
-    drawGlow(ctx, cx, cy - shift, time)
+    drawGlow(ctx, cx, cy - shift, r, time)
     diskStars.draw(
       ctx,
       { cx, cy: cy - shift, r, tilt: TILT, planeAngle: PLANE_ANGLE, startAngle: START_ANGLE },
@@ -328,6 +425,7 @@ function createGalaxy(setup: SceneSetup) {
       diskStars.dispose()
       texture = null
       smudges = []
+      liveKnots = []
     },
   }
 }

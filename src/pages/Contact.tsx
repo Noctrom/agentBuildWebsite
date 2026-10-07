@@ -5,6 +5,8 @@ import { contactPage, profile } from '../content'
 /** Contact page: call to action, visible email address and social links. No form. */
 export default function Contact() {
   const { email, github, linkedin } = profile.links
+  // Let a long address wrap before the "@" rather than mid-word on phones.
+  const at = email.indexOf('@')
 
   return (
     <>
@@ -16,8 +18,16 @@ export default function Contact() {
           className={`glass-edge w-fit max-w-full rounded-lg border border-border p-5 sm:p-6 ${glassClass.surface}`}
         >
           <p className="text-sm font-medium text-muted">{contactPage.emailLabel}</p>
-          <p className="mt-1 text-lg font-semibold break-all text-fg select-all sm:text-xl">
-            {email}
+          <p className="mt-1 text-lg font-semibold break-words text-fg select-all sm:text-xl">
+            {at > 0 ? (
+              <>
+                {email.slice(0, at)}
+                <wbr />
+                {email.slice(at)}
+              </>
+            ) : (
+              email
+            )}
           </p>
 
           <ul aria-label={contactPage.linksLabel} className="mt-6 flex flex-wrap gap-3">

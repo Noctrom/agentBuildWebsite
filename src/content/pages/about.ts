@@ -18,7 +18,7 @@ export const aboutPage: AboutPageCopy = {
   meta: {
     title: 'About',
     description:
-      'Placeholder about description: lorem ipsum background, skills and experience of Jane Placeholder.',
+      'Placeholder about description: lorem ipsum background, skills and experience of Christopher Waldriff.',
   },
   title: 'About',
   skillsTitle: 'Skills',

@@ -47,17 +47,31 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.37](docs/backlog/v0/v0.25-v0.49.md#v037--behind-the-scenes-shows-version-ids) | Behind the Scenes shows version ids | dev-2 | V0.34 | done |
 | [V0.38](docs/backlog/v0/v0.25-v0.49.md#v038--vertical-navigation-rail-with-bubble-hover) | Vertical navigation rail with bubble hover | dev-1 | V0.35 | done |
 | [V0.39](docs/backlog/v0/v0.25-v0.49.md#v039--contact-galaxy-swirls) | Contact galaxy swirls | dev-2 | — | done |
-| [V0.40](docs/backlog/v0/v0.25-v0.49.md#v040--contact-galaxy-core-breathes-and-stars-twinkle) | Contact galaxy core breathes and stars twinkle | dev-2 | V0.39 | in progress |
+| [V0.40](docs/backlog/v0/v0.25-v0.49.md#v040--contact-galaxy-core-breathes-and-stars-twinkle) | Contact galaxy core breathes and stars twinkle | dev-2 | V0.39 | done |
 | [V0.41](docs/backlog/v0/v0.25-v0.49.md#v041--animation-onoff-control-in-the-footer) | Animation on/off control in the footer | dev-1 | V0.38 | done |
 | [V0.42](docs/backlog/v0/v0.25-v0.49.md#v042--auto-pause-animation-on-low-powered-devices) | Auto-pause animation on low-powered devices | dev-1 | V0.41 | done |
-| [V0.43](docs/backlog/v0/v0.25-v0.49.md#v043--behind-the-scenes-black-hole-moves-to-the-center) | Behind the Scenes black hole moves to the center | dev-2 | V0.46, V0.47 | todo |
-| [V0.44](docs/backlog/v0/v0.25-v0.49.md#v044--behind-the-scenes-black-hole-comes-alive) | Behind the Scenes black hole comes alive | dev-2 | V0.43 | todo |
-| [V0.45](docs/backlog/v0/v0.25-v0.49.md#v045--blue-gas-giant-orbits-the-black-hole) | Blue gas giant orbits the black hole | dev-2 | V0.44 | todo |
-| [V0.46](docs/backlog/v0/v0.25-v0.49.md#v046--behind-the-scenes-one-band-tighter-even-spacing) | Behind the Scenes: one band, tighter even spacing | dev-2 | — | todo |
+| [V0.43](docs/backlog/v0/v0.25-v0.49.md#v043--behind-the-scenes-black-hole-moves-to-the-center) | Behind the Scenes black hole moves to the center | dev-2 | V0.46, V0.47 | done |
+| [V0.44](docs/backlog/v0/v0.25-v0.49.md#v044--behind-the-scenes-black-hole-comes-alive) | Behind the Scenes black hole comes alive | dev-2 | V0.43 | done |
+| [V0.45](docs/backlog/v0/v0.25-v0.49.md#v045--blue-gas-giant-orbits-the-black-hole) | Blue gas giant orbits the black hole | dev-2 | V0.44 | done |
+| [V0.46](docs/backlog/v0/v0.25-v0.49.md#v046--behind-the-scenes-one-band-tighter-even-spacing) | Behind the Scenes: one band, tighter even spacing | dev-2 | — | done |
 | [V0.47](docs/backlog/v0/v0.25-v0.49.md#v047--slim-see-through-nav-rail-with-short-labels) | Slim, see-through nav rail with short labels | dev-1 | V0.49 | done |
 | [V0.48](docs/backlog/v0/v0.25-v0.49.md#v048--phone-top-bar-shows-the-space-background) | Phone top bar shows the space background | dev-1 | V0.47 | done |
 | [V0.49](docs/backlog/v0/v0.25-v0.49.md#v049--animation-switch-also-controls-ui-motion) | Animation switch also controls UI motion | dev-1 | V0.42 | done |
-| [V0.50](docs/backlog/v0/v0.50-v0.74.md#v050--see-through-footer-with-the-animation-switch-on-the-right) | See-through footer with the Animation switch on the right | dev-1 | — | in progress |
+| [V0.50](docs/backlog/v0/v0.50-v0.74.md#v050--see-through-footer-with-the-animation-switch-on-the-right) | See-through footer with the Animation switch on the right | dev-1 | — | done |
+| [V0.51](docs/backlog/v0/v0.50-v0.74.md#v051--real-profile-name-title-links-bio) | Real profile: name, title, links, bio | dev-2 | — | done |
+| [V0.52](docs/backlog/v0/v0.50-v0.74.md#v052--real-education-and-work-history) | Real education and work history | dev-2 | — | done |
+| [V0.53](docs/backlog/v0/v0.50-v0.74.md#v053--real-projects-and-skills) | Real projects and skills | dev-2 | — | done |
+| [V0.54](docs/backlog/v0/v0.50-v0.74.md#v054--real-photo-and-resume-pdf) | Real photo and resume PDF | dev-2 | V0.51 | done |
+| [V0.55](docs/backlog/v0/v0.50-v0.74.md#v055--shared-band-component-for-grouped-sections) | Shared band component for grouped sections | dev-1 | V0.46 | done |
+| [V0.56](docs/backlog/v0/v0.50-v0.74.md#v056--rail-width-ready-before-scenes-draw) | Rail width ready before scenes draw | dev-1 | V0.43 | done |
+| [V0.57](docs/backlog/v0/v0.50-v0.74.md#v057--button-to-hide-the-page-content-and-show-only-the-space-background) | Button to hide the page content and show only the space background | dev-1 | V0.56 | done |
+| [V0.58](docs/backlog/v0/v0.50-v0.74.md#v058--contact-galaxy-clears-the-taller-phone-footer) | Contact galaxy clears the taller phone footer | dev-2 | V0.57, V0.45 | done |
+| [V0.59](docs/backlog/v0/v0.50-v0.74.md#v059--contact-galaxy-recoloured-to-match-chriss-milky-way-photo) | Contact galaxy recoloured to match Chris's Milky Way photo | dev-2 | V0.58 | in progress |
+| [V0.60](docs/backlog/v0/v0.50-v0.74.md#v060--milky-way-band-across-the-contact-sky) | Milky Way band across the Contact sky | dev-2 | V0.59 | todo |
+| [V0.61](docs/backlog/v0/v0.50-v0.74.md#v061--hidden-content-view-shows-the-background-bright-and-sharp) | Hidden-content view shows the background bright and sharp | dev-1 | V0.57, V0.42 | in progress |
+| [V0.62](docs/backlog/v0/v0.50-v0.74.md#v062--resume-nebula-redrawn-as-drifting-clouds-across-the-whole-screen) | Resume nebula redrawn as drifting clouds across the whole screen | dev-2 | — | in progress |
+| [V0.63](docs/backlog/v0/v0.50-v0.74.md#v063--behind-the-scenes-planet-without-its-gas-stream) | Behind the Scenes planet without its gas stream | dev-2 | V0.45 | in progress |
+| [V0.64](docs/backlog/v0/v0.50-v0.74.md#v064--projects-gas-giant-gets-moving-jupiter-like-clouds) | Projects gas giant gets moving Jupiter-like clouds | dev-2 | — | in progress |
 
 ## Old ids
 

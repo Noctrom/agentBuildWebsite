@@ -25,6 +25,11 @@ import { makeCanvas, type Rgb } from './canvas'
  * one `putImageData`; every frame draws the buffer with one additive
  * `drawImage`. The buffer is only ever touched by `putImageData`, so the
  * browser never has to rasterize into it on the main thread.
+ *
+ * Twinkle (V0.40): some stars get a slow brightness wave with their own
+ * period and phase (`StarSeed.twinkle`). The factor swings between
+ * 1 - depth and 1 + depth around 1, so on average the galaxy is exactly as
+ * bright as in V0.39, and the random phases keep the stars out of step.
  */
 
 /** Star colors, indexed by `StarSeed.color`. */
@@ -54,6 +59,21 @@ export interface StarSeed {
   color: number
   /** Side of the star in CSS pixels before the disk tilt squashes it. */
   size: number
+  /** Optional twinkle; leave out for a steady star. */
+  twinkle?: Twinkle
+}
+
+/**
+ * A slow brightness wave around the steady light: the light is scaled by
+ * 1 + depth * sin(phase + time * 2 pi / period), which averages to 1.
+ */
+export interface Twinkle {
+  /** 0..1: how far the light swings up and down. */
+  depth: number
+  /** Seconds per wave. */
+  period: number
+  /** Radians. */
+  phase: number
 }
 
 export interface DiskView {
@@ -134,6 +154,10 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
   /** Peak light per star: alpha times the star's area in pixels at tilt 1. */
   const light = new Float32Array(n)
   const color = new Uint8Array(n)
+  /** Twinkle depth (0 = steady), rate and phase in sine-table steps. */
+  const twDepth = new Float32Array(n)
+  const twRate = new Float32Array(n)
+  const twPhase = new Float32Array(n)
   seeds.forEach((s, i) => {
     radius[i] = s.radius
     base[i] = s.base
@@ -141,6 +165,11 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
     width[i] = s.width
     light[i] = s.alpha * s.size * s.size
     color[i] = s.color
+    if (s.twinkle) {
+      twDepth[i] = s.twinkle.depth
+      twRate[i] = SIN_STEPS / s.twinkle.period
+      twPhase[i] = s.twinkle.phase * SIN_SCALE
+    }
     const own = orbitSpeed(s.radius, motion)
     // Arm stars move relative to the rigid pattern; free stars by their own orbit.
     relSpeed[i] = s.width > 0 ? own - motion.patternSpin : own
@@ -224,6 +253,8 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
     for (let i = from; i < to; i++) {
       let angle: number
       let a = light[i]
+      const depth = twDepth[i]
+      if (depth > 0) a *= 1 + depth * tableSin(twPhase[i] + twRate[i] * time)
       const w = width[i]
       if (w > 0) {
         // Offset from the arm, wrapped into [-w, w).

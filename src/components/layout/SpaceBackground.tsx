@@ -39,6 +39,26 @@ function afterPaint(callback: () => void): () => void {
 }
 
 /**
+ * Phones get the showcase's full strength but not its native resolution
+ * (V0.61): at 375px under 4x CPU throttle with software raster, sharp mode
+ * fell from 60 fps to ~8 fps at DPR 3 and ~21 fps at DPR 2 (see the V0.61
+ * log). A phone is a touch-first device whose screen is under 600 CSS px on
+ * its short side; tablets and desktops get sharp mode, with the engine's
+ * automatic fallback if it runs slow.
+ */
+function isPhone(): boolean {
+  if (typeof window.matchMedia !== 'function') return false
+  const coarse = window.matchMedia('(pointer: coarse)').matches
+  return coarse && Math.min(window.screen.width, window.screen.height) < 600
+}
+
+interface SpaceBackgroundProps {
+  /** Content is hidden (V0.57): show the background bright and sharp (V0.61). */
+  showcase?: boolean
+  onAutoPause?: () => void
+}
+
+/**
  * Animated space background (S24), fixed behind all content. Renders the
  * scene mapped to the current route in `src/scenes/routes.ts`; on navigation
  * the old scene fades out at once and the new one fades in when ready (S33).
@@ -53,8 +73,14 @@ function afterPaint(callback: () => void): () => void {
  * 'auto-paused' (remembered, shown as off in the footer) and calls
  * `onAutoPause` so the layout can tell the visitor. It never runs once the
  * visitor has chosen on/off or after an auto-pause.
+ *
+ * Showcase (V0.61): while the page content is hidden (`showcase`), the
+ * engine shows the scene at full strength and, except on phones, at the
+ * screen's native resolution; see backgroundEngine.ts. A paused scene
+ * brightens and sharpens too. If sharp mode runs slow the engine silently
+ * falls back to the standard resolution before auto-pause can trigger.
  */
-export default function SpaceBackground({ onAutoPause }: { onAutoPause?: () => void }) {
+export default function SpaceBackground({ showcase = false, onAutoPause }: SpaceBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [engine, setEngine] = useState<BackgroundEngine | null>(null)
   const [failed, setFailed] = useState(false)
@@ -69,6 +95,10 @@ export default function SpaceBackground({ onAutoPause }: { onAutoPause?: () => v
     reducedMotionRef.current = reducedMotion
     engine?.setReducedMotion(reducedMotion)
   }, [engine, reducedMotion])
+
+  useEffect(() => {
+    engine?.setShowcase(showcase)
+  }, [engine, showcase])
 
   useEffect(() => {
     onAutoPauseRef.current = onAutoPause
@@ -99,6 +129,7 @@ export default function SpaceBackground({ onAutoPause }: { onAutoPause?: () => v
       created = new BackgroundEngine(container, {
         reducedMotion: reducedMotionRef.current,
         onFail: () => setFailed(true),
+        allowSharp: !isPhone(),
       })
       setEngine(created)
     })

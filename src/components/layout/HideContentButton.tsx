@@ -22,6 +22,8 @@ interface HideContentButtonProps {
  *   Layout adds while content is hidden.
  * - Colors: muted icon, accent on hover, the global focus ring plus the focus
  *   glow, the same as the footer links and switch (AA notes in index.css).
+ * - While content is hidden the background is at full strength (V0.61), so
+ *   the button sits on a dark glass disc (`backingClass`).
  */
 export default function HideContentButton({ hidden, onToggle }: HideContentButtonProps) {
   const label = hidden ? 'Show content' : 'Hide content'
@@ -39,7 +41,9 @@ export default function HideContentButton({ hidden, onToggle }: HideContentButto
       }}
       onBlur={() => setTipDismissed(false)}
       onPointerLeave={() => setTipDismissed(false)}
-      className="group relative z-50 inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors duration-200 hover:text-accent focus-visible:shadow-glow-focus"
+      className={`group relative z-50 inline-flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-[color,background-color,box-shadow] duration-200 hover:text-accent ${
+        hidden ? backingClass : 'focus-visible:shadow-glow-focus'
+      }`}
     >
       {hidden ? <EyeOffIcon /> : <EyeIcon />}
       <span
@@ -53,6 +57,17 @@ export default function HideContentButton({ hidden, onToggle }: HideContentButto
     </button>
   )
 }
+
+/**
+ * While content is hidden the background is at full strength (V0.61), up to
+ * pure white, so the button gets a dark glass disc: the bg-glass fill plus
+ * a 6px ring of the same color around it (box-shadow, so the button's size
+ * and place don't change). The focus outline (2px, 2px offset) lies inside
+ * that ring, so both the icon and the ring keep their contrast over any
+ * frame; the focus glow is added outside it.
+ */
+const backingClass =
+  'bg-bg-glass shadow-[0_0_0_6px_var(--color-bg-glass)] focus-visible:shadow-[0_0_0_6px_var(--color-bg-glass),var(--shadow-glow-focus)]'
 
 const iconProps = {
   'aria-hidden': true,

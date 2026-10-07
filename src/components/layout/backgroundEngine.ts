@@ -37,6 +37,16 @@ import { FrameRateMonitor } from './frameRateMonitor'
  * Contrast budget: the layers' opacities never sum to more than 1 (times
  * BACKGROUND_MAX_OPACITY), so overlapping fades are never brighter than one
  * scene at full opacity.
+ *
+ * Showcase (V0.61): while the page content is hidden (V0.57) there is no text
+ * to keep readable, so `setShowcase(true)` raises the canvases from
+ * BACKGROUND_MAX_OPACITY to full strength and, where the device can afford
+ * it, draws them at the screen's native resolution ("sharp"). The strength
+ * follows the content's fade (SHOWCASE_FADE_MS), or switches at once with
+ * reduce motion. If the loop runs consistently slow while sharp, the engine
+ * silently drops back to the standard resolution (keeping full strength)
+ * for the rest of the page session; only after that does the V0.42
+ * auto-pause monitor see any frames.
  */
 
 /**
@@ -46,7 +56,7 @@ import { FrameRateMonitor } from './frameRateMonitor'
  * the tightest pairs are accent on a surface nested twice (4.96:1) and accent
  * on the bare background (5.05:1). At 0.22 bare accent drops to 4.7, so this
  * is the cap with the current tokens. Recompute (table in `index.css`) before
- * raising it.
+ * raising it. Showcase mode (V0.61) lifts it to 1 only while no text is shown.
  */
 export const BACKGROUND_MAX_OPACITY = 0.2
 
@@ -54,10 +64,23 @@ export const BACKGROUND_MAX_OPACITY = 0.2
  * Canvas resolution caps. The background is dim and soft, so it gains little
  * from more pixels, and fill rate is the main cost: at 1.5 the 375px view ran
  * at ~36 fps under 4x CPU throttling, at 1 it holds 60 fps. Large screens are
- * further scaled down to at most MAX_CANVAS_PIXELS backing pixels.
+ * further scaled down to at most MAX_CANVAS_PIXELS backing pixels. Showcase
+ * mode (V0.61) uses MAX_SHARP_PIXELS and no DPR cap instead.
  */
 const MAX_DPR = 1
 const MAX_CANVAS_PIXELS = 1_100_000
+/**
+ * Sharp mode (V0.61, content hidden): no DPR cap, so the canvas has one
+ * backing pixel per screen pixel. The only cap is a 4K panel's pixel count,
+ * which any browser window on a 4K or Retina laptop screen fits; larger
+ * screens (5K and up) are scaled down to it.
+ */
+const MAX_SHARP_PIXELS = 3840 * 2160
+/**
+ * Brightening and dimming in showcase mode (V0.61). Matches the content's
+ * fade in contentVisibility.ts (300 ms, ease-out), so they move together.
+ */
+const SHOWCASE_FADE_MS = 300
 /**
  * Fade-out of the old scene, started as soon as the scene changes (S33).
  * React renders the new page first (~40-80 ms after the click on desktop,
@@ -85,6 +108,12 @@ interface Layer {
   instance: SceneInstance
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
+  /**
+   * Size this layer's canvas and instance have. Usually the engine's size;
+   * differs while a showcase resolution rebuild runs, and for a layer that
+   * was fading out when the resolution changed.
+   */
+  size: SceneSize
   /** Scene time in seconds (excludes time paused). */
   time: number
   fadeFrom: number
@@ -92,6 +121,27 @@ interface Layer {
   fadeStart: number
   fadeMs: number
   opacity: number
+}
+
+/**
+ * A shown layer being rebuilt at a new resolution in the background
+ * (V0.61), so switching sharp mode never stalls the animation. The old
+ * instance keeps drawing until the new one is ready, then they swap.
+ */
+interface Rebuild {
+  layer: Layer
+  build: SceneBuild
+  size: SceneSize
+  /** setTimeout id of the next task (0 while none is queued). */
+  timer: number
+  /** The built instance and its canvas (off screen), once `build` is done. */
+  next: { instance: SceneInstance; canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null
+  /** `next` has drawn its first frame and is ready to swap in. */
+  primed: boolean
+}
+
+function sameSize(a: SceneSize, b: SceneSize) {
+  return a.width === b.width && a.height === b.height && a.dpr === b.dpr
 }
 
 /** An incremental scene build in progress (S29). */
@@ -110,6 +160,19 @@ export interface BackgroundEngineOptions {
   reducedMotion: boolean
   /** Called once if canvas is unsupported or a scene throws; the engine stops. */
   onFail: () => void
+  /**
+   * May showcase mode draw at native resolution (V0.61)? False on phones,
+   * which get full strength only. Defaults to true.
+   */
+  allowSharp?: boolean
+}
+
+/**
+ * Close to CSS `ease-out` as Tailwind defines it (cubic-bezier(0, 0, 0.2, 1)),
+ * which the content fade uses.
+ */
+function easeOutCubic(t: number) {
+  return 1 - (1 - t) ** 3
 }
 
 function easeInOut(t: number) {
@@ -127,6 +190,7 @@ export class BackgroundEngine implements MirrorSource {
   private reducedMotion: boolean
   private layers: Layer[] = []
   private pending: PendingBuild | null = null
+  private rebuild: Rebuild | null = null
   /** False until the first scene is shown; that one uses the slower intro fade. */
   private introDone = false
   private size: SceneSize = { width: 0, height: 0, dpr: 1 }
@@ -136,15 +200,35 @@ export class BackgroundEngine implements MirrorSource {
   private destroyed = false
   /** Slow-frame detection (V0.42); null while not watching. */
   private monitor: FrameRateMonitor | null = null
+  /** Content is hidden: full strength, sharp where allowed (V0.61). */
+  private showcase = false
+  /**
+   * Canvas opacity of a fully shown layer: BACKGROUND_MAX_OPACITY normally,
+   * 1 in showcase mode, in between while it fades.
+   */
+  private strength = BACKGROUND_MAX_OPACITY
+  private strengthFrom = BACKGROUND_MAX_OPACITY
+  private strengthTo = BACKGROUND_MAX_OPACITY
+  private strengthStart = 0
+  private strengthMs = 0
+  /** May showcase mode be sharp on this device (false on phones). */
+  private readonly sharpAllowed: boolean
+  /** Sharp mode is on and adds pixels (the device DPR is above the standard cap). */
+  private sharpActive = false
+  /** Sharp mode ran slow once; it stays off for this page session. */
+  private sharpBlocked = false
+  /** Watches the frame rate while sharp mode is active; null otherwise. */
+  private sharpMonitor: FrameRateMonitor | null = null
   private readonly resizeObserver: ResizeObserver | null
 
   constructor(container: HTMLElement, options: BackgroundEngineOptions) {
     this.container = container
     this.onFail = options.onFail
     this.reducedMotion = options.reducedMotion
+    this.sharpAllowed = options.allowSharp ?? true
     this.measure()
     this.resizeObserver =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => this.handleResize())
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => this.applySize())
     this.resizeObserver?.observe(container)
     document.addEventListener('visibilitychange', this.handleVisibility)
     setMirrorSource(this)
@@ -161,18 +245,28 @@ export class BackgroundEngine implements MirrorSource {
    * the same backing scale. Each layer is drawn with the opacity its canvas
    * is shown at, so over the same solid page color the copy matches the page
    * pixel for pixel. The container is fixed at the viewport's top-left, so
-   * viewport and container coordinates are the same.
+   * viewport and container coordinates are the same. A layer at another
+   * resolution (V0.61, mid-rebuild) is scaled to `scale`.
    */
   paintCopy(ctx: CanvasRenderingContext2D, left: number, top: number) {
-    const { dpr } = this.size
     const { width, height } = ctx.canvas
-    const sx = Math.round(left * dpr)
-    const sy = Math.round(top * dpr)
     for (const layer of this.layers) {
-      const alpha = layer.opacity * BACKGROUND_MAX_OPACITY
+      const alpha = layer.opacity * this.strength
       if (alpha <= 0) continue
+      const { dpr } = layer.size
+      const k = dpr / this.size.dpr
       ctx.globalAlpha = alpha
-      ctx.drawImage(layer.canvas, sx, sy, width, height, 0, 0, width, height)
+      ctx.drawImage(
+        layer.canvas,
+        Math.round(left * dpr),
+        Math.round(top * dpr),
+        width * k,
+        height * k,
+        0,
+        0,
+        width,
+        height,
+      )
     }
     ctx.globalAlpha = 1
   }
@@ -208,9 +302,12 @@ export class BackgroundEngine implements MirrorSource {
         if (layer !== existing) this.fadeOut(layer, now)
       }
       if (existing.fadeTo !== 1) this.startFade(existing, 1, FADE_IN_MS, now)
+      // It may have been fading out when the resolution changed.
+      if (this.rebuild?.layer !== existing) this.startRebuild(existing)
       this.refresh()
       return
     }
+    this.cancelRebuild()
     for (const layer of this.layers) this.fadeOut(layer, now)
     this.refresh()
     this.beginScene(scene, false)
@@ -220,6 +317,11 @@ export class BackgroundEngine implements MirrorSource {
     if (this.reducedMotion === reducedMotion) return
     this.reducedMotion = reducedMotion
     this.monitor?.reset()
+    this.sharpMonitor?.reset()
+    // A running strength fade ends now.
+    this.strengthMs = 0
+    // The layer is rebuilt below anyway, at the current size.
+    this.cancelRebuild()
     // The scene being shown: the one building, else the layer fading in or
     // shown (after a quick "back" it need not be the top layer).
     const target =
@@ -233,6 +335,25 @@ export class BackgroundEngine implements MirrorSource {
     this.refresh()
     // Rebuild with the new flag; the old layer stays until the new one is ready.
     if (target) this.beginScene(target, true)
+  }
+
+  /**
+   * Showcase mode (V0.61), on while the page content is hidden: the
+   * background goes to full strength and, where allowed, native resolution.
+   * Off returns both to normal. The strength fades over SHOWCASE_FADE_MS
+   * with the content, or switches at once with reduced motion. The new
+   * resolution is built in the background while the scene animates (see
+   * `applySize`), or at once for a still frame.
+   */
+  setShowcase(showcase: boolean) {
+    if (this.showcase === showcase || this.failed || this.destroyed) return
+    this.showcase = showcase
+    this.strengthFrom = this.strength
+    this.strengthTo = showcase ? 1 : BACKGROUND_MAX_OPACITY
+    this.strengthStart = performance.now()
+    this.strengthMs = this.reducedMotion ? 0 : SHOWCASE_FADE_MS
+    this.applySize(true)
+    this.refresh()
   }
 
   /**
@@ -255,6 +376,7 @@ export class BackgroundEngine implements MirrorSource {
   destroy() {
     this.destroyed = true
     this.cancelPending()
+    this.cancelRebuild()
     this.stop()
     this.resizeObserver?.disconnect()
     document.removeEventListener('visibilitychange', this.handleVisibility)
@@ -266,13 +388,35 @@ export class BackgroundEngine implements MirrorSource {
     const rect = this.container.getBoundingClientRect()
     const width = Math.max(1, Math.round(rect.width))
     const height = Math.max(1, Math.round(rect.height))
-    const dpr = Math.min(
-      window.devicePixelRatio || 1,
-      MAX_DPR,
-      Math.sqrt(MAX_CANVAS_PIXELS / (width * height)),
-    )
-    // Round so tiny viewport changes don't trigger a rebuild.
-    this.size = { width, height, dpr: Math.round(dpr * 100) / 100 }
+    const device = window.devicePixelRatio || 1
+    const capped = (maxDpr: number, maxPixels: number) => {
+      const dpr = Math.min(device, maxDpr, Math.sqrt(maxPixels / (width * height)))
+      // Round a pixel cap so tiny viewport changes don't trigger a rebuild.
+      // The device ratio itself is stable and stays exact, so a sharp canvas
+      // is exactly its on-screen size x devicePixelRatio.
+      return dpr === device ? dpr : Math.round(dpr * 100) / 100
+    }
+    const standard = capped(MAX_DPR, MAX_CANVAS_PIXELS)
+    const dpr =
+      this.showcase && this.sharpAllowed && !this.sharpBlocked
+        ? capped(Infinity, MAX_SHARP_PIXELS)
+        : standard
+    this.size = { width, height, dpr }
+    const sharpActive = dpr > standard
+    if (sharpActive && !this.sharpActive) {
+      // A fresh monitor per sharp period; it fires at most once.
+      const monitor = new FrameRateMonitor(() => {
+        if (this.sharpMonitor !== monitor) return
+        // Too slow at native resolution: standard resolution from now on,
+        // still at full strength. Silent (V0.61).
+        this.sharpBlocked = true
+        this.applySize(true)
+      })
+      this.sharpMonitor = monitor
+    } else if (!sharpActive) {
+      this.sharpMonitor = null
+    }
+    this.sharpActive = sharpActive
   }
 
   /** Create `scene`: show it now, or start an incremental build. */
@@ -379,17 +523,13 @@ export class BackgroundEngine implements MirrorSource {
   }
 
   private createLayer(scene: Scene, instance: SceneInstance): Layer {
-    const canvas = document.createElement('canvas')
-    canvas.setAttribute('aria-hidden', 'true')
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0'
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('Canvas 2D is not available')
-    this.sizeCanvas(canvas, ctx)
+    const { canvas, ctx } = this.createCanvas(this.size, '0')
     return {
       scene,
       instance,
       canvas,
       ctx,
+      size: this.size,
       time: 0,
       fadeFrom: 0,
       fadeTo: 0,
@@ -399,14 +539,130 @@ export class BackgroundEngine implements MirrorSource {
     }
   }
 
-  private sizeCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-    const { width, height, dpr } = this.size
+  private createCanvas(size: SceneSize, opacity: string) {
+    const canvas = document.createElement('canvas')
+    canvas.setAttribute('aria-hidden', 'true')
+    canvas.style.cssText = `position:absolute;inset:0;width:100%;height:100%;opacity:${opacity}`
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas 2D is not available')
+    this.sizeCanvas(canvas, ctx, size)
+    return { canvas, ctx }
+  }
+
+  private sizeCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, size: SceneSize) {
+    const { width, height, dpr } = size
     canvas.width = Math.round(width * dpr)
     canvas.height = Math.round(height * dpr)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
 
+  /**
+   * Bring the shown `layer` to the engine's size without stalling the
+   * animation (V0.61). A new instance of its scene is made at that size in
+   * the background while the old one keeps drawing, in separate tasks
+   * between frames: `create` (a generator in time-boxed slices, as for a
+   * scene change), then one priming draw on a new canvas that is not on
+   * screen yet (a scene's first draw uploads its new caches, which can take
+   * a frame or two). The next animation frame swaps the canvases.
+   */
+  private startRebuild(layer: Layer) {
+    this.cancelRebuild()
+    if (sameSize(layer.size, this.size)) return
+    const size = this.size
+    const setup = { ...size, reducedMotion: this.reducedMotion, budget }
+    // Defer even a plain `create` to its own task.
+    const build: SceneBuild = (function* () {
+      const result = layer.scene.create(setup)
+      return isSceneBuild(result) ? yield* result : result
+    })()
+    this.rebuild = { layer, build, size, timer: 0, next: null, primed: false }
+    this.scheduleRebuildPump()
+  }
+
+  private scheduleRebuildPump() {
+    if (this.rebuild && !this.rebuild.timer) {
+      this.rebuild.timer = window.setTimeout(this.pumpRebuild, 0)
+    }
+  }
+
+  /** One rebuild task: build slices for up to BUILD_SLICE_MS, else the priming draw. */
+  private readonly pumpRebuild = () => {
+    const rebuild = this.rebuild
+    if (!rebuild || this.failed || this.destroyed) return
+    rebuild.timer = 0
+    try {
+      if (!rebuild.next) {
+        const deadline = performance.now() + BUILD_SLICE_MS
+        for (;;) {
+          const step = rebuild.build.next()
+          if (step.done) {
+            rebuild.next = { instance: step.value, ...this.createCanvas(rebuild.size, '0') }
+            break
+          }
+          // In a hidden tab, run to the end at once.
+          if (!document.hidden && performance.now() >= deadline) break
+        }
+        if (!document.hidden || !rebuild.next) {
+          this.scheduleRebuildPump()
+          return
+        }
+      }
+      const { instance, canvas, ctx } = rebuild.next
+      this.drawScene(instance, ctx, canvas, rebuild.size, rebuild.layer.time, 0)
+      rebuild.primed = true
+    } catch (error) {
+      this.fail(error)
+      return
+    }
+    // The loop swaps it in at its next frame; with no loop running (hidden
+    // tab), swap and draw now.
+    if (!this.frameId) {
+      this.finishRebuild()
+      if (this.layers.length) this.drawAll(0)
+    }
+  }
+
+  /** Abandon a resolution rebuild, letting its `finally` blocks run. */
+  private cancelRebuild() {
+    const rebuild = this.rebuild
+    if (!rebuild) return
+    this.rebuild = null
+    window.clearTimeout(rebuild.timer)
+    try {
+      rebuild.build.return(undefined as never)
+      rebuild.next?.instance.dispose?.()
+    } catch {
+      // A scene failing to clean up must not break the page.
+    }
+  }
+
+  /**
+   * Swap a primed rebuild in: the layer takes the new instance and canvas,
+   * the old canvas leaves the DOM in the same frame, so the screen never
+   * shows an empty or half-drawn frame. The caller draws the layer next.
+   */
+  private finishRebuild() {
+    const rebuild = this.rebuild
+    if (!rebuild?.next || !rebuild.primed) return
+    this.rebuild = null
+    const { layer } = rebuild
+    const old = { instance: layer.instance, canvas: layer.canvas }
+    const { instance, canvas, ctx } = rebuild.next
+    canvas.style.opacity = old.canvas.style.opacity
+    Object.assign(layer, { instance, canvas, ctx, size: rebuild.size })
+    old.canvas.replaceWith(canvas)
+    try {
+      old.instance.dispose?.()
+    } catch {
+      // A scene failing to clean up must not break the page.
+    }
+    this.monitor?.reset()
+    this.sharpMonitor?.reset()
+  }
+
+
   private removeLayer(layer: Layer) {
+    if (this.rebuild?.layer === layer) this.cancelRebuild()
     this.layers = this.layers.filter((l) => l !== layer)
     layer.canvas.remove()
     try {
@@ -433,7 +689,7 @@ export class BackgroundEngine implements MirrorSource {
    * fading in are capped so all opacities sum to at most 1 (contrast budget).
    */
   private updateFades(now: number): boolean {
-    let running = false
+    let running = this.updateStrength(now)
     let outgoing = 0
     const done: Layer[] = []
     for (const layer of this.layers) {
@@ -456,24 +712,44 @@ export class BackgroundEngine implements MirrorSource {
         }
         room -= layer.opacity
       }
-      layer.canvas.style.opacity = String(layer.opacity * BACKGROUND_MAX_OPACITY)
+      layer.canvas.style.opacity = String(layer.opacity * this.strength)
     }
     for (const layer of done) this.removeLayer(layer)
     return running
   }
 
+  /** Advance the showcase strength fade; returns true while it runs. */
+  private updateStrength(now: number): boolean {
+    const t =
+      this.strengthMs > 0
+        ? Math.min(1, Math.max(0, (now - this.strengthStart) / this.strengthMs))
+        : 1
+    this.strength = this.strengthFrom + (this.strengthTo - this.strengthFrom) * easeOutCubic(t)
+    return t < 1
+  }
+
   private drawLayer(layer: Layer, dt: number) {
-    const { ctx, canvas } = layer
+    this.drawScene(layer.instance, layer.ctx, layer.canvas, layer.size, layer.time, dt)
+  }
+
+  private drawScene(
+    instance: SceneInstance,
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement,
+    size: SceneSize,
+    time: number,
+    dt: number,
+  ) {
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.setTransform(this.size.dpr, 0, 0, this.size.dpr, 0, 0)
+    ctx.setTransform(size.dpr, 0, 0, size.dpr, 0, 0)
     ctx.globalAlpha = 1
     ctx.globalCompositeOperation = 'source-over'
     const still = this.reducedMotion
-    layer.instance.draw({
+    instance.draw({
       ctx,
-      ...this.size,
-      time: still ? 0 : layer.time,
+      ...size,
+      time: still ? 0 : time,
       dt: still ? 0 : dt,
       scrollY: still ? 0 : window.scrollY,
       reducedMotion: still,
@@ -525,14 +801,28 @@ export class BackgroundEngine implements MirrorSource {
     this.lastNow = now
     for (const layer of this.layers) layer.time += dt
     const fading = this.updateFades(now)
+    // A primed resolution rebuild (V0.61) takes over in this frame's draw.
+    if (this.rebuild?.primed) this.finishRebuild()
     this.drawAll(dt)
-    if (this.monitor) {
-      // Steady: on screen, animating, nothing building or fading.
-      if (fading || this.pending || document.hidden || this.layers.length === 0) {
-        this.monitor.reset()
-      } else {
-        this.monitor.frame(now, interval)
-      }
+    // Steady: on screen, animating, nothing building, rebuilding or fading.
+    // While sharp mode is active only its own monitor counts frames, so a
+    // slow sharp frame rate first drops the resolution (V0.61), and only a
+    // slow standard one can auto-pause (V0.42).
+    const steady = !(
+      fading ||
+      this.pending ||
+      this.rebuild ||
+      document.hidden ||
+      this.layers.length === 0
+    )
+    if (steady && this.sharpActive) {
+      this.monitor?.reset()
+      this.sharpMonitor?.frame(now, interval)
+    } else if (steady) {
+      this.monitor?.frame(now, interval)
+    } else {
+      this.monitor?.reset()
+      this.sharpMonitor?.reset()
     }
     if (!this.failed && this.layers.length > 0) {
       this.frameId = requestAnimationFrame(this.tick)
@@ -544,32 +834,64 @@ export class BackgroundEngine implements MirrorSource {
     else this.refresh()
   }
 
-  private handleResize() {
+  /**
+   * Re-measure (viewport size, DPR, showcase sharp mode) and resize every
+   * layer if the canvas size changed.
+   */
+  /**
+   * Re-measure (viewport size, DPR, showcase sharp mode) and bring the layers
+   * to the new size if it changed.
+   *
+   * `gradual` (V0.61, showcase on/off and the sharp fallback) while the
+   * scene animates: the shown layer is rebuilt in the background and swapped
+   * in when ready (`startRebuild`), because a scene's `resize` rebuilds all
+   * its caches at once (the sun took ~65 ms at 1x and ~225 ms at 4x CPU
+   * throttle), which showed as a hitch at the start of the fade. Layers
+   * fading out keep their size until they are removed.
+   *
+   * Otherwise (a real resize, or a still frame) every layer is resized at
+   * once and redrawn.
+   */
+  private applySize(gradual = false) {
+    if (this.failed || this.destroyed) return
     const prev = this.size
     this.measure()
-    const { width, height, dpr } = this.size
-    if (width === prev.width && height === prev.height && dpr === prev.dpr) return
+    if (sameSize(prev, this.size)) return
     // Resizing (e.g. rotating a phone) costs frames that say nothing about the device.
     this.monitor?.reset()
+    this.sharpMonitor?.reset()
+    const shown = this.layers.findLast((layer) => layer.fadeTo !== 0)
+    if (gradual && !this.reducedMotion && shown) {
+      this.startRebuild(shown)
+      return
+    }
+    this.cancelRebuild()
     try {
       for (const layer of this.layers) {
-        this.sizeCanvas(layer.canvas, layer.ctx)
+        if (sameSize(layer.size, this.size)) continue
+        this.sizeCanvas(layer.canvas, layer.ctx, this.size)
+        layer.size = this.size
         layer.instance.resize?.(this.size)
       }
     } catch (error) {
       this.fail(error)
       return
     }
-    // Still frames must be redrawn; the loop redraws on its next frame anyway.
-    if (this.reducedMotion || document.hidden) this.drawAll(0)
+    // Resizing clears the canvases, and this can run after this frame's draw
+    // (a ResizeObserver callback), so redraw now rather than show an empty
+    // frame. dt 0: no scene time passes.
+    this.updateFades(performance.now())
+    this.drawAll(0)
   }
 
   private fail(error: unknown) {
     if (this.failed) return
     this.failed = true
     this.monitor = null
+    this.sharpMonitor = null
     console.error('Space background disabled:', error)
     this.cancelPending()
+    this.cancelRebuild()
     this.stop()
     for (const layer of [...this.layers]) this.removeLayer(layer)
     clearMirrorSource(this)

@@ -96,6 +96,15 @@
  *   anywhere on screen, but even the theoretical worst pixel above keeps
  *   muted 5.30 / accent 5.05. Its tooltip has its own bg-glass fill: fg
  *   15.80 at worst.
+ *   V0.61: while content is hidden the background is at full strength (1,
+ *   not 0.2), and the bare button failed (brightest pixel rgb(194 156 124):
+ *   muted 1.14). So while hidden it sits on a bg-glass disc plus a 6px
+ *   bg-glass ring (HideContentButton `backingClass`) that also holds the
+ *   focus outline. Measured scan (all routes at 375/768/1280, hidden, after
+ *   the fade, 5 frames, within 20.5px of the centre): brightest pixel
+ *   rgb(70 58 52), on the disc's anti-aliased edge: muted 4.97, accent
+ *   (hover icon, focus ring) 4.74, both need 3:1. Pure white under the
+ *   glass gives rgb(55 56 63): muted 5.30 / accent 5.05.
  * Tone distinctness (band vs a tone="bg" panel inside it): 1.12 / 1.63; the
  * faint border keeps panels outlined.
  * Glow shadows are drawn outside elements, never under their text.

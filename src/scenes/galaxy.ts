@@ -171,6 +171,25 @@ const PHONE_BAND_TOP = 557
 const PHONE_BAND_BOTTOM = 186
 /** Half the height the turning disk sweeps on screen, in galaxy radii (measured). */
 const SWEEP_HALF_HEIGHT = 0.64
+/**
+ * Half the width it sweeps (V0.68). The swept outline is the tilted disk's
+ * ellipse, so this is SWEEP_HALF_HEIGHT scaled by the ellipse's aspect
+ * (TILT, PLANE_ANGLE): 1.0 r. Measured over a full turn at 1280x800: ~0.94 r
+ * to the faint edge (changes of 6/255 or more on screen).
+ */
+const SWEEP_HALF_WIDTH = 1
+/**
+ * Tablet and up (V0.68): the footer's highest text or control (the eye
+ * button's box) starts this far above the bottom of the viewport, measured
+ * on /contact from 768x1024 to 1920x1080 (the © glyphs start at 56). The
+ * page is pinned to at least the viewport height, so scrolled to the end the
+ * footer is here on screen for every viewport height.
+ */
+const DESKTOP_FOOTER_TOP = 64
+/** Gap between the galaxy's swept outline and the footer, and the right edge. */
+const DESKTOP_FOOTER_GAP = 16
+const DESKTOP_EDGE_GAP = 24
+const DESKTOP_EDGE_GAP_SHARE = 0.025
 
 /**
  * Where the galaxy sits. The whole tilted disk sweeps through every
@@ -180,8 +199,14 @@ const SWEEP_HALF_HEIGHT = 0.64
  *   to fit it (at most S27's 0.44 * width, at least 100 px). If even 100 px
  *   doesn't fit (375x812 and shorter since V0.58), it sits on the band's
  *   bottom edge, clear of the footer text, and overlaps the panel.
- * - Tablet and up: right of the panel. Since V0.38 the desktop nav is a left
- *   rail, which moves the content right but not as far as the galaxy.
+ * - Tablet and up: right of and below the panel, toward the bottom-right
+ *   corner (V0.68; until then centred at 0.76 w, 0.46 h). The swept outline
+ *   keeps a gap to the right edge (24 px or 2.5% of the width, the larger)
+ *   and to the footer's text and controls below. The size is unchanged.
+ *   Since V0.38 the desktop nav is a left rail, which moves the content right
+ *   but not as far as the galaxy. The galaxy only moves up (parallax) when
+ *   scrolling, and the footer is lowest on screen until the end of the page,
+ *   so the scroll-0 position is the one closest to the footer.
  */
 function layoutFor({ width, height }: SceneSize): Layout {
   if (width < 768) {
@@ -193,7 +218,13 @@ function layoutFor({ width, height }: SceneSize): Layout {
     const cy = Math.min((top + bottom) / 2, bottom - r * SWEEP_HALF_HEIGHT)
     return { cx: width * 0.6, cy, r }
   }
-  return { cx: width * 0.76, cy: height * 0.46, r: Math.max(150, Math.min(width * 0.2, height * 0.36)) }
+  const r = Math.max(150, Math.min(width * 0.2, height * 0.36))
+  const edgeGap = Math.max(DESKTOP_EDGE_GAP, width * DESKTOP_EDGE_GAP_SHARE)
+  return {
+    cx: width - edgeGap - r * SWEEP_HALF_WIDTH,
+    cy: height - DESKTOP_FOOTER_TOP - DESKTOP_FOOTER_GAP - r * SWEEP_HALF_HEIGHT,
+    r,
+  }
 }
 
 /** Arm radius (as a fraction of the galaxy radius) at winding angle theta. */
@@ -403,12 +434,12 @@ interface Ellipse {
 /**
  * Where the sky tint and the bright stars go: the text-free area around the
  * galaxy, from text boxes measured on /contact (V0.59).
- * - Tablet and up: the galaxy is right of the panel. The intro text ends
- *   ~170 px from the top and the footer text starts 92 px above the bottom,
- *   at every size from 768x1024 to 1920x1080, so there is more room below
- *   the galaxy (cy = 0.46h) than above it (0.75r at 1280x800, the tightest).
- *   The ellipse reaches 0.75r up, 1.25r down and 1.3r left of the galaxy
- *   centre, where the galaxy's own outline ends and the panel is.
+ * - Tablet and up: the galaxy is right of the panel. The ellipse reaches
+ *   0.75r up, 1.25r down and 1.3r left of the galaxy centre, where the
+ *   galaxy's own outline ends and the panel is. Since V0.68 the galaxy sits
+ *   near the bottom-right corner, so the lower part of the ellipse runs off
+ *   screen and the tint now also lies behind the right end of the footer;
+ *   the V0.68 AA scan found the footer text's lowest contrast unchanged.
  * - Phones: only the band the turning galaxy already sweeps (0.64r up and
  *   down, which V0.58 keeps clear of the footer), but the full width.
  */

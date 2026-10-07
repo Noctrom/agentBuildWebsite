@@ -12,8 +12,10 @@ import type { SceneSize } from './types'
  * into the sky, and dense fine stars.
  *
  * - Desktop and tablet: it crosses the open sky left of the spiral galaxy,
- *   behind the contact text (Chris's choice), and passes behind the top of
- *   the spiral. Its warm middle sits in the open sky below the contact panel.
+ *   behind the contact text (Chris's choice). Its warm middle sits in the
+ *   open sky below the contact panel. Since V0.68 it keeps its own anchor
+ *   (the galaxy's old place) while the spiral sits lower, near the
+ *   bottom-right corner, drawn in front of the band's edge.
  * - Phones: it runs behind the galaxy, below the contact text.
  *
  * The band doesn't move. `paintBand` bakes it once per size into the Contact
@@ -112,11 +114,23 @@ function ramp(t: number): Rgb {
 }
 
 /**
+ * The band's own anchor on tablet and up (V0.68): where the galaxy centre
+ * was from V0.39 to V0.67 (0.76 w, 0.46 h). V0.68 moved the galaxy toward
+ * the bottom-right corner but kept the band where it was, so the band is
+ * placed from this point, not from the galaxy.
+ */
+function desktopAnchor(width: number, height: number) {
+  return { x: width * 0.76, y: height * 0.46 }
+}
+
+/**
  * Where the band goes.
- * - Tablet and up: through a point left of and slightly above the galaxy
- *   centre, rising at `DESKTOP_ANGLE`, so it passes behind the panel and the
- *   intro text and behind the top of the spiral. Its warm middle is one
- *   galaxy radius further down-left, in the open sky below the panel.
+ * - Tablet and up: through a point left of and slightly above its anchor
+ *   (`desktopAnchor`, the galaxy's place before V0.68), rising at
+ *   `DESKTOP_ANGLE`, so it passes behind the panel and the intro text,
+ *   above and left of the galaxy (V0.68). Its warm middle is one galaxy radius further
+ *   down-left, in the open sky below the panel. Its sizes still scale with
+ *   the galaxy radius `r`, which V0.68 didn't change.
  * - Phones: through the galaxy, a little below its centre, at the flatter
  *   `PHONE_ANGLE` so it stays in the band below the text. The warm middle is
  *   left of the galaxy, where it isn't hidden by the spiral.
@@ -129,9 +143,10 @@ function bandShape({ width, height }: SceneSize, { cx, cy, r }: GalaxyPlace): Ba
   if (phone) {
     return { ox: cx, oy: cy + 0.1 * r, dx, dy, nx: -dy, ny: dx, halfWidth: 0.62 * r, core: -0.9 * r, coreLength: 1.3 * r }
   }
+  const anchor = desktopAnchor(width, height)
   return {
-    ox: cx - 1.25 * r,
-    oy: cy - 0.15 * r,
+    ox: anchor.x - 1.25 * r,
+    oy: anchor.y - 0.15 * r,
     dx,
     dy,
     nx: -dy,

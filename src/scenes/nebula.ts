@@ -90,8 +90,8 @@ const TILE_PAD = 64
  * the finer end, large screens the coarser); streamers are 1.5x finer than
  * the banks. Gas and near dust are soft, so they can be coarse.
  */
-const BANK_TEXELS = 70_000
-const BANK_SCALE: readonly [number, number] = [0.28, 0.45]
+const BANK_TEXELS = 40_000
+const BANK_SCALE: readonly [number, number] = [0.24, 0.45]
 const WISP_FACTOR = 1.5
 const GAS_SCALE = 0.07
 const NEAR_SCALE = 0.12
@@ -211,7 +211,7 @@ function offGrid(noise: TileNoise, x: number, y: number, px: number, py: number)
  * puffs.
  */
 function billowFbm(noise: TileNoise, x: number, y: number, px: number, py: number, octaves: number) {
-  let sum = offGrid(noise, x, y, px, py) * 0.5
+  let sum = noise(x, y, px, py) * 0.5
   let amp = 0.25
   let norm = 0.5
   for (let o = 1; o < octaves; o++) {
@@ -269,35 +269,20 @@ function sampleCoarse(grid: Float32Array, gw: number, gh: number, i: number, j: 
   return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy
 }
 
-/** Periodic horizontal box blur of radius `r`, in place. */
-function blurRows(grid: Float32Array, gw: number, gh: number, r: number) {
-  const tmp = new Float32Array(gw)
+/**
+ * Periodic box blur of radius `r` along one line of a grid, in place: `count`
+ * values starting at `start`, `stride` apart (1 for a row, the grid width for
+ * a column). `tmp` is scratch space of at least `count` values.
+ */
+function blurLine(grid: Float32Array, start: number, stride: number, count: number, r: number, tmp: Float32Array) {
   const n = r * 2 + 1
-  for (let y = 0; y < gh; y++) {
-    const row = y * gw
-    let sum = 0
-    for (let k = -r; k <= r; k++) sum += grid[row + wrap(k, gw)]
-    for (let x = 0; x < gw; x++) {
-      tmp[x] = sum / n
-      sum += grid[row + wrap(x + r + 1, gw)] - grid[row + wrap(x - r, gw)]
-    }
-    grid.set(tmp, row)
+  let sum = 0
+  for (let k = -r; k <= r; k++) sum += grid[start + wrap(k, count) * stride]
+  for (let i = 0; i < count; i++) {
+    tmp[i] = sum / n
+    sum += grid[start + wrap(i + r + 1, count) * stride] - grid[start + wrap(i - r, count) * stride]
   }
-}
-
-/** Periodic vertical box blur of radius `r`, in place. */
-function blurColumns(grid: Float32Array, gw: number, gh: number, r: number) {
-  const tmp = new Float32Array(gh)
-  const n = r * 2 + 1
-  for (let x = 0; x < gw; x++) {
-    let sum = 0
-    for (let k = -r; k <= r; k++) sum += grid[wrap(k, gh) * gw + x]
-    for (let y = 0; y < gh; y++) {
-      tmp[y] = sum / n
-      sum += grid[wrap(y + r + 1, gh) * gw + x] - grid[wrap(y - r, gh) * gw + x]
-    }
-    for (let y = 0; y < gh; y++) grid[y * gw + x] = tmp[y]
-  }
+  for (let i = 0; i < count; i++) grid[start + i * stride] = tmp[i]
 }
 
 /** Color along the emission ramp at t in [0, 1], written into `out` (no allocation in hot loops). */
@@ -452,11 +437,13 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
   const warpNoise = createTileNoise(2722)
   const dustNoise = createTileNoise(2723)
 
-  // Coarse grid (every 4th texel): domain warp, colour and dust lanes. They are smooth, so interpolating them is enough.
+  // Coarse grid (every 4th texel): domain warp, broad cloud masses, colour
+  // and dust lanes. They are smooth, so interpolating them is enough.
   const cw = bx / 4
   const ch = by / 4
   const warpX = new Float32Array(cw * ch)
   const warpY = new Float32Array(cw * ch)
+  const masses = new Float32Array(cw * ch)
   const hue = new Float32Array(cw * ch)
   const lanes = new Float32Array(cw * ch)
   yield* eachRow(ch, (j) => {
@@ -468,6 +455,7 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
       const wy = WARP * (warpNoise(x + 1.7, y + 9.2, px, py) - 0.5)
       warpX[k] = wx
       warpY[k] = wy
+      masses[k] = tileFbm(densityNoise, x + wx, y + wy, px, py, 2)
       hue[k] = 0.25 + (tileFbm(dustNoise, (i / cw) * hx + 40, (j / ch) * hy - 7, hx, hy, 2) - 0.25) * 1.7
       // Dust lanes: a ridged noise, only in some patches.
       const lx = x + wx * 0.5 + 11.3
@@ -490,11 +478,11 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
       const x = (i / bx) * px + sampleCoarse(warpX, cw, ch, i, j)
       const y = (j / by) * py + sampleCoarse(warpY, cw, ch, i, j)
       const puffs = billowFbm(densityNoise, x * 3 + 3.1, y * 3 + 7.7, px * 3, py * 3, 2)
-      const n = tileFbm(densityNoise, x, y, px, py, 2) * 0.6 + puffs * 0.4
+      const n = sampleCoarse(masses, cw, ch, i, j) * 0.6 + puffs * 0.4
       relief[j * bx + i] = n
       density[j * bx + i] = smoothstep(0.45, 0.58, n)
     }
-    return bx * 4
+    return bx * 3
   })
 
   // Lighting: each texel looks a few steps toward the light (upper left)
@@ -503,11 +491,16 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
   // the banks look puffy and 3D. The steps are whole-texel offsets; the
   // first reads the sharp density, the rest a blurred copy.
   const soft = density.slice()
+  const blurTmp = new Float32Array(Math.max(bx, by))
   for (let pass = 0; pass < 2; pass++) {
-    blurRows(soft, bx, by, 2)
-    yield
-    blurColumns(soft, bx, by, 2)
-    yield
+    yield* eachRow(by, (j) => {
+      blurLine(soft, j * bx, 1, bx, 2, blurTmp)
+      return bx / 4
+    })
+    yield* eachRow(bx, (i) => {
+      blurLine(soft, i, bx, by, 2, blurTmp)
+      return by / 4
+    })
   }
   const bankImg = new ImageData(bx, by)
   {

@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI labels used by more than one page. Page-specific copy lives
+// UI labels used by more than one page. Page-specific copy lives
 // in pages/<page>.ts; anything shared goes here so it is defined only once.
 
 export interface SharedLabels {

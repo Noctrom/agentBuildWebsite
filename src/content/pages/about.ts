@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI copy for the About page (/about). The bio comes from
+// UI copy for the About page (/about). The bio comes from
 // `profile` (profile.ts), the lists from `skills` and `experience`.
 
 import type { PageMetaCopy } from '../types'
@@ -18,11 +18,11 @@ export const aboutPage: AboutPageCopy = {
   meta: {
     title: 'About',
     description:
-      'Placeholder about description: lorem ipsum background, skills and experience of Christopher Waldriff.',
+      'About Christopher Waldriff, a computer science student at the University of Minnesota Duluth: background, skills and work experience.',
   },
   title: 'About',
   skillsTitle: 'Skills',
-  skillsIntro: 'Lorem ipsum placeholder intro: tools and technologies I work with.',
+  skillsIntro: 'Languages and tools I work with.',
   experienceTitle: 'Experience',
-  experienceIntro: 'Lorem ipsum placeholder intro: where I have worked, most recent first.',
+  experienceIntro: "Where I've worked, most recent first.",
 }

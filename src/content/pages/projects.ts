@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI copy for the projects page (/projects). The projects and
+// UI copy for the projects page (/projects). The projects and
 // tags come from projects.ts; the card action labels from `sharedLabels`.
 
 import type { PageMetaCopy } from '../types'
@@ -21,11 +21,11 @@ export const projectsPage: ProjectsPageCopy = {
   meta: {
     title: 'Projects',
     description:
-      'Placeholder projects description: lorem ipsum selection of projects by Christopher Waldriff, filterable by technology.',
+      'Projects by Christopher Waldriff: SQL data analysis, a team-built social media app and this website, filterable by technology.',
   },
   title: 'Projects',
   intro:
-    'Lorem ipsum dolor sit amet, a placeholder selection of things I have built. Filter by technology below.',
+    "Things I've built, from SQL data analysis to a team-built app and this website. Filter by technology below.",
   filterLabel: 'Filter projects by technology',
   allLabel: 'All',
   resultCount: (shown, total) =>

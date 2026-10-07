@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI copy for the home page (/). The hero name, title, pitch and
+// UI copy for the home page (/). The hero name, title, pitch and
 // photo come from `profile` (profile.ts); the cards come from `featuredProjects`.
 
 import type { HomePageMetaCopy } from '../types'
@@ -26,6 +26,6 @@ export const homePage: HomePageCopy = {
   viewProjectsLabel: 'View Projects',
   downloadResumeLabel: 'Download Resume',
   featuredTitle: 'Featured Projects',
-  featuredIntro: 'Lorem ipsum placeholder intro: a few highlights from the projects page.',
+  featuredIntro: 'A few highlights from my work. See the Projects page for more.',
   seeAllProjectsLabel: 'See all projects',
 }

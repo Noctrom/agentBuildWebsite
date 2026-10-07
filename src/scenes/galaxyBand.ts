@@ -59,11 +59,11 @@ interface BandShape {
 
 /** Rise of the band: radians above horizontal (the photo's band rises ~20 degrees). */
 const DESKTOP_ANGLE = 0.55
-const PHONE_ANGLE = 0.3
+const PHONE_ANGLE = 0.26
 /** Peak opacity of the band glow (the canvas itself is shown at 0.2). */
 const BAND_PEAK = 0.85
 /** How far out the glow reaches, in band half-widths (it is ~0 beyond). */
-const BAND_REACH = 2.2
+const BAND_REACH = 1.9
 /** Low-res bake: one bitmap cell per this many CSS pixels, smoothed when drawn. */
 const CELL = 3
 /** Bitmap rows baked between yields (each slice well under 5 ms on a slow phone). */
@@ -149,7 +149,7 @@ function bandShape({ width, height }: SceneSize, { cx, cy, r }: GalaxyPlace): Ba
 export function bandRows(size: SceneSize, place: GalaxyPlace): [number, number] {
   const s = bandShape(size, place)
   // Widest the glow gets (warm middle, plus the wander), measured across the band.
-  const reach = (BAND_REACH * 1.2 + 0.5) * s.halfWidth
+  const reach = (BAND_REACH * 1.22 + 0.45) * s.halfWidth
   const slope = s.dy / s.dx
   const yAt = (x: number) => s.oy + (x - s.ox) * slope
   const across = reach / s.dx

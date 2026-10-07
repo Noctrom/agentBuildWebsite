@@ -394,9 +394,12 @@ function* eachRow(count: number, row: (j: number) => number): Generator<unknown,
 }
 
 /** Bake every cloud layer for a viewport size, in slices (see `eachRow`). */
-function* bakeLayers(width: number, height: number): Generator<unknown, Baked, undefined> {
+function* bakeLayers(width: number, height: number, sharp: number): Generator<unknown, Baked, undefined> {
   const unit = Math.sqrt(width * height)
+  /** Layer start offsets: drawn first, so they are the same for every bake. */
   const random = createRandom(2720)
+  const gasStart = [random(), random()]
+  const bankStart = [random(), random()]
   const dither = makeDither(2729)
   const rgb: [number, number, number] = [0, 0, 0]
 
@@ -430,14 +433,19 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
   }
 
   // --- 2. Cloud banks. ---
-  const bankScale = Math.max(
+  // The tile size comes from the normal resolution; a sharp bake has exactly
+  // `sharp` times the texels, so both bakes show the same picture.
+  const baseScale = Math.max(
     BANK_SCALE[0],
     Math.min(BANK_SCALE[1], Math.sqrt(BANK_TEXELS / ((width + TILE_PAD) * (height + TILE_PAD)))),
   )
-  const [bx, by] = tileTexels(width, height, bankScale)
+  const [baseX, baseY] = tileTexels(width, height, baseScale)
+  const bankScale = baseScale * sharp
+  const bx = baseX * sharp
+  const by = baseY * sharp
   /** Density noise lattice: cloud masses about 30% of the screen across. */
-  const px = Math.max(2, Math.round((bx / bankScale / unit) * 3.4))
-  const py = Math.max(2, Math.round((by / bankScale / unit) * 3.4))
+  const px = Math.max(2, Math.round((baseX / baseScale / unit) * 3.4))
+  const py = Math.max(2, Math.round((baseY / baseScale / unit) * 3.4))
   /** Colour varies more slowly than the clouds: half the lattice. */
   const hx = Math.max(1, Math.round(px / 2))
   const hy = Math.max(1, Math.round(py / 2))
@@ -486,7 +494,10 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
       const x = (i / bx) * px + sampleCoarse(warpX, cw, ch, i, j)
       const y = (j / by) * py + sampleCoarse(warpY, cw, ch, i, j)
       const puffs = billowFbm(densityNoise, x * 3 + 3.1, y * 3 + 7.7, px * 3, py * 3, 2)
-      const n = sampleCoarse(masses, cw, ch, i, j) * 0.6 + puffs * 0.4
+      let n = sampleCoarse(masses, cw, ch, i, j) * 0.6 + puffs * 0.4
+      // The sharp bake adds finer puffs, centred on zero so the cloud shapes
+      // stay the same as in the normal bake: only their edges get more detail.
+      if (sharp > 1) n += (Math.abs(offGrid(densityNoise, x * 12 + 5.3, y * 12 + 1.9, px * 12, py * 12) * 2 - 1) - 0.4) * 0.07
       relief[j * bx + i] = n
       density[j * bx + i] = smoothstep(0.45, 0.58, n)
     }
@@ -502,20 +513,20 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
   const blurTmp = new Float32Array(Math.max(bx, by))
   for (let pass = 0; pass < 2; pass++) {
     yield* eachRow(by, (j) => {
-      blurLine(soft, j * bx, 1, bx, 2, blurTmp)
+      blurLine(soft, j * bx, 1, bx, 2 * sharp, blurTmp)
       return bx / 4
     })
     yield* eachRow(bx, (i) => {
-      blurLine(soft, i, bx, by, 2, blurTmp)
+      blurLine(soft, i, bx, by, 2 * sharp, blurTmp)
       return by / 4
     })
   }
   const bankImg = new ImageData(bx, by)
   {
     const px32 = new Uint32Array(bankImg.data.buffer)
-    const [c0, c1, c2, c3, c4] = SHADOW_STEPS.map(([dist]) => shiftedColumns(bx, Math.round(LIGHT_X * dist)))
+    const [c0, c1, c2, c3, c4] = SHADOW_STEPS.map(([dist]) => shiftedColumns(bx, Math.round(LIGHT_X * dist * sharp)))
     const [w0, w1, w2, w3, w4] = SHADOW_STEPS.map(([, weight]) => weight)
-    const dy = SHADOW_STEPS.map(([dist]) => Math.round(LIGHT_Y * dist))
+    const dy = SHADOW_STEPS.map(([dist]) => Math.round(LIGHT_Y * dist * sharp))
     yield* eachRow(by, (j) => {
       const r0w = wrap(j + dy[0], by) * bx
       const r1w = wrap(j + dy[1], by) * bx
@@ -624,34 +635,42 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
     })
   }
 
-  // Young stars: on dense spots of the banks (tile coordinates).
+  // Young stars: on dense spots of the banks (tile coordinates), picked on
+  // the normal-resolution grid so the sharp bake picks the same spots.
+  const starRandom = createRandom(2726)
   const youngStars: YoungStar[] = []
   for (let tries = 0; tries < 400 && youngStars.length < 5; tries++) {
-    const i = Math.floor(random() * bx)
-    const j = Math.floor(random() * by)
-    if (soft[j * bx + i] < 0.35) continue
-    const x = i / bankScale
-    const y = j / bankScale
+    const i = Math.floor(starRandom() * baseX)
+    const j = Math.floor(starRandom() * baseY)
+    if (soft[j * sharp * bx + i * sharp] < 0.35) continue
+    const x = i / baseScale
+    const y = j / baseScale
     if (youngStars.some((s) => Math.hypot(s.x - x, s.y - y) < unit * 0.25)) continue
     youngStars.push({
       x,
       y,
-      size: between(random, 26, 48) * Math.min(1, unit / 800 + 0.3),
-      speed: between(random, 0.2, 0.45),
-      phase: random() * Math.PI * 2,
+      size: between(starRandom, 26, 48) * Math.min(1, unit / 800 + 0.3),
+      speed: between(starRandom, 0.2, 0.45),
+      phase: starRandom() * Math.PI * 2,
     })
   }
   yield
 
-  const layer = (tile: HTMLCanvasElement, scale: number, speed: number, parallax: number): TileLayer => ({
+  const layer = (
+    tile: HTMLCanvasElement,
+    scale: number,
+    speed: number,
+    parallax: number,
+    start: number[],
+  ): TileLayer => ({
     canvas: tileTexture(tile, width * scale, height * scale),
     tw: tile.width / scale,
     th: tile.height / scale,
     scale,
     speed,
     parallax,
-    x0: random() * (tile.width / scale),
-    y0: random() * (tile.height / scale),
+    x0: start[0] * (tile.width / scale),
+    y0: start[1] * (tile.height / scale),
   })
   // Banks and streamers drift together, so they share one texture at the
   // streamers' resolution: one full-screen draw per frame instead of two.
@@ -666,25 +685,38 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
     cctx.drawImage(canvasOf(wispImg), 0, 0)
   }
   yield
-  const banks = layer(clouds, bankScale * WISP_FACTOR, 1, 0.025)
+  const banks = layer(clouds, bankScale * WISP_FACTOR, 1, 0.025, bankStart)
   yield
-  const gas = layer(canvasOf(gasImg), GAS_SCALE, 0.45, 0.012)
+  const gas = layer(canvasOf(gasImg), GAS_SCALE, 0.45, 0.012, gasStart)
   return { gas, banks, youngStars }
 }
 
 /**
- * The bake is the slow part of this scene, so the last result is kept for the
- * same viewport size: coming back to the page doesn't bake again. A few small
- * textures, about 1-4 MB. Written only once a bake has finished: a build
- * abandoned mid-bake leaves the cache as it was.
+ * Bake resolution multiplier for a canvas `dpr`: 2 for the sharp view on
+ * desktops and tablets (V0.61, dpr 1.5 and up), else 1. The normal view
+ * (dpr <= 1) always bakes at 1, so this never slows down the first frame.
  */
-let bakeCache: { key: string; baked: Baked } | null = null
+function sharpness(dpr: number) {
+  return dpr >= 1.5 ? 2 : 1
+}
 
-function* cachedLayers(width: number, height: number): Generator<unknown, Baked, undefined> {
-  const key = `${width}x${height}`
-  if (bakeCache?.key === key) return bakeCache.baked
-  const baked = yield* bakeLayers(width, height)
-  bakeCache = { key, baked }
+/**
+ * The bake is the slow part of this scene, so the last two results are kept
+ * (by viewport size and sharpness): coming back to the page, or switching
+ * between the normal and hidden-content views, doesn't bake again. About
+ * 2-6 MB at 1x, four times that at 2x. Written only once a bake has finished:
+ * a build abandoned mid-bake leaves the cache as it was.
+ */
+const bakeCache = new Map<string, Baked>()
+
+function* cachedLayers(width: number, height: number, sharp: number): Generator<unknown, Baked, undefined> {
+  const key = `${width}x${height}@${sharp}`
+  const hit = bakeCache.get(key)
+  if (hit) return hit
+  const baked = yield* bakeLayers(width, height, sharp)
+  bakeCache.set(key, baked)
+  // Keep the newest two.
+  for (const old of bakeCache.keys()) if (bakeCache.size > 2) bakeCache.delete(old)
   return baked
 }
 
@@ -725,8 +757,8 @@ function* createNebula(setup: SceneSetup): SceneBuild {
   /** Bank drift speed (CSS px per second) for the current size. */
   let drift = 0
 
-  function* build({ width, height }: SceneSize): Generator<unknown, void, undefined> {
-    const next = yield* cachedLayers(width, height)
+  function* build({ width, height, dpr }: SceneSize): Generator<unknown, void, undefined> {
+    const next = yield* cachedLayers(width, height, sharpness(dpr))
     baked = next
     drift = Math.min(Math.sqrt(width * height) * DRIFT_PER_UNIT, width / MIN_CROSS_SECONDS)
   }

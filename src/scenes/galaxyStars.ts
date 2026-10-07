@@ -1,4 +1,5 @@
 import { makeCanvas, type Rgb } from './canvas'
+import { MILKY_WAY, mix } from './galaxyPalette'
 
 /**
  * Moving stars of the Contact galaxy (V0.39), drawn live every frame so the
@@ -32,12 +33,17 @@ import { makeCanvas, type Rgb } from './canvas'
  * bright as in V0.39, and the random phases keep the stars out of step.
  */
 
-/** Star colors, indexed by `StarSeed.color`. */
+/**
+ * Star colors, indexed by `StarSeed.color` (V0.59: the Milky Way palette in
+ * `galaxyPalette.ts`; inner stars warm, outer stars blue-white and cyan).
+ */
 export const STAR_COLORS: readonly Rgb[] = [
-  [205, 220, 255], // arm stars, blue-white
-  [255, 245, 230], // arm stars, warm white
-  [255, 228, 190], // bulge
-  [210, 215, 245], // inter-arm disk
+  MILKY_WAY.blueWhite, // 0: outer arm stars
+  MILKY_WAY.paleCyan, // 1: outer arm stars, a few
+  mix(MILKY_WAY.gold, MILKY_WAY.cream, 0.5), // 2: bulge
+  mix(MILKY_WAY.blueWhite, MILKY_WAY.gold, 0.35), // 3: inter-arm disk
+  mix(MILKY_WAY.gold, MILKY_WAY.cream, 0.3), // 4: inner arm stars
+  mix(MILKY_WAY.amber, MILKY_WAY.gold, 0.5), // 5: inner arm stars, a few
 ]
 
 /** A star before packing, in galaxy units (radius as a fraction of the galaxy radius). */

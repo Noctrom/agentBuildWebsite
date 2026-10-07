@@ -70,7 +70,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.60](docs/backlog/v0/v0.50-v0.74.md#v060--milky-way-band-across-the-contact-sky) | Milky Way band across the Contact sky | dev-2 | V0.59 | todo |
 | [V0.61](docs/backlog/v0/v0.50-v0.74.md#v061--hidden-content-view-shows-the-background-bright-and-sharp) | Hidden-content view shows the background bright and sharp | dev-1 | V0.57, V0.42 | in progress |
 | [V0.62](docs/backlog/v0/v0.50-v0.74.md#v062--resume-nebula-redrawn-as-drifting-clouds-across-the-whole-screen) | Resume nebula redrawn as drifting clouds across the whole screen | dev-2 | — | in progress |
-| [V0.63](docs/backlog/v0/v0.50-v0.74.md#v063--behind-the-scenes-planet-without-its-gas-stream) | Behind the Scenes planet without its gas stream | dev-2 | V0.45 | in progress |
+| [V0.63](docs/backlog/v0/v0.50-v0.74.md#v063--behind-the-scenes-planet-without-its-gas-stream) | Behind the Scenes planet without its gas stream | dev-2 | V0.45 | done |
 | [V0.64](docs/backlog/v0/v0.50-v0.74.md#v064--projects-gas-giant-gets-moving-jupiter-like-clouds) | Projects gas giant gets moving Jupiter-like clouds | dev-2 | — | in progress |
 
 ## Old ids

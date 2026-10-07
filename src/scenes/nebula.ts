@@ -17,14 +17,14 @@ import type { Scene, SceneBuild, SceneFrame, SceneSetup, SceneSize } from './typ
  *    baked at a finer resolution so they stay sharp.
  * 4. Stars, and five young stars with six-point diffraction spikes that sit
  *    in the cloud banks and move with them.
- * 5. Near dust: soft dark lanes in front, drifting a little faster.
  *
  * Drift (V0.62): every layer is a tileable texture (periodic noise), baked
  * once per viewport size. Each frame draws a window of it, offset by
  * `speed * time` and wrapped, so the clouds drift forever without gaps or
- * seams, and no noise is computed per frame. The layers drift at different
- * speeds (parallax), so the motion reads as depth. Per frame: four
- * `drawImage` calls for the clouds, the starfield and five star sprites.
+ * seams, and no noise is computed per frame. The gas drifts slower than the
+ * banks (parallax), so the motion reads as depth. Per frame: two full-screen
+ * `drawImage` calls (gas; banks with streamers), the starfield and five star
+ * sprites.
  * Motion is a pure function of `time`, so the first frame already moves at
  * full speed and a still frame (reduce motion) at time 0 looks complete.
  *
@@ -54,7 +54,7 @@ const GAS_BASE: readonly Rgb[] = [
 ]
 const GAS_TEAL: Rgb = [40, 160, 185]
 const GAS_MAGENTA: Rgb = [185, 60, 150]
-/** Dust: the dark lanes, and the near dust in front. */
+/** Dust: the dark lanes. */
 const DUST: Rgb = [16, 8, 16]
 /** Pale tint for lit rims and streamers. */
 const RIM: Rgb = [255, 236, 228]
@@ -88,21 +88,20 @@ const TILE_PAD = 64
  * Texture resolution in texels per CSS pixel. The banks aim for
  * `BANK_TEXELS` texels per tile within the `BANK_SCALE` limits (phones get
  * the finer end, large screens the coarser); streamers are 1.5x finer than
- * the banks. Gas and near dust are soft, so they can be coarse.
+ * the banks. The gas is soft, so it can be coarse.
  */
 const BANK_TEXELS = 40_000
 const BANK_SCALE: readonly [number, number] = [0.24, 0.45]
 const WISP_FACTOR = 1.5
 const GAS_SCALE = 0.07
-const NEAR_SCALE = 0.12
 /** Texels of noise work between yields (each slice stays well under 5 ms on a slow phone). */
 const TEXELS_PER_SLICE = 600
 
 /**
  * Drift speed of the cloud banks in CSS px per second: about 0.8% of the
  * screen's size per second, but never faster than crossing the width in
- * 90 s. The gas drifts at 45% of that, the near dust at 140% (so it crosses
- * a phone screen in a bit over a minute). Direction: left and slightly up.
+ * 90 s. The gas behind drifts at 45% of that. Direction: left and slightly
+ * up.
  */
 const DRIFT_PER_UNIT = 0.008
 const MIN_CROSS_SECONDS = 90
@@ -322,22 +321,32 @@ function wrap(value: number, size: number) {
   return m < 0 ? m + size : m
 }
 
-/**
- * Put a tile's pixels on a texture large enough for any viewport-sized
- * window at any offset: the tile, plus wrapped copies to the right and below.
- * The extra copy also feeds the texels just outside a window, so the
- * bilinear upscale has no seams.
- */
-function tileTexture(img: ImageData, tx: number, ty: number, viewW: number, viewH: number) {
-  const tile = makeCanvas(tx, ty)
-  tile.getContext('2d')?.putImageData(img, 0, 0)
-  const w = Math.min(tx * 2, tx + Math.ceil(viewW) + 2)
-  const h = Math.min(ty * 2, ty + Math.ceil(viewH) + 2)
+/** Canvas holding an `ImageData`. */
+function canvasOf(img: ImageData) {
+  const canvas = makeCanvas(img.width, img.height)
+  canvas.getContext('2d')?.putImageData(img, 0, 0)
+  return canvas
+}
+
+/** A `w` x `h` canvas filled with copies of `tile`, starting at the top left. */
+function repeated(tile: HTMLCanvasElement, w: number, h: number) {
   const canvas = makeCanvas(w, h)
   const ctx = canvas.getContext('2d')
   if (!ctx) return canvas
-  for (let y = 0; y < h; y += ty) for (let x = 0; x < w; x += tx) ctx.drawImage(tile, x, y)
+  for (let y = 0; y < h; y += tile.height) for (let x = 0; x < w; x += tile.width) ctx.drawImage(tile, x, y)
   return canvas
+}
+
+/**
+ * A texture large enough for any viewport-sized window (`viewW` x `viewH`
+ * texels) at any offset: the tile, plus wrapped copies to the right and
+ * below. The extra copy also feeds the texels just outside a window, so the
+ * bilinear upscale has no seams.
+ */
+function tileTexture(tile: HTMLCanvasElement, viewW: number, viewH: number) {
+  const tx = tile.width
+  const ty = tile.height
+  return repeated(tile, Math.min(tx * 2, tx + Math.ceil(viewW) + 2), Math.min(ty * 2, ty + Math.ceil(viewH) + 2))
 }
 
 /** Tile dimensions in texels (multiples of 4, for the coarse grid) for a scale. */
@@ -361,9 +370,8 @@ function makeDither(seed: number) {
 
 interface Baked {
   gas: TileLayer
+  /** Cloud banks with their streamers. */
   banks: TileLayer
-  wisps: TileLayer
-  near: TileLayer
   youngStars: YoungStar[]
 }
 
@@ -616,27 +624,6 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
     })
   }
 
-  // --- 5. Near dust: soft dark lanes in front. ---
-  const [nx, ny] = tileTexels(width, height, NEAR_SCALE)
-  const nearImg = new ImageData(nx, ny)
-  {
-    const px32 = new Uint32Array(nearImg.data.buffer)
-    const noise = createTileNoise(2725)
-    const pnx = Math.max(1, Math.round((nx / NEAR_SCALE / unit) * 2.4))
-    const pny = Math.max(1, Math.round((ny / NEAR_SCALE / unit) * 2.4))
-    yield* eachRow(ny, (j) => {
-      const y = (j / ny) * pny
-      for (let i = 0; i < nx; i++) {
-        const x = (i / nx) * pnx
-        const patch = smoothstep(0.5, 0.7, tileFbm(noise, x + 13.1, y + 3.7, pnx, pny, 2))
-        if (patch < 0.01) continue
-        const ridge = 1 - Math.abs(tileFbm(noise, x, y, pnx, pny, 3) * 2 - 1)
-        px32[j * nx + i] = pack(DUST[0], DUST[1], DUST[2], 255 * smoothstep(0.7, 0.95, ridge) * patch * 0.6, dither())
-      }
-      return nx * 3
-    })
-  }
-
   // Young stars: on dense spots of the banks (tile coordinates).
   const youngStars: YoungStar[] = []
   for (let tries = 0; tries < 400 && youngStars.length < 5; tries++) {
@@ -656,24 +643,33 @@ function* bakeLayers(width: number, height: number): Generator<unknown, Baked, u
   }
   yield
 
-  const layer = (img: ImageData, tx: number, ty: number, scale: number, speed: number, parallax: number): TileLayer => ({
-    canvas: tileTexture(img, tx, ty, width * scale, height * scale),
-    tw: tx / scale,
-    th: ty / scale,
+  const layer = (tile: HTMLCanvasElement, scale: number, speed: number, parallax: number): TileLayer => ({
+    canvas: tileTexture(tile, width * scale, height * scale),
+    tw: tile.width / scale,
+    th: tile.height / scale,
     scale,
     speed,
     parallax,
-    x0: random() * (tx / scale),
-    y0: random() * (ty / scale),
+    x0: random() * (tile.width / scale),
+    y0: random() * (tile.height / scale),
   })
-  const banks = layer(bankImg, bx, by, bankScale, 1, 0.025)
+  // Banks and streamers drift together, so they share one texture at the
+  // streamers' resolution: one full-screen draw per frame instead of two.
+  // The banks are scaled up from a 3x3 repeat, so the bilinear filter wraps
+  // around the tile edges instead of clamping there.
+  const bankTile = canvasOf(bankImg)
   yield
-  // Streamers share the banks' tile and offset, so they stay attached.
-  const wisps: TileLayer = { ...layer(wispImg, wx2, wy2, bankScale * WISP_FACTOR, 1, 0.025), x0: banks.x0, y0: banks.y0 }
+  const clouds = makeCanvas(wx2, wy2)
+  const cctx = clouds.getContext('2d')
+  if (cctx) {
+    cctx.drawImage(repeated(bankTile, bx * 3, by * 3), bx, by, bx, by, 0, 0, wx2, wy2)
+    cctx.drawImage(canvasOf(wispImg), 0, 0)
+  }
   yield
-  const gas = layer(gasImg, gx, gy, GAS_SCALE, 0.45, 0.012)
-  const near = layer(nearImg, nx, ny, NEAR_SCALE, 1.4, 0.04)
-  return { gas, banks, wisps, near, youngStars }
+  const banks = layer(clouds, bankScale * WISP_FACTOR, 1, 0.025)
+  yield
+  const gas = layer(canvasOf(gasImg), GAS_SCALE, 0.45, 0.012)
+  return { gas, banks, youngStars }
 }
 
 /**
@@ -764,7 +760,6 @@ function* createNebula(setup: SceneSetup): SceneBuild {
     const { ctx, time, scrollY } = frame
     drawLayer(ctx, baked.gas, frame)
     drawLayer(ctx, baked.banks, frame)
-    drawLayer(ctx, baked.wisps, frame)
     stars.draw(frame)
     // Young stars sit in the banks and drift with them.
     const banks = baked.banks
@@ -778,7 +773,6 @@ function* createNebula(setup: SceneSetup): SceneBuild {
       ctx.drawImage(spikeStar, x - half, y - half, s.size, s.size)
     }
     ctx.globalAlpha = 1
-    drawLayer(ctx, baked.near, frame)
   }
 
   return {

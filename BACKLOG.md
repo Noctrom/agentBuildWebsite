@@ -75,7 +75,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.65](docs/backlog/v0/v0.50-v0.74.md#v065--about-sun-churns-visibly-and-throws-random-sunbursts) | About sun churns visibly and throws random sunbursts | dev-2 | — | done |
 | [V0.66](docs/backlog/v0/v0.50-v0.74.md#v066--privacy-and-secrets-scan-before-going-public-report-only) | Privacy and secrets scan before going public (report only) | leader | — | done |
 | [V0.67](docs/backlog/v0/v0.50-v0.74.md#v067--scene-docs-match-the-v061-showcase-mode) | Scene docs match the V0.61 showcase mode | dev-2 | V0.61 | done |
-| [V0.68](docs/backlog/v0/v0.50-v0.74.md#v068--contact-galaxy-moves-down-toward-the-bottom-right-corner-on-tablet-and-desktop) | Contact galaxy moves down toward the bottom-right corner on tablet and desktop | dev-2 | V0.60 | todo |
+| [V0.68](docs/backlog/v0/v0.50-v0.74.md#v068--contact-galaxy-moves-down-toward-the-bottom-right-corner-on-tablet-and-desktop) | Contact galaxy moves down toward the bottom-right corner on tablet and desktop | dev-2 | V0.60 | in progress |
 
 ## Old ids
 

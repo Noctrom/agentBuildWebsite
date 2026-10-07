@@ -56,7 +56,7 @@ import { FrameRateMonitor } from './frameRateMonitor'
  * the tightest pairs are accent on a surface nested twice (4.96:1) and accent
  * on the bare background (5.05:1). At 0.22 bare accent drops to 4.7, so this
  * is the cap with the current tokens. Recompute (table in `index.css`) before
- * raising it.
+ * raising it. Showcase mode (V0.61) lifts it to 1 only while no text is shown.
  */
 export const BACKGROUND_MAX_OPACITY = 0.2
 
@@ -64,7 +64,8 @@ export const BACKGROUND_MAX_OPACITY = 0.2
  * Canvas resolution caps. The background is dim and soft, so it gains little
  * from more pixels, and fill rate is the main cost: at 1.5 the 375px view ran
  * at ~36 fps under 4x CPU throttling, at 1 it holds 60 fps. Large screens are
- * further scaled down to at most MAX_CANVAS_PIXELS backing pixels.
+ * further scaled down to at most MAX_CANVAS_PIXELS backing pixels. Showcase
+ * mode (V0.61) uses MAX_SHARP_PIXELS and no DPR cap instead.
  */
 const MAX_DPR = 1
 const MAX_CANVAS_PIXELS = 1_100_000

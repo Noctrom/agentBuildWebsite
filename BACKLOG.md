@@ -69,6 +69,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.59](docs/backlog/v0/v0.50-v0.74.md#v059--contact-galaxy-recoloured-to-match-chriss-milky-way-photo) | Contact galaxy recoloured to match Chris's Milky Way photo | dev-2 | V0.58 | in progress |
 | [V0.60](docs/backlog/v0/v0.50-v0.74.md#v060--milky-way-band-across-the-contact-sky) | Milky Way band across the Contact sky | dev-2 | V0.59 | todo |
 | [V0.61](docs/backlog/v0/v0.50-v0.74.md#v061--hidden-content-view-shows-the-background-bright-and-sharp) | Hidden-content view shows the background bright and sharp | dev-1 | V0.57, V0.42 | in progress |
+| [V0.62](docs/backlog/v0/v0.50-v0.74.md#v062--resume-nebula-redrawn-as-drifting-clouds-across-the-whole-screen) | Resume nebula redrawn as drifting clouds across the whole screen | dev-2 | — | in progress |
 
 ## Old ids
 

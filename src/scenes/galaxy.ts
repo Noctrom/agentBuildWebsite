@@ -1,9 +1,11 @@
+import { runToEnd } from './build'
 import { makeCanvas, makeSoftDot, rgba, spread, type Rgb } from './canvas'
+import { bandRows, drawTwinkles, makeTwinkleSprite, paintBand, type BandTwinkle } from './galaxyBand'
 import { MILKY_WAY, mix } from './galaxyPalette'
 import { createDiskStars, type DiskStars, type StarSeed, type Twinkle } from './galaxyStars'
 import { between, createRandom } from './random'
 import { createStarfield } from './starfield'
-import type { Scene, SceneFrame, SceneSetup, SceneSize } from './types'
+import type { Scene, SceneBuild, SceneFrame, SceneSetup, SceneSize } from './types'
 
 /**
  * Contact scene (S27, swirling since V0.39): a quiet starfield with a spiral
@@ -414,39 +416,42 @@ function skyShape({ width }: SceneSize, { cx, cy, r }: Layout): Ellipse {
   return { x: cx + 0.35 * r, y: cy + 0.25 * r, ax: 1.65 * r, ay: r }
 }
 
-/** The baked sky and where it goes on screen (CSS pixels). */
+/** The baked sky and where it goes on screen (CSS pixels), with the band's twinkling stars. */
 interface SkyLayer {
   canvas: HTMLCanvasElement
   x: number
   y: number
   w: number
   h: number
+  twinkles: BandTwinkle[]
 }
 
 /**
  * Contact sky (V0.59), baked once per size into one canvas at device
  * resolution and drawn under the shared starfield: a deep indigo-to-navy
- * tint around the galaxy, with many fine blue-white stars and a few bright
- * ones in it. It is the Contact scene's own layer, so
- * the shared starfield (and every other page) is unchanged. It doesn't move,
- * so it costs one `drawImage` a frame.
+ * tint around the galaxy, the Milky Way band (V0.60, `galaxyBand.ts`) across
+ * it, then many fine blue-white stars and a few bright ones in the tint. It
+ * is the Contact scene's own layer, so the shared starfield (and every other
+ * page) is unchanged. It doesn't move, so it costs one `drawImage` a frame;
+ * only the band's few twinkling stars are drawn live. A generator (see
+ * "Heavy setup" in `types.ts`): the band bake yields every few rows.
  */
-function makeSky(size: SceneSize, layout: Layout): SkyLayer {
+function* makeSky(size: SceneSize, layout: Layout): Generator<unknown, SkyLayer, undefined> {
   const { width, height, dpr } = size
   const { cx, cy, r } = layout
   const shape = skyShape(size, layout)
-  // Only the ellipse's box (on screen) is baked and drawn, which keeps the
-  // per-frame fill small: about a sixth of the screen on phones.
-  const x0 = Math.max(0, Math.floor(shape.x - shape.ax))
-  const y0 = Math.max(0, Math.floor(shape.y - shape.ay))
-  const x1 = Math.min(width, Math.ceil(shape.x + shape.ax))
-  const y1 = Math.min(height, Math.ceil(shape.y + shape.ay))
-  const layer = { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) }
+  // Only the rows of the tint and the band are baked and drawn, full width
+  // (the band crosses the screen): the whole screen on desktop, about two
+  // fifths of it on phones.
+  const [bandTop, bandBottom] = bandRows(size, layout)
+  const y0 = Math.max(0, Math.min(bandTop, Math.floor(shape.y - shape.ay)))
+  const y1 = Math.min(height, Math.max(bandBottom, Math.ceil(shape.y + shape.ay)))
+  const layer = { x: 0, y: y0, w: Math.max(1, width), h: Math.max(1, y1 - y0) }
   const canvas = makeCanvas(layer.w * dpr, layer.h * dpr)
   const ctx = canvas.getContext('2d')
-  if (!ctx) return { canvas, ...layer }
+  if (!ctx) return { canvas, ...layer, twinkles: [] }
   ctx.scale(dpr, dpr)
-  ctx.translate(-x0, -y0)
+  ctx.translate(-layer.x, -layer.y)
   ctx.save()
   ctx.translate(shape.x, shape.y)
   ctx.scale(shape.ax, shape.ay)
@@ -458,6 +463,10 @@ function makeSky(size: SceneSize, layout: Layout): SkyLayer {
   ctx.fillStyle = tint
   ctx.fillRect(-1, -1, 2, 2)
   ctx.restore()
+  yield
+
+  // V0.60: the Milky Way band over the tint.
+  const twinkles = yield* paintBand(ctx, size, layout, layer.x, layer.y, layer.w, layer.h)
 
   const random = createRandom(2734)
   // Fine stars fill the tinted sky only, so none lands behind the text.
@@ -492,7 +501,7 @@ function makeSky(size: SceneSize, layout: Layout): SkyLayer {
     placed++
   }
   ctx.globalAlpha = 1
-  return { canvas, ...layer }
+  return { canvas, ...layer, twinkles }
 }
 
 /** Small elliptical smudge for faint background galaxies. */
@@ -510,7 +519,7 @@ interface Smudge {
   alpha: number
 }
 
-function createGalaxy(setup: SceneSetup) {
+function* createGalaxy(setup: SceneSetup): SceneBuild {
   const stars = createStarfield(setup, {
     seed: 273,
     density: 0.7,
@@ -536,12 +545,20 @@ function createGalaxy(setup: SceneSetup) {
     softening: SOFTENING,
   })
 
-  function build(size: SceneSize) {
-    layout = layoutFor(size)
+  const twinkleSprite = makeTwinkleSprite()
+
+  function* build(size: SceneSize): Generator<unknown, void, undefined> {
+    const next = layoutFor(size)
     const random = createRandom(2730)
-    liveKnots = []
-    texture = makeGlow(layout.r, random, liveKnots)
-    sky = makeSky(size, layout)
+    const nextKnots: LiveKnot[] = []
+    const nextTexture = makeGlow(next.r, random, nextKnots)
+    yield
+    const nextSky = yield* makeSky(size, next)
+    // Assigned only once the whole bake is done (a build may be abandoned at a yield).
+    layout = next
+    liveKnots = nextKnots
+    texture = nextTexture
+    sky = nextSky
     const { width, height } = size
     const { cx, cy, r } = layout
     const warm = makeSmudge(mix(MILKY_WAY.gold, MILKY_WAY.cream, 0.5))
@@ -555,7 +572,7 @@ function createGalaxy(setup: SceneSetup) {
     ]
   }
 
-  build(setup)
+  yield* build(setup)
 
   /**
    * The glow texture, turning rigidly with the arm pattern, with the
@@ -592,7 +609,11 @@ function createGalaxy(setup: SceneSetup) {
   }
 
   function draw(frame: SceneFrame) {
-    if (sky) frame.ctx.drawImage(sky.canvas, sky.x, sky.y, sky.w, sky.h)
+    if (sky) {
+      frame.ctx.drawImage(sky.canvas, sky.x, sky.y, sky.w, sky.h)
+      // V0.60: the band's twinkling stars (time 0, so steady, with reduced motion).
+      drawTwinkles(frame.ctx, twinkleSprite, sky.twinkles, frame.time)
+    }
     stars.draw(frame)
     if (!texture) return
     const { ctx, time, scrollY } = frame
@@ -619,7 +640,7 @@ function createGalaxy(setup: SceneSetup) {
     draw,
     resize(next: SceneSize) {
       stars.resize?.(next)
-      build(next)
+      runToEnd(build(next))
     },
     dispose() {
       stars.dispose?.()

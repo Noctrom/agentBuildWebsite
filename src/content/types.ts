@@ -1,6 +1,6 @@
 /**
  * Content types shared by every page. Edit the data files next to this one
- * (profile.ts, projects.ts, ...) to replace placeholders with real content.
+ * (profile.ts, projects.ts, ...) to change what the site shows.
  */
 
 /** Year and month, e.g. "2023-04". Pages format these for display. */

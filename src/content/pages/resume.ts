@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI copy for the resume page (/resume). The entries themselves
+// UI copy for the resume page (/resume). The entries themselves
 // come from `experience` (experience.ts) and `education` (education.ts); the
 // PDF path comes from `profile.resumeUrl`.
 
@@ -24,15 +24,15 @@ export const resumePage: ResumePageCopy = {
   meta: {
     title: 'Resume',
     description:
-      'Placeholder resume description: lorem ipsum summary of experience and education, with a PDF download.',
+      'Resume of Christopher Waldriff: computer science at the University of Minnesota Duluth and work experience, with a PDF download.',
   },
   title: 'Resume',
   intro:
-    'Lorem ipsum placeholder intro: a summary of my experience and education. Download the PDF for the full version.',
+    'A summary of my education and experience. Download the PDF for the full resume.',
   downloadLabel: 'Download PDF',
   experienceTitle: 'Experience',
-  experienceIntro: 'Lorem ipsum placeholder intro: roles, most recent first.',
+  experienceIntro: 'Roles, most recent first.',
   highlightsLabel: 'Highlights',
   educationTitle: 'Education',
-  educationIntro: 'Lorem ipsum placeholder intro: degrees and courses.',
+  educationIntro: 'Degree, coursework and honors.',
 }

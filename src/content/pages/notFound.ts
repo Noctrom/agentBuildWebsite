@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI copy for the 404 page (any unknown URL, the catch-all route).
+// UI copy for the 404 page (any unknown URL, the catch-all route).
 
 import type { PageMetaCopy } from '../types'
 
@@ -15,10 +15,10 @@ export interface NotFoundPageCopy {
 export const notFoundPage: NotFoundPageCopy = {
   meta: {
     title: 'Page not found',
-    description: 'Placeholder 404 description: lorem ipsum, this page does not exist.',
+    description: "This page doesn't exist on Christopher Waldriff's site.",
   },
   title: 'Page not found',
   intro:
-    'Lorem ipsum placeholder text: the page you are looking for does not exist or has moved.',
+    "The page you're looking for doesn't exist or has moved.",
   homeLabel: 'Back to home',
 }

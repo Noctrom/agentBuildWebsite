@@ -722,6 +722,7 @@ function* createSun(setup: SceneSetup): SceneBuild {
       ctx.globalAlpha = 0.9 * flash
       ctx.drawImage(flare, x - s / 2, y - s / 2, s, s)
     }
+    ctx.globalCompositeOperation = 'source-over'
     // Eruption: shoots up off the limb, then stretches outward, widening and
     // fading, while a clump of ejected gas runs on ahead of it.
     const e = u - ERUPT_DELAY
@@ -748,7 +749,6 @@ function* createSun(setup: SceneSetup): SceneBuild {
         ctx.restore()
       }
     }
-    ctx.globalCompositeOperation = 'source-over'
   }
 
   function draw(frame: SceneFrame) {

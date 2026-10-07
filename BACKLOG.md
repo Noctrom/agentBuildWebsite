@@ -76,6 +76,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.66](docs/backlog/v0/v0.50-v0.74.md#v066--privacy-and-secrets-scan-before-going-public-report-only) | Privacy and secrets scan before going public (report only) | leader | — | done |
 | [V0.67](docs/backlog/v0/v0.50-v0.74.md#v067--scene-docs-match-the-v061-showcase-mode) | Scene docs match the V0.61 showcase mode | dev-2 | V0.61 | done |
 | [V0.68](docs/backlog/v0/v0.50-v0.74.md#v068--contact-galaxy-moves-down-toward-the-bottom-right-corner-on-tablet-and-desktop) | Contact galaxy moves down toward the bottom-right corner on tablet and desktop | dev-2 | V0.60 | done |
+| [V0.69](docs/backlog/v0/v0.50-v0.74.md#v069--replace-the-leftover-lorem-ipsum-page-copy-with-real-text) | Replace the leftover "Lorem ipsum" page copy with real text | dev-2 | V0.51–V0.53 | in progress |
 
 ## Old ids
 

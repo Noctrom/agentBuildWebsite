@@ -78,7 +78,7 @@ const TWINKLES_PHONE = 14
  * Band brightness left where it crosses the desktop contact text (1 = not
  * dimmed). A soft fade (`textDim`), not a cutout.
  */
-const TEXT_DIM = 1
+const TEXT_DIM = 0.75
 
 /**
  * Colour across the band, by warmth (0 = edge, 1 = warm middle): blue-white
@@ -163,16 +163,22 @@ export function bandRows(size: SceneSize, place: GalaxyPlace): [number, number] 
  * `TEXT_DIM` behind the desktop contact text, with a soft edge. Text boxes
  * measured on /contact from 768x1024 to 1920x1080 (V0.59, V0.60): the intro
  * and the contact panel end ~415 px from the top (768) or ~350 (1024 and up),
- * and reach right to ~0.72 of the width at most; the footer text starts
+ * and the intro reaches right to 740 (768 wide), 851 (1024), 908 (1280) and
+ * 1228 (1920), all inside `textRight`; the footer text starts
  * ~92 px above the bottom. Phones return 1: there the band runs below the
  * text.
  */
 function textDim({ width, height }: SceneSize, x: number, y: number) {
   if (width < 768 || TEXT_DIM >= 1) return 1
-  const panel = (1 - smoothstep(420, 520, y)) * (1 - smoothstep(width * 0.72, width * 0.72 + 90, x))
+  const panel = (1 - smoothstep(420, 520, y)) * (1 - smoothstep(textRight(width), textRight(width) + 90, x))
   const footer = smoothstep(height - 150, height - 95, y)
   const text = Math.max(panel, footer)
   return 1 - (1 - TEXT_DIM) * text
+}
+
+/** Right edge of the desktop contact text, with a small margin (see `textDim`). */
+function textRight(width: number) {
+  return width / 2 + 360
 }
 
 /** A twinkling band star, in CSS pixels. */
@@ -243,7 +249,7 @@ export function* paintBand(
       // across it), with thinner lanes where a ridged noise peaks inside them,
       // strongest in the middle of the band and fading out to its edges.
       const along = u / (0.9 * W)
-      const side = (v * half) / (0.3 * W)
+      const side = across / (0.3 * W)
       const patch = smoothstep(0.5, 0.78, fbm(lanes, along, side, 3))
       const ridge = 1 - Math.abs(fbm(breaks, along * 0.7, side * 1.6, 2) * 2 - 1)
       const lane = Math.min(1, patch * 0.75 + smoothstep(0.82, 0.97, ridge) * patch) * Math.exp(-v * v * 1.6)
@@ -332,7 +338,7 @@ export function* paintBand(
  */
 function inTextArea({ width, height }: SceneSize, x: number, y: number) {
   if (width < 768) return y < 557 || y > height - 186
-  return (y < 520 && x < width * 0.72 + 90) || y > height - 150
+  return (y < 520 && x < textRight(width) + 90) || y > height - 150
 }
 
 /** Sprite for the twinkling band stars. */

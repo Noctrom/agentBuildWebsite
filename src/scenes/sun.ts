@@ -77,12 +77,12 @@ const BURST_LENGTH = [3.8, 5] as const
 /** The surface flash: rises over FLASH_RISE s, gone at FLASH_END s. */
 const FLASH_RISE = 0.4
 const FLASH_END = 2
-/** The eruption starts this long after the flash, grows for ERUPT_GROW s, then lifts off and fades. */
+/** The eruption starts this long after the flash, grows for ERUPT_GROW s, then stretches outward and fades. */
 const ERUPT_DELAY = 0.15
 const ERUPT_GROW = 1.4
 const ERUPT_FADE_FROM = 1.8
 /** How far the eruption travels out (in r) by the end of the burst. */
-const ERUPT_LIFT = 0.55
+const ERUPT_LIFT = 0.3
 /** Keep burst sites at least this far (fraction of r, min px) inside the viewport. */
 const BURST_MARGIN = 0.06
 
@@ -392,7 +392,7 @@ function makeSwells(r: number, random: () => number): Tile {
     const s = r * between(random, 0.28, 0.58)
     const x = random() * w
     const y = random() * h
-    ctx.globalAlpha = isDark ? between(random, 0.3, 0.5) : between(random, 0.3, 0.5)
+    ctx.globalAlpha = between(random, 0.38, 0.58)
     // Stamp the wrapped copies too, so the tile repeats without seams.
     for (let ox = -w; ox <= w; ox += w)
       for (let oy = -h; oy <= h; oy += h) {
@@ -470,8 +470,8 @@ interface EruptionSprite {
  */
 function makeEruption(kind: 'jet' | 'loop', w: number, h: number, random: () => number): EruptionSprite {
   const pad = Math.max(w, h) * 0.3
-  // Room below the feet for the whole foot glow: the sprite lifts off the
-  // limb, so its bottom edge must not cut the glow.
+  // Room below the feet for the whole foot glow, so the sprite's bottom
+  // edge never cuts it, even when stretched past the limb.
   const below = w * 0.6
   const canvas = makeCanvas(w + pad * 2, h + pad + below)
   const sprite = { canvas, foot: below }
@@ -487,7 +487,7 @@ function makeEruption(kind: 'jet' | 'loop', w: number, h: number, random: () => 
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.lineCap = 'round'
   ctx.shadowColor = 'rgb(255 125 55)'
-  ctx.shadowBlur = Math.max(6, Math.min(w, h) * 0.22)
+  ctx.shadowBlur = Math.max(6, Math.min(w, h) * 0.35)
   if (kind === 'jet') {
     for (let k = 0; k < 5; k++) {
       const x0 = cx + between(random, -0.1, 0.1) * w
@@ -503,8 +503,8 @@ function makeEruption(kind: 'jet' | 'loop', w: number, h: number, random: () => 
         x1,
         top,
       )
-      ctx.strokeStyle = `rgb(255 ${Math.round(between(random, 160, 205))} 105 / ${between(random, 0.3, 0.5).toFixed(2)})`
-      ctx.lineWidth = Math.max(2, w * between(random, 0.05, 0.11))
+      ctx.strokeStyle = `rgb(255 ${Math.round(between(random, 160, 205))} 105 / ${between(random, 0.22, 0.38).toFixed(2)})`
+      ctx.lineWidth = Math.max(2, w * between(random, 0.08, 0.16))
       ctx.stroke()
     }
     ctx.shadowBlur = 0
@@ -722,7 +722,8 @@ function* createSun(setup: SceneSetup): SceneBuild {
       ctx.globalAlpha = 0.9 * flash
       ctx.drawImage(flare, x - s / 2, y - s / 2, s, s)
     }
-    // Eruption: grows off the limb, then lifts away, widening and fading.
+    // Eruption: shoots up off the limb, then stretches outward, widening and
+    // fading, while a clump of ejected gas runs on ahead of it.
     const e = u - ERUPT_DELAY
     const sprite = eruptions[b.kind]
     if (e > 0 && sprite) {
@@ -732,19 +733,18 @@ function* createSun(setup: SceneSetup): SceneBuild {
       const alpha = smooth(e / 0.45) * fade
       if (alpha > 0) {
         const lift = travel * ERUPT_LIFT * r
-        const w = sprite.canvas.width * (1 + 0.5 * travel)
-        const h = sprite.canvas.height * (0.2 + 0.8 * grow) * (1 + 0.35 * travel)
+        const w = sprite.canvas.width * (1 + 0.4 * travel)
+        const h = sprite.canvas.height * (0.2 + 0.8 * grow) * (1 + 1.1 * travel)
         const foot = sprite.foot * (h / sprite.canvas.height)
         ctx.save()
         ctx.translate(cx + cos * r, cy + sin * r)
         ctx.rotate(a + Math.PI / 2)
         ctx.scale(b.flip, 1)
         ctx.globalAlpha = alpha
-        ctx.drawImage(sprite.canvas, -w / 2, -h + foot + r * 0.015 - lift, w, h)
-        // The ejected gas: a glowing clump at the front, running ahead as it lifts.
-        const s = r * (0.16 + 0.22 * travel)
-        ctx.globalAlpha = alpha * (0.25 + 0.4 * travel)
-        ctx.drawImage(blob, -s / 2, -(h - foot) * 0.85 - lift * 1.35 - s / 2, s, s)
+        ctx.drawImage(sprite.canvas, -w / 2, -h + foot + r * 0.015, w, h)
+        const s = r * (0.16 + 0.24 * travel)
+        ctx.globalAlpha = alpha * (0.3 + 0.4 * travel)
+        ctx.drawImage(blob, -s / 2, -(h - foot) * 0.85 - lift - s / 2, s, s)
         ctx.restore()
       }
     }

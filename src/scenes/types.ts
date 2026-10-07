@@ -12,8 +12,10 @@
  *   2. Map its route in `src/scenes/routes.ts`.
  *
  * Lifecycle
- * - `create(setup)` runs once when the scene becomes active (on page load or
- *   navigation). Precompute here: star positions, offscreen canvases, sprites.
+ * - `create(setup)` runs when the scene becomes active (on page load or
+ *   navigation), and again in the background when the visitor hides or shows
+ *   the page content (see "Size changes between the views" below).
+ *   Precompute here: star positions, offscreen canvases, sprites.
  *   Keep state in the closure / returned object; scenes must not touch the DOM
  *   outside their own offscreen canvases.
  * - `resize(size)` runs when the viewport size changes. Rebuild anything that
@@ -65,15 +67,46 @@
  *     },
  *   }
  *
- * Brightness (contrast budget)
- * - Draw at full brightness. The engine shows the canvas at a fixed low opacity
- *   (`budget.maxOpacity`, 0.2 since S32) over the page background, so even
- *   pure white ends up at most rgb(55 56 63). That keeps every text color in
- *   `index.css` at WCAG AA (>= 4.5:1) at every frame, on the bare background
- *   and on surface panels nested twice (lowest: accent, 4.96). Scenes cannot break contrast, and should not try to
- *   compensate by brightening further; contrast against text is not their job.
- * - Because the output is scaled down, contrast *inside* the scene matters:
- *   use alpha 0.4-1 for things that should be visible.
+ * Brightness (contrast budget) and the two views
+ * - Draw at full brightness. A scene is shown in two views, and the engine
+ *   picks the opacity and resolution; scenes draw the same in both:
+ *   - Normal view (page content shown): the canvas is shown at a fixed low
+ *     opacity (`budget.maxOpacity`, 0.2 since S32) over the page background,
+ *     at a DPR capped at 1 (lower on very large screens), so even pure white
+ *     ends up at most rgb(55 56 63). That keeps every text color in
+ *     `index.css` at WCAG AA (>= 4.5:1) at every frame, on the bare
+ *     background and on surface panels nested twice (lowest: accent, 4.96).
+ *     Scenes cannot break contrast, and should not try to compensate by
+ *     brightening further; contrast against text is not their job.
+ *   - Hidden-content view (V0.57 eye button, V0.61 "showcase"): no text is
+ *     shown, so the canvas goes to full strength (opacity 1, 5x brighter)
+ *     and, except on phones, to the screen's native DPR, capped at
+ *     3840x2160 backing pixels (larger screens are scaled down to that).
+ *     Phones get full strength at the normal resolution. If the sharp view
+ *     runs slow, the engine silently drops back to the normal resolution
+ *     (still at full strength) for the rest of the visit. The change fades
+ *     with the content (~300 ms), or switches at once with reduced motion.
+ *     `budget.maxOpacity` stays 0.2 in this view: it describes the normal
+ *     cap, not the current opacity.
+ * - Because the normal view is scaled down, contrast *inside* the scene
+ *   matters: use alpha 0.4-1 for things that should be visible.
+ * - Build for full strength too: at opacity 1 every flaw is 5x more visible.
+ *   Soft layers (clouds, glows, gradients baked into textures) must not show
+ *   banding or blockiness: bake them at enough resolution (or in device
+ *   pixels via `dpr`) and add a little dither or noise to long, smooth
+ *   gradients. Check a new scene with the content hidden, on a DPR 2 screen.
+ *
+ * Size changes between the views
+ * - Switching views changes `dpr` (on desktops and tablets). While the scene
+ *   animates, the engine does not call `resize` for this: it builds a fresh
+ *   instance of the scene at the new size in the background (`create`, run
+ *   in slices if it is a generator, plus one priming `draw` off screen),
+ *   keeps the old instance drawing meanwhile, then swaps them and disposes
+ *   the old one. `frame.time` carries on from the old instance, so the
+ *   motion does not jump. `create` must give the same picture as `create` +
+ *   `resize` at that size, and should not depend on randomness that changes
+ *   the look between two calls (use a fixed seed). A real viewport resize, or any size change while
+ *   reduced motion is on, still calls `resize` at once and redraws.
  *
  * Motion
  * - `frame.time` is seconds since the scene was created, paused while the tab
@@ -110,13 +143,24 @@ export interface SceneSize {
   width: number
   /** Height in CSS pixels (the large viewport height on mobile). */
   height: number
-  /** Canvas pixels per CSS pixel (capped by the engine at 1, lower on very large screens). */
+  /**
+   * Canvas pixels per CSS pixel. Normal view: capped by the engine at 1,
+   * lower on very large screens (at most 1.1 M backing pixels). Hidden-content
+   * view (V0.61): the device's native ratio, capped at 3840x2160 backing
+   * pixels; not on phones, and back to the normal cap if it runs slow. When it
+   * changes, the engine rebuilds the scene at the new size in the background
+   * (see "Size changes between the views" above).
+   */
   dpr: number
 }
 
 /** How bright the background may get. Enforced by the engine, informational for scenes. */
 export interface SceneBudget {
-  /** Opacity the canvas is shown at over the page background (0..1). */
+  /**
+   * Opacity the canvas is shown at over the page background (0..1) in the
+   * normal view. Stays at this value while the content is hidden, even
+   * though the engine then shows the canvas at 1 (V0.61).
+   */
   maxOpacity: number
 }
 

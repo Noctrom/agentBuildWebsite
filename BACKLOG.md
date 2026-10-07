@@ -66,12 +66,16 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.56](docs/backlog/v0/v0.50-v0.74.md#v056--rail-width-ready-before-scenes-draw) | Rail width ready before scenes draw | dev-1 | V0.43 | done |
 | [V0.57](docs/backlog/v0/v0.50-v0.74.md#v057--button-to-hide-the-page-content-and-show-only-the-space-background) | Button to hide the page content and show only the space background | dev-1 | V0.56 | done |
 | [V0.58](docs/backlog/v0/v0.50-v0.74.md#v058--contact-galaxy-clears-the-taller-phone-footer) | Contact galaxy clears the taller phone footer | dev-2 | V0.57, V0.45 | done |
-| [V0.59](docs/backlog/v0/v0.50-v0.74.md#v059--contact-galaxy-recoloured-to-match-chriss-milky-way-photo) | Contact galaxy recoloured to match Chris's Milky Way photo | dev-2 | V0.58 | in progress |
-| [V0.60](docs/backlog/v0/v0.50-v0.74.md#v060--milky-way-band-across-the-contact-sky) | Milky Way band across the Contact sky | dev-2 | V0.59 | todo |
-| [V0.61](docs/backlog/v0/v0.50-v0.74.md#v061--hidden-content-view-shows-the-background-bright-and-sharp) | Hidden-content view shows the background bright and sharp | dev-1 | V0.57, V0.42 | in progress |
-| [V0.62](docs/backlog/v0/v0.50-v0.74.md#v062--resume-nebula-redrawn-as-drifting-clouds-across-the-whole-screen) | Resume nebula redrawn as drifting clouds across the whole screen | dev-2 | — | in progress |
-| [V0.63](docs/backlog/v0/v0.50-v0.74.md#v063--behind-the-scenes-planet-without-its-gas-stream) | Behind the Scenes planet without its gas stream | dev-2 | V0.45 | in progress |
-| [V0.64](docs/backlog/v0/v0.50-v0.74.md#v064--projects-gas-giant-gets-moving-jupiter-like-clouds) | Projects gas giant gets moving Jupiter-like clouds | dev-2 | — | in progress |
+| [V0.59](docs/backlog/v0/v0.50-v0.74.md#v059--contact-galaxy-recoloured-to-match-chriss-milky-way-photo) | Contact galaxy recoloured to match Chris's Milky Way photo | dev-2 | V0.58 | done |
+| [V0.60](docs/backlog/v0/v0.50-v0.74.md#v060--milky-way-band-across-the-contact-sky) | Milky Way band across the Contact sky | dev-2 | V0.59 | done |
+| [V0.61](docs/backlog/v0/v0.50-v0.74.md#v061--hidden-content-view-shows-the-background-bright-and-sharp) | Hidden-content view shows the background bright and sharp | dev-1 | V0.57, V0.42 | done |
+| [V0.62](docs/backlog/v0/v0.50-v0.74.md#v062--resume-nebula-redrawn-as-drifting-clouds-across-the-whole-screen) | Resume nebula redrawn as drifting clouds across the whole screen | dev-2 | — | done |
+| [V0.63](docs/backlog/v0/v0.50-v0.74.md#v063--behind-the-scenes-planet-without-its-gas-stream) | Behind the Scenes planet without its gas stream | dev-2 | V0.45 | done |
+| [V0.64](docs/backlog/v0/v0.50-v0.74.md#v064--projects-gas-giant-gets-moving-jupiter-like-clouds) | Projects gas giant gets moving Jupiter-like clouds | dev-2 | — | done |
+| [V0.65](docs/backlog/v0/v0.50-v0.74.md#v065--about-sun-churns-visibly-and-throws-random-sunbursts) | About sun churns visibly and throws random sunbursts | dev-2 | — | done |
+| [V0.66](docs/backlog/v0/v0.50-v0.74.md#v066--privacy-and-secrets-scan-before-going-public-report-only) | Privacy and secrets scan before going public (report only) | leader | — | done |
+| [V0.67](docs/backlog/v0/v0.50-v0.74.md#v067--scene-docs-match-the-v061-showcase-mode) | Scene docs match the V0.61 showcase mode | dev-2 | V0.61 | done |
+| [V0.68](docs/backlog/v0/v0.50-v0.74.md#v068--contact-galaxy-moves-down-toward-the-bottom-right-corner-on-tablet-and-desktop) | Contact galaxy moves down toward the bottom-right corner on tablet and desktop | dev-2 | V0.60 | done |
 
 ## Old ids
 

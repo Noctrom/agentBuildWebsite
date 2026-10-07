@@ -50,7 +50,7 @@ export default function Layout() {
 
   return (
     <div className="relative isolate flex min-h-dvh flex-col text-fg lg:pl-(--rail-width)">
-      <SpaceBackground onAutoPause={openNotice} />
+      <SpaceBackground showcase={contentHidden} onAutoPause={openNotice} />
       <a
         href="#main"
         inert={contentHidden}

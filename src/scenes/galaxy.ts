@@ -33,11 +33,12 @@ import type { Scene, SceneBuild, SceneFrame, SceneSetup, SceneSize } from './typ
  * average as before. With reduced motion the engine draws time 0 only, so
  * nothing changes.
  *
- * Layers, back to front: the Contact sky (V0.59), starfield, smudges, the baked glow texture
+ * Layers, back to front: the Contact sky (V0.59) with the Milky Way band
+ * baked into it (V0.60, `galaxyBand.ts`), the band's twinkling stars, starfield, smudges, the baked glow texture
  * (`makeGlow`, drawn in `drawGlow`) with the breathing core and the live
  * knots on top, then the live stars (`createDiskStars`).
  *
- * Cost per frame: one draw of the baked sky, the starfield, three tiny sprites, one transformed draw of
+ * Cost per frame: one draw of the baked sky, ~14-36 tiny twinkle sprites, the starfield, three tiny sprites, one transformed draw of
  * the glow texture (as in S27), the core halo sprite and 16 live
  * small knot sprites, a third of the ~4 600 stars splatted into a
  * pixel buffer and one draw of that buffer.

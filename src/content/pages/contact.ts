@@ -1,4 +1,4 @@
-// PLACEHOLDER: UI copy for the contact page (/contact). The address, links and
+// UI copy for the contact page (/contact). The address, links and
 // call to action themselves come from `profile` (profile.ts).
 
 import type { PageMetaCopy } from '../types'
@@ -22,7 +22,7 @@ export const contactPage: ContactPageCopy = {
   meta: {
     title: 'Contact',
     description:
-      'Placeholder contact description: lorem ipsum ways to reach Christopher Waldriff by email, GitHub or LinkedIn.',
+      'Contact Christopher Waldriff about software internships by email, LinkedIn or GitHub.',
   },
   title: 'Contact',
   emailLabel: 'Email',

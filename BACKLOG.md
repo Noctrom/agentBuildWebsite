@@ -71,7 +71,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.61](docs/backlog/v0/v0.50-v0.74.md#v061--hidden-content-view-shows-the-background-bright-and-sharp) | Hidden-content view shows the background bright and sharp | dev-1 | V0.57, V0.42 | done |
 | [V0.62](docs/backlog/v0/v0.50-v0.74.md#v062--resume-nebula-redrawn-as-drifting-clouds-across-the-whole-screen) | Resume nebula redrawn as drifting clouds across the whole screen | dev-2 | — | in progress |
 | [V0.63](docs/backlog/v0/v0.50-v0.74.md#v063--behind-the-scenes-planet-without-its-gas-stream) | Behind the Scenes planet without its gas stream | dev-2 | V0.45 | done |
-| [V0.64](docs/backlog/v0/v0.50-v0.74.md#v064--projects-gas-giant-gets-moving-jupiter-like-clouds) | Projects gas giant gets moving Jupiter-like clouds | dev-2 | — | in progress |
+| [V0.64](docs/backlog/v0/v0.50-v0.74.md#v064--projects-gas-giant-gets-moving-jupiter-like-clouds) | Projects gas giant gets moving Jupiter-like clouds | dev-2 | — | done |
 | [V0.65](docs/backlog/v0/v0.50-v0.74.md#v065--about-sun-churns-visibly-and-throws-random-sunbursts) | About sun churns visibly and throws random sunbursts | dev-2 | — | in progress |
 | [V0.66](docs/backlog/v0/v0.50-v0.74.md#v066--privacy-and-secrets-scan-before-going-public-report-only) | Privacy and secrets scan before going public (report only) | leader | — | done |
 | [V0.67](docs/backlog/v0/v0.50-v0.74.md#v067--scene-docs-match-the-v061-showcase-mode) | Scene docs match the V0.61 showcase mode | dev-2 | V0.61 | done |

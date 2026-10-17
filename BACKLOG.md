@@ -77,7 +77,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.67](docs/backlog/v0/v0.50-v0.74.md#v067--scene-docs-match-the-v061-showcase-mode) | Scene docs match the V0.61 showcase mode | dev-2 | V0.61 | done |
 | [V0.68](docs/backlog/v0/v0.50-v0.74.md#v068--contact-galaxy-moves-down-toward-the-bottom-right-corner-on-tablet-and-desktop) | Contact galaxy moves down toward the bottom-right corner on tablet and desktop | dev-2 | V0.60 | done |
 | [V0.69](docs/backlog/v0/v0.50-v0.74.md#v069--replace-the-leftover-lorem-ipsum-page-copy-with-real-text) | Replace the leftover "Lorem ipsum" page copy with real text | dev-2 | V0.51–V0.53 | done |
-| [V0.70](docs/backlog/v0/v0.50-v0.74.md#v070--education-section-on-the-about-page) | Education section on the About page | dev-2 | V0.52 | in progress |
+| [V0.70](docs/backlog/v0/v0.50-v0.74.md#v070--education-section-on-the-about-page) | Education section on the About page | dev-2 | V0.52 | done |
 | [V0.71](docs/backlog/v0/v0.50-v0.74.md#v071--site-content-matches-the-latest-resume-pdf) | Site content matches the latest resume PDF | dev-2 | V0.52, V0.53 | in progress |
 | [V0.72](docs/backlog/v0/v0.50-v0.74.md#v072--favicon-gets-a-real-title) | Favicon gets a real title | dev-1 | V0.30 | in progress |
 | [V0.73](docs/backlog/v0/v0.50-v0.74.md#v073--contact-galaxy-uploads-stars-with-createimagebitmap) | Contact galaxy uploads stars with createImageBitmap | dev-2 | V0.60, V0.68 | in progress |

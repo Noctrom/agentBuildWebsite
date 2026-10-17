@@ -80,7 +80,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.70](docs/backlog/v0/v0.50-v0.74.md#v070--education-section-on-the-about-page) | Education section on the About page | dev-2 | V0.52 | done |
 | [V0.71](docs/backlog/v0/v0.50-v0.74.md#v071--site-content-matches-the-latest-resume-pdf) | Site content matches the latest resume PDF | dev-2 | V0.52, V0.53 | done |
 | [V0.72](docs/backlog/v0/v0.50-v0.74.md#v072--favicon-gets-a-real-title) | Favicon gets a real title | dev-1 | V0.30 | done |
-| [V0.73](docs/backlog/v0/v0.50-v0.74.md#v073--contact-galaxy-uploads-stars-with-createimagebitmap) | Contact galaxy uploads stars with createImageBitmap | dev-2 | V0.60, V0.68 | in progress |
+| [V0.73](docs/backlog/v0/v0.50-v0.74.md#v073--contact-galaxy-uploads-stars-with-createimagebitmap) | Contact galaxy uploads stars with createImageBitmap | dev-2 | V0.60, V0.68 | done |
 | [V0.74](docs/backlog/v0/v0.50-v0.74.md#v074--nebula-streamers-look-wispy-not-straight-streaks) | Nebula streamers look wispy, not straight streaks | dev-2 | V0.62 | in progress |
 | [V0.75](docs/backlog/v0/v0.75-v0.99.md#v075--soft-nebula-cloud-layers-without-banding) | Soft nebula cloud layers without banding | dev-2 | V0.61, V0.74 | todo |
 | [V0.76](docs/backlog/v0/v0.75-v0.99.md#v076--performance-check-across-all-pages-report-only) | Performance check across all pages (report only) | dev-1 | V0.73, V0.74, V0.75 | todo |

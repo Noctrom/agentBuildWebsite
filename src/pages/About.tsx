@@ -1,5 +1,13 @@
-import { PageMeta, Section, Tag } from '../components/ui'
-import { aboutPage, experience, formatYearMonth, profile, sharedLabels, skills } from '../content'
+import { Card, PageMeta, Section, Tag } from '../components/ui'
+import {
+  aboutPage,
+  education,
+  experience,
+  formatYearMonth,
+  profile,
+  sharedLabels,
+  skills,
+} from '../content'
 
 export default function About() {
   return (
@@ -53,6 +61,36 @@ export default function About() {
                 )}
               </p>
               <p className="mt-3 max-w-prose text-fg">{job.summary}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      <Section title={aboutPage.educationTitle} intro={aboutPage.educationIntro} tone="surface">
+        <ol className="space-y-6">
+          {education.map((entry) => (
+            <li key={entry.id}>
+              <Card
+                tone="bg"
+                title={entry.degree}
+                description={
+                  <>
+                    <p className="font-medium text-accent">{entry.institution}</p>
+                    <p className="text-sm text-muted">
+                      <time dateTime={entry.start}>{formatYearMonth(entry.start)}</time>
+                      {' – '}
+                      {entry.end === null ? (
+                        sharedLabels.present
+                      ) : (
+                        <time dateTime={entry.end}>{formatYearMonth(entry.end)}</time>
+                      )}
+                    </p>
+                    {entry.details && (
+                      <p className="mt-3 max-w-prose text-base text-fg">{entry.details}</p>
+                    )}
+                  </>
+                }
+              />
             </li>
           ))}
         </ol>

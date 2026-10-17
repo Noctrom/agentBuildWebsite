@@ -5,4 +5,5 @@ export const skills: SkillGroup[] = [
   { category: 'Languages', skills: ['Python', 'Java', 'SQL'] },
   { category: 'Data & Vision', skills: ['MySQL', 'OpenCV'] },
   { category: 'Tools', skills: ['Docker', 'Git', 'Linux'] },
+  { category: 'AI', skills: ['Claude (Claude agents)'] },
 ]

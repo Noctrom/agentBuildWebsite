@@ -85,6 +85,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.75](docs/backlog/v0/v0.75-v0.99.md#v075--soft-nebula-cloud-layers-without-banding) | Soft nebula cloud layers without banding | dev-2 | V0.61, V0.74 | todo |
 | [V0.76](docs/backlog/v0/v0.75-v0.99.md#v076--performance-check-across-all-pages-report-only) | Performance check across all pages (report only) | dev-1 | V0.73, V0.74, V0.75 | todo |
 | [V0.77](docs/backlog/v0/v0.75-v0.99.md#v077--link-previews-use-the-live-site-address) | Link previews use the live site address | dev-1 | V0.12 | done |
+| [V0.78](docs/backlog/v0/v0.75-v0.99.md#v078--real-link-preview-image) | Real link-preview image | dev-1 | V0.77 | in progress |
 
 ## Old ids
 

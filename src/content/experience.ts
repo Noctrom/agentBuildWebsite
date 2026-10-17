@@ -26,9 +26,5 @@ export const experience: Experience[] = [
     start: '2023-07',
     end: '2024-05',
     summary: "Worked the line at one of Duluth's busiest restaurants.",
-    highlights: [
-      'Managed multiple orders during peak hours.',
-      'Adapted quickly to new recipes and techniques.',
-    ],
   },
 ]

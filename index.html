@@ -41,8 +41,21 @@
       property="og:description"
       content="Computer science student at the University of Minnesota Duluth, looking for a software internship to put my skills to work on real-world projects."
     />
-    <meta property="og:image" content="/og-image.png" />
+    <!-- V0.77: link-preview crawlers need absolute addresses. The live site
+         address is https://noctrom.vercel.app. If the site moves to its own
+         domain, update these three lines: og:url, og:image, twitter:image.
+         If public/og-image.png is replaced, keep og:image:width/height in
+         line with its real size and update the alt text. -->
+    <meta property="og:url" content="https://noctrom.vercel.app/" />
+    <meta property="og:image" content="https://noctrom.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Preview card for Christopher Waldriff's personal website: a dark starfield with a ringed planet"
+    />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://noctrom.vercel.app/og-image.png" />
   </head>
   <body>
     <div id="root"></div>

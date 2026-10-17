@@ -14,7 +14,9 @@ import type { Scene, SceneBuild, SceneFrame, SceneSetup, SceneSize } from './typ
  *    blue-violet), lit from the upper left: a bright rim on the side facing
  *    the light, a darker shadowed side. Dark dust lanes cut through them.
  * 3. Streamers: thin, wispy filaments that trail off the edges of the banks,
- *    baked at a finer resolution so they stay sharp.
+ *    baked at a finer resolution so they stay sharp. They follow a smooth
+ *    bend field (V0.74), so they curve and part instead of running straight,
+ *    and swell, thin out and break up along their length.
  * 4. Stars, and five young stars with six-point diffraction spikes that sit
  *    in the cloud banks and move with them.
  *
@@ -78,6 +80,11 @@ const SHADOW_STEPS: readonly (readonly [number, number])[] = [
 ]
 /** Upwind samples when tracing streamers back to a bank. */
 const TRAIL_STEPS = 4
+/**
+ * How far the streamers bend (V0.74), as a fraction of the screen's size:
+ * the peak vertical push of the bend field. Larger curves them more.
+ */
+const STREAMER_BEND = 0.09
 
 /**
  * Tile size: the viewport plus this margin (CSS px), so a young star sprite
@@ -573,35 +580,77 @@ function* bakeLayers(width: number, height: number, sharp: number): Generator<un
   // --- 3. Streamers: thin filaments trailing off the banks, finer texture. ---
   // Each texel looks upwind (to the left) for a bank; thin strands run
   // downwind from it and fade with distance, like gas blown off the clouds.
+  // V0.74: the strands follow a smooth "bend" field instead of running
+  // straight along x, so they curve, tilt and part; their thickness and
+  // brightness vary along their length, and they break into pieces.
   const wx2 = Math.round(bx * WISP_FACTOR)
   const wy2 = Math.round(by * WISP_FACTOR)
   const wispImg = new ImageData(wx2, wy2)
   {
+    // Bend: how far (bank texels, vertically) the strands are pushed at each
+    // point. A strand is a line where `y + bend` is constant, so where the
+    // bend changes along x the strand curves. Two octaves: broad sweeps plus
+    // a gentler wiggle. Smooth, so the coarse grid is enough.
+    const bendNoise = createTileNoise(2727)
+    const bendAmp = unit * STREAMER_BEND * bankScale
+    const bend = new Float32Array(cw * ch)
+    yield* eachRow(ch, (j) => {
+      const y = (j / ch) * py
+      for (let i = 0; i < cw; i++) {
+        const x = (i / cw) * px
+        const sweep = offGrid(bendNoise, x + 3.3, y + 8.1, px, py) - 0.5
+        const wiggle = bendNoise(x * 3 + 21.7, y * 4 + 4.9, px * 3, py * 4) - 0.5
+        bend[j * cw + i] = (sweep + wiggle * 0.5) * 2 * bendAmp
+      }
+      return cw * 4
+    })
+
     // Upwind search on the bank grid (cheaper than per streamer texel),
-    // reaching about 20% of the screen.
+    // reaching about 20% of the screen. Each step follows the bent strand
+    // back to its source, so the trails curve with the strands.
     const stepLen = (unit * 0.2 * bankScale) / TRAIL_STEPS
     const trails = new Float32Array(bx * by)
     const upwind = Array.from({ length: TRAIL_STEPS }, (_, s) => shiftedColumns(bx, -Math.round((s + 1) * stepLen)))
     const fade = Array.from({ length: TRAIL_STEPS }, (_, s) => 1 - (s + 1) / (TRAIL_STEPS + 1))
+    /** The bend along the current row, at every coarse column and every bank texel. */
+    const bendCol = new Float32Array(cw)
+    const bendRow = new Float32Array(bx)
     yield* eachRow(by, (j) => {
       const row = j * bx
+      // `sampleCoarse` for the whole row: blend the two coarse rows once,
+      // then interpolate along the row.
+      const r0 = (j >> 2) * cw
+      const r1 = ((j >> 2) + 1 === ch ? 0 : (j >> 2) + 1) * cw
+      const fy = (j & 3) * 0.25
+      for (let c = 0; c < cw; c++) bendCol[c] = bend[r0 + c] + (bend[r1 + c] - bend[r0 + c]) * fy
+      for (let i = 0; i < bx; i++) {
+        const c0 = i >> 2
+        const a = bendCol[c0]
+        bendRow[i] = a + (bendCol[c0 + 1 === cw ? 0 : c0 + 1] - a) * (i & 3) * 0.25
+      }
       for (let i = 0; i < bx; i++) {
         const here = soft[row + i]
         if (here > 0.7) continue
+        const b0 = bendRow[i]
         let trail = 0
         for (let s = 0; s < TRAIL_STEPS; s++) {
-          const t = soft[row + upwind[s][i]] * fade[s]
+          const c = upwind[s][i]
+          // Usually inside the tile; `wrap` only when it isn't (cheaper in
+          // this hot loop than wrapping every time).
+          let up = j + Math.round(b0 - bendRow[c])
+          if (up < 0 || up >= by) up = wrap(up, by)
+          const t = soft[up * bx + c] * fade[s]
           if (t > trail) trail = t
         }
         trails[row + i] = smoothstep(0.15, 0.6, trail) * (1 - smoothstep(0.35, 0.7, here))
       }
-      return bx * 2
+      return bx * 3
     })
 
     const px32 = new Uint32Array(wispImg.data.buffer)
     const noise = createTileNoise(2724)
     /** Strands: long along x (few lattice cells), thin across (many). */
-    const pa = Math.max(1, Math.round(px / 2))
+    const pa = Math.max(1, px)
     const pb = py * 7
     /** Nearest bank column for each streamer column, for a quick reject. */
     const nearCol = new Int32Array(wx2)
@@ -616,14 +665,30 @@ function* bakeLayers(width: number, height: number, sharp: number): Generator<un
         const bi = i / WISP_FACTOR
         const trail = sampleWrapped(trails, bx, by, bi, bj)
         if (trail < 0.02) continue
-        work += 3
+        work += 5
         const u = i / wx2
-        const wy = sampleWrapped(warpY, cw, ch, bi / 4, bj / 4)
-        const n = tileFbm(noise, u * pa, v * pb + wy * 4, pa, pb, 2)
-        let streak = (1 - Math.abs(n * 2 - 1)) ** 12 * trail
+        // Across-strand coordinate, in strand lattice cells: bent, so each
+        // strand curves (`bend` is in bank texels; `by` of them per tile).
+        const s = (v + sampleWrapped(bend, cw, ch, bi / 4, bj / 4) / by) * pb
+        const n = tileFbm(noise, u * pa, s, pa, pb, 2)
+        /** Distance from the strand's centre line (0 on it, 1 halfway to the next). */
+        const off = Math.abs(n * 2 - 1)
+        // Quick reject: too far out even for the widest part of a strand.
+        const widest = 1 - off * 1.74
+        if (widest <= 0 || widest * widest * widest * trail < 0.01) continue
+        // Thickness varies along the strand: thin threads that swell into
+        // fainter, wider wisps. The cross-section is q^3, about (1 - off)^14
+        // where thin and (1 - off)^5 where wide, without a costly pow.
+        // `sv` is the strand coordinate on the py lattice.
+        const sv = s / 7
+        const thick = noise(u * px * 2 + 20.5, sv * 2 + 3.5, px * 2, py * 2)
+        const q = 1 - off * (1.6 - thick) * 2.9
+        if (q <= 0) continue
+        let streak = q * q * q * (1 - 0.3 * thick) * trail
         if (streak < 0.01) continue
-        // Break the strands up into different lengths.
-        streak *= smoothstep(0.25, 0.6, noise(u * px + 50.5, v * py * 4 + 9.5, px, py * 4))
+        // Break the strands up into pieces of different lengths, each strand
+        // on its own (the breaks follow the bent strand coordinate).
+        streak *= smoothstep(0.2, 0.55, noise(u * px * 2 + 50.5, sv * 4 + 9.5, px * 2, py * 4))
         if (streak < 0.01) continue
         rampInto(sampleWrapped(hue, cw, ch, bi / 4, bj / 4), rgb)
         const r = rgb[0] + (RIM[0] - rgb[0]) * 0.4

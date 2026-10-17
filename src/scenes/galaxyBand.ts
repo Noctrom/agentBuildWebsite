@@ -5,8 +5,8 @@ import { between, createRandom } from './random'
 import type { SceneSize } from './types'
 
 /**
- * Milky Way band across the Contact sky (V0.60), after Chris's reference
- * photo (`docs/story-inbox/night-sky-Milky-Way-Galaxy.webp`): a diagonal band
+ * Milky Way band across the Contact sky (V0.60), after Chris's Milky Way
+ * reference photo: a diagonal band
  * from lower left to upper right with a gold and amber middle, broken
  * brown-black dust lanes running along it, blue-white edges fading softly
  * into the sky, and dense fine stars.

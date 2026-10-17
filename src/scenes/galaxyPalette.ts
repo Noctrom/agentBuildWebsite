@@ -1,9 +1,8 @@
 import type { Rgb } from './canvas'
 
 /**
- * Milky Way palette of the Contact scene (V0.59), taken from Chris's
- * reference photo (`docs/story-inbox/night-sky-Milky-Way-Galaxy.webp`, a
- * colour reference only; it is not shipped). Region medians and bright
+ * Milky Way palette of the Contact scene (V0.59), taken from Chris's Milky
+ * Way reference photo (a colour reference only; it is not shipped). Region medians and bright
  * percentiles of the photo, scaled up to full brightness where the scene
  * needs a light colour (the scene canvas is shown at 0.2 opacity, so it
  * works with bright source colours):

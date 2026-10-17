@@ -25,5 +25,7 @@ dist-ssr
 *.suo
 *.sw?
 
-# Agent worktrees
+# Agent worktrees and local Claude state
 .claude/worktrees/
+.claude/scheduled_tasks.lock
+.claude/settings.local.json

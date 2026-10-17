@@ -19,7 +19,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.09](docs/backlog/v0/v0.00-v0.24.md#v009--resume-page) | Resume page | dev-2 | V0.03, V0.04, V0.05 | done |
 | [V0.10](docs/backlog/v0/v0.00-v0.24.md#v010--contact-page) | Contact page | dev-2 | V0.03, V0.04, V0.05 | done |
 | [V0.11](docs/backlog/v0/v0.00-v0.24.md#v011--seo-metadata-foundation) | SEO metadata foundation | dev-1 | V0.03 | done |
-| [V0.12](docs/backlog/v0/v0.00-v0.24.md#v012--deploy-to-vercel) | Deploy to Vercel | leader | all | todo |
+| [V0.12](docs/backlog/v0/v0.00-v0.24.md#v012--deploy-to-vercel) | Deploy to Vercel | leader | all | done |
 | [V0.13](docs/backlog/v0/v0.00-v0.24.md#v013--align-header-with-page-content) | Align header with page content | dev-1 | V0.03 | done |
 | [V0.14](docs/backlog/v0/v0.00-v0.24.md#v014--card--tag-background-tones) | Card & Tag background tones | dev-1 | V0.04 | done |
 | [V0.15](docs/backlog/v0/v0.00-v0.24.md#v015--consistent-page-copy-in-content) | Consistent page copy in content | dev-2 | V0.06–V0.10 | done |

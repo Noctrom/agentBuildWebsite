@@ -19,7 +19,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.09](docs/backlog/v0/v0.00-v0.24.md#v009--resume-page) | Resume page | dev-2 | V0.03, V0.04, V0.05 | done |
 | [V0.10](docs/backlog/v0/v0.00-v0.24.md#v010--contact-page) | Contact page | dev-2 | V0.03, V0.04, V0.05 | done |
 | [V0.11](docs/backlog/v0/v0.00-v0.24.md#v011--seo-metadata-foundation) | SEO metadata foundation | dev-1 | V0.03 | done |
-| [V0.12](docs/backlog/v0/v0.00-v0.24.md#v012--deploy-to-vercel) | Deploy to Vercel | leader | all | todo |
+| [V0.12](docs/backlog/v0/v0.00-v0.24.md#v012--deploy-to-vercel) | Deploy to Vercel | leader | all | done |
 | [V0.13](docs/backlog/v0/v0.00-v0.24.md#v013--align-header-with-page-content) | Align header with page content | dev-1 | V0.03 | done |
 | [V0.14](docs/backlog/v0/v0.00-v0.24.md#v014--card--tag-background-tones) | Card & Tag background tones | dev-1 | V0.04 | done |
 | [V0.15](docs/backlog/v0/v0.00-v0.24.md#v015--consistent-page-copy-in-content) | Consistent page copy in content | dev-2 | V0.06–V0.10 | done |
@@ -77,6 +77,15 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | [V0.67](docs/backlog/v0/v0.50-v0.74.md#v067--scene-docs-match-the-v061-showcase-mode) | Scene docs match the V0.61 showcase mode | dev-2 | V0.61 | done |
 | [V0.68](docs/backlog/v0/v0.50-v0.74.md#v068--contact-galaxy-moves-down-toward-the-bottom-right-corner-on-tablet-and-desktop) | Contact galaxy moves down toward the bottom-right corner on tablet and desktop | dev-2 | V0.60 | done |
 | [V0.69](docs/backlog/v0/v0.50-v0.74.md#v069--replace-the-leftover-lorem-ipsum-page-copy-with-real-text) | Replace the leftover "Lorem ipsum" page copy with real text | dev-2 | V0.51–V0.53 | done |
+| [V0.70](docs/backlog/v0/v0.50-v0.74.md#v070--education-section-on-the-about-page) | Education section on the About page | dev-2 | V0.52 | done |
+| [V0.71](docs/backlog/v0/v0.50-v0.74.md#v071--site-content-matches-the-latest-resume-pdf) | Site content matches the latest resume PDF | dev-2 | V0.52, V0.53 | done |
+| [V0.72](docs/backlog/v0/v0.50-v0.74.md#v072--favicon-gets-a-real-title) | Favicon gets a real title | dev-1 | V0.30 | done |
+| [V0.73](docs/backlog/v0/v0.50-v0.74.md#v073--contact-galaxy-uploads-stars-with-createimagebitmap) | Contact galaxy uploads stars with createImageBitmap | dev-2 | V0.60, V0.68 | done |
+| [V0.74](docs/backlog/v0/v0.50-v0.74.md#v074--nebula-streamers-look-wispy-not-straight-streaks) | Nebula streamers look wispy, not straight streaks | dev-2 | V0.62 | done |
+| [V0.75](docs/backlog/v0/v0.75-v0.99.md#v075--soft-starfield-clouds-without-banding) | Soft starfield clouds without banding | dev-2 | V0.61, V0.74 | done |
+| [V0.76](docs/backlog/v0/v0.75-v0.99.md#v076--performance-check-across-all-pages-report-only) | Performance check across all pages (report only) | dev-1 | V0.73, V0.74, V0.75 | done |
+| [V0.77](docs/backlog/v0/v0.75-v0.99.md#v077--link-previews-use-the-live-site-address) | Link previews use the live site address | dev-1 | V0.12 | done |
+| [V0.78](docs/backlog/v0/v0.75-v0.99.md#v078--real-link-preview-image) | Real link-preview image | dev-1 | V0.77 | done |
 
 ## Old ids
 

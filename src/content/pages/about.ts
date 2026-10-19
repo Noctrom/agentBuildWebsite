@@ -1,5 +1,6 @@
 // UI copy for the About page (/about). The bio comes from
-// `profile` (profile.ts), the lists from `skills` and `experience`.
+// `profile` (profile.ts), the lists from `skills`, `experience` and
+// `education`.
 
 import type { PageMetaCopy } from '../types'
 
@@ -12,6 +13,8 @@ export interface AboutPageCopy {
   skillsIntro: string
   experienceTitle: string
   experienceIntro: string
+  educationTitle: string
+  educationIntro: string
 }
 
 export const aboutPage: AboutPageCopy = {
@@ -25,4 +28,6 @@ export const aboutPage: AboutPageCopy = {
   skillsIntro: 'Languages and tools I work with.',
   experienceTitle: 'Experience',
   experienceIntro: "Where I've worked, most recent first.",
+  educationTitle: 'Education',
+  educationIntro: 'Degree, coursework and honors.',
 }

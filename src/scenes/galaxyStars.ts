@@ -22,10 +22,17 @@ import { MILKY_WAY, mix } from './galaxyPalette'
  * star is splatted (bilinear, so slow stars glide instead of hopping whole
  * pixels) into a pixel buffer the size of the galaxy, which is several times
  * cheaper than filling thousands of tiny rects. The refill is spread over
- * `FILL_FRAMES` frames (a slice of the stars per frame), then uploaded with
- * one `putImageData`; every frame draws the buffer with one additive
- * `drawImage`. The buffer is only ever touched by `putImageData`, so the
- * browser never has to rasterize into it on the main thread.
+ * `FILL_FRAMES` frames (a slice of the stars per frame), then published;
+ * every frame draws the last published buffer with one additive `drawImage`.
+ *
+ * Publishing (V0.73): while animating, the finished pixels go to the GPU via
+ * `createImageBitmap(image)`, which resolves between frames; until it does,
+ * the previous bitmap keeps being drawn, and the one it replaces is
+ * `close()`d. Before V0.73 every refill was a `putImageData` into a buffer
+ * canvas, and on a real GPU that upload stalled every third frame (23-28 fps
+ * on Contact). Still frames (reduce motion, animation off) and the first
+ * frame after a (re)size must be whole at once, so they keep the synchronous
+ * `putImageData` path into the buffer canvas.
  *
  * Twinkle (V0.40): some stars get a slow brightness wave with their own
  * period and phase (`StarSeed.twinkle`). The factor swings between
@@ -207,6 +214,23 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
   let next = 0
   /** False until the buffer holds a complete frame. */
   let ready = false
+  /**
+   * The last published frame as a bitmap (async path), or null to draw
+   * `canvas` (sync path). `issued` numbers each publish; `latest` is the
+   * number of what is shown now. A bitmap that resolves after a newer frame
+   * is shown, or after a resize or dispose, is closed at once.
+   */
+  let bitmap: ImageBitmap | null = null
+  let issued = 0
+  let latest = 0
+  /** Pending `createImageBitmap` calls; used to skip one if the GPU lags. */
+  let pending = 0
+  const asyncUpload = typeof createImageBitmap === 'function'
+
+  function dropBitmap() {
+    bitmap?.close()
+    bitmap = null
+  }
 
   function allocate(view: DiskView) {
     const { r, tilt, planeAngle } = view
@@ -215,6 +239,8 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
     const s = Math.sin(planeAngle)
     bw = Math.ceil(2 * outer * Math.sqrt(c * c + tilt * tilt * s * s)) + 4
     bh = Math.ceil(2 * outer * Math.sqrt(s * s + tilt * tilt * c * c)) + 4
+    dropBitmap()
+    latest = ++issued
     canvas = makeCanvas(bw, bh)
     bufCtx = canvas.getContext('2d')
     image = bufCtx ? bufCtx.createImageData(bw, bh) : null
@@ -298,8 +324,11 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
     }
   }
 
-  /** Move the finished refill into `image` (straight RGBA) and upload it. */
-  function publish() {
+  /**
+   * Move the finished refill into `image` (straight RGBA) and upload it:
+   * synchronously into `canvas` with `sync`, else as a bitmap (see top).
+   */
+  function publish(sync: boolean) {
     if (!image || !bufCtx) return
     const data = image.data
     for (let t = 0; t < shownCount; t++) data[shown[t] * 4 + 3] = 0
@@ -323,8 +352,34 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
     touched = swap
     touchedCount = 0
     generation = (generation + 1) >>> 0 || 1
-    bufCtx.putImageData(image, 0, 0)
     ready = true
+    if (sync || !asyncUpload) {
+      bufCtx.putImageData(image, 0, 0)
+      dropBitmap()
+      latest = ++issued
+      return
+    }
+    // One upload in flight at a time: if the last one hasn't landed yet the
+    // GPU is behind, so skip this refill rather than queue more copies.
+    if (pending > 0) return
+    const id = ++issued
+    pending++
+    // The pixels are copied when the call is made, so `image` can be reused.
+    createImageBitmap(image).then(
+      (next) => {
+        pending--
+        if (id <= latest) {
+          next.close()
+          return
+        }
+        bitmap?.close()
+        bitmap = next
+        latest = id
+      },
+      () => {
+        pending--
+      },
+    )
   }
 
   function draw(ctx: CanvasRenderingContext2D, view: DiskView, time: number, complete: boolean) {
@@ -339,20 +394,20 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
       touchedCount = 0
       generation = (generation + 1) >>> 0 || 1
       splat(view, time, 0, n)
-      publish()
+      publish(true)
       next = 0
     } else {
       const to = Math.min(n, next + Math.ceil(n / FILL_FRAMES))
       splat(view, time, next, to)
       next = to
       if (next >= n) {
-        publish()
+        publish(false)
         next = 0
       }
     }
     ctx.save()
     ctx.globalCompositeOperation = 'lighter'
-    ctx.drawImage(canvas, cx - bw / 2, cy - bh / 2)
+    ctx.drawImage(bitmap ?? canvas, cx - bw / 2, cy - bh / 2)
     ctx.restore()
   }
 
@@ -360,6 +415,8 @@ export function createDiskStars(seeds: readonly StarSeed[], motion: DiskMotion):
     draw,
     dispose() {
       sizedFor = { r: 0, tilt: 0, planeAngle: 0 }
+      dropBitmap()
+      latest = ++issued
       canvas = null
       bufCtx = null
       image = null

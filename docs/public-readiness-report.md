@@ -141,3 +141,9 @@ Nothing in history will be rewritten without your explicit decision.
 - **Remove local paths from story texts (L1):** owner leader with the story-writer. Docs only.
 - **Ignore local Claude files (I1):** owner leader. `.gitignore` only.
 - **Milky Way photo (R1):** depends on your answer about its source.
+
+## Follow-up (2026-10-17)
+
+- **R1:** Chris asked for the photo to be deleted. It and the V0.59/V0.60 side-by-side screenshots were removed from the working tree; they stay in git history, since published history is never rewritten.
+- **L1:** the Windows paths were removed from the V0.51, V0.54 and V0.66 story texts.
+- **I1:** `.claude/scheduled_tasks.lock` and `.claude/settings.local.json` were added to `.gitignore`.
